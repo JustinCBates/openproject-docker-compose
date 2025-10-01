@@ -9,6 +9,8 @@
 
         header_up X-Forwarded-Proto {header.X-Forwarded-Proto}
         header_up X-Forwarded-For {header.X-Forwarded-For}
+    # Forward Host header to the upstream so the app receives the original request host
+    header_up Host {host}
     }
 
     file_server
