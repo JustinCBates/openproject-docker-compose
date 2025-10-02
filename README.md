@@ -47,6 +47,27 @@ For instance you could mount specific configuration files, override environment 
 
 Please refer to the official [Docker Compose documentation](https://docs.docker.com/compose/extends/) for more details.
 
+### Local overrides and per-host env files
+
+For deployments you should keep host-specific configuration out of version control. This repository provides a tracked example override and a local env pattern to make that simple:
+
+- Copy the tracked examples to create your local files (do not commit these local files):
+
+```bash
+cp docker-compose.override.example.yml docker-compose.override.yml
+cp .env.hostinger.vps .env
+```
+
+- Then start the stack as usual:
+
+```bash
+docker compose up -d --build --pull always
+```
+
+The `docker-compose.override.yml` file is ignored by the repository on purpose, so local overrides remain private. Use the `.example` file as a starting point and keep secret values in your local `.env`.
+
+If you want to keep a sanitized per-host example environment in the repo, create an `.env.hostinger.example` with no secrets and track that instead.
+
 ### Troubleshooting
 
 **pull access denied for openproject/proxy, repository does not exist or may require 'docker login': denied: requested access to the resource is denied**
