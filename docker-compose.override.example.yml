@@ -1,0 +1,14 @@
+# docker-compose.override.example.yml
+# Tracked example override to show a safe, non-secret local override.
+# Usage:
+#   cp docker-compose.override.example.yml docker-compose.override.yml
+#   cp .env.hostinger.vps .env
+#   docker compose up -d --build
+
+services:
+  proxy:
+    # Example: publish host port 80 to proxy container
+    ports:
+      - "${PORT:-80}:80"
+
+# Add any local, non-secret mounts or environment overrides here as examples.
