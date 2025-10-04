@@ -2,14 +2,13 @@
 
 This repository contains the installation method for OpenProject using Docker Compose.
 
-
 > [!NOTE]
 > Looking for the Kubernetes installation method?
-> Please use the [OpenProject helm chart](https://charts.openproject.org) to install OpenProject on kubernetes.
+> Please use the [OpenProject helm chart](https://charts.openproject.org) to install OpenProject on Kubernetes.
 
 ## Quick start
 
-First, you must clone the [openproject-docker-compose](https://github.com/opf/openproject-docker-compose) repository:
+First, clone the `openproject-docker-compose` repository:
 
 ```shell
 git clone https://github.com/opf/openproject-docker-compose.git --depth=1 --branch=stable/16 openproject
@@ -22,223 +21,177 @@ cp .env.example .env
 vim .env
 ```
 
-If you are using the default value of OPDATA that is used in the ```.env.example``` you need to make sure that the folder exist, and you have the right permissions:
+If you are using the default value of `OPDATA` from `.env.example`, ensure the folder exists and has the right permissions:
 
 ```shell
 sudo mkdir -p /var/openproject/assets
 sudo chown 1000:1000 -R /var/openproject/assets
 ```
 
-Next you start up the containers in the background while making sure to pull the latest versions of all used images.
+Start the containers in the background and pull latest images (recommended):
 
 ```shell
-OPENPROJECT_HTTPS=false docker compose up -d --build --pull always
+OPENPROJECT_HTTPS=false docker compose up -d --build --pull=always
 ```
 
-After a while, OpenProject should be up and running on `http://localhost:8080`. The default username and password is login: `admin`, and password: `admin`.
-The `OPENPROJECT_HTTPS=false` environment variable explicitly disables HTTPS mode for the first startup. Without this, OpenProject assumes it's running behind HTTPS in production by default.
-We do strongly recommend you use OpenProject behind a TLS terminated proxy for production purposes and remove this flag before actually starting to use it.
+After a short time, OpenProject should be available on `http://localhost:8080`. The default credentials are `admin` / `admin`.
+
+`OPENPROJECT_HTTPS=false` disables HTTPS behavior for initial startup (recommended for simple local testing). For production, run OpenProject behind a TLS-terminating proxy and remove this flag.
 
 ### Customization
 
-The `docker-compose.yml` file present in the repository can be adjusted to your convenience. But note that with each pull, it will be overwritten.
-Best practice is to use the file `docker-compose.override.yml` for that case.
-For instance you could mount specific configuration files, override environment variables, or switch off services you don't need.
-
-Please refer to the official [Docker Compose documentation](https://docs.docker.com/compose/extends/) for more details.
-
-### Local overrides and per-host env files
-
-For deployments you should keep host-specific configuration out of version control. This repository provides a tracked example override and a local env pattern to make that simple:
-
-- Copy the tracked examples to create your local files (do not commit these local files):
+Prefer local overrides to keep host-specific configuration out of version control. Use `docker-compose.override.yml` for local changes (this file is intentionally ignored in the repo):
 
 ```bash
 cp docker-compose.override.example.yml docker-compose.override.yml
+# edit docker-compose.override.yml and .env as needed
+```
+
+See the official Docker Compose docs for how overrides work: https://docs.docker.com/compose/extends/
+
+### Local per-host environment files
+
+If you want host-specific examples, keep a sanitized example in the repo (no secrets), e.g. `.env.hostinger.example`. For local use, copy the tracked example:
+
+```bash
 cp .env.hostinger.vps .env
 ```
 
-- Then start the stack as usual:
+Then start the stack as usual:
 
 ```bash
-docker compose up -d --build --pull always
+docker compose up -d --build --pull=always
 ```
-
-The `docker-compose.override.yml` file is ignored by the repository on purpose, so local overrides remain private. Use the `.example` file as a starting point and keep secret values in your local `.env`.
-
-If you want to keep a sanitized per-host example environment in the repo, create an `.env.hostinger.example` with no secrets and track that instead.
 
 ### Troubleshooting
 
-**pull access denied for openproject/proxy, repository does not exist or may require 'docker login': denied: requested access to the resource is denied**
+If you see a warning like "pull access denied for openproject/proxy..." after `docker compose up`, it is usually safe to ignore. If this occurs during `docker compose pull` the command may return a non-zero exit code even though other images were pulled. Consider:
 
-If you encounter this after `docker compose up` this is merely a warning which can be ignored.
-
-If this happens during `docker compose pull` this is simply a warning as well.
-But it will result in the command's exit code to be a failure even though all images are pulled.
-To prevent this you can add the `--ignore-buildable` option, running `docker compose pull  --ignore-buildable`.
-
-### HTTPS/SSL
-
-By default OpenProject starts with the HTTPS option **enabled**, but it **does not** handle SSL termination itself. This
-is usually done separately via a [reverse proxy
-setup](https://www.openproject.org/docs/installation-and-operations/installation/docker/#apache-reverse-proxy-setup).
-Without this you will run into an `ERR_SSL_PROTOCOL_ERROR` when accessing OpenProject.
-
-See below how to disable HTTPS.
-
-Be aware that if you want to use the integrated Caddy proxy as a proxy with outbound connections, you need to rewrite the
-`Caddyfile`. In the default state, it is configured to forward the `X-Forwarded-*` headers from the reverse proxy in
-front of it and not setting them itself. This is considered a security flaw and should instead be solved by configuring
-`trusted_proxies` inside the `Caddyfile`. For more information read
-the [Caddy documentation](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy).
-
-### PORT
-
-By default the port is bound to `0.0.0.0` means access to OpenProject will be public.
-See below how to change that.
-
-## Image configuration
-
-OpenProject publishes `slim` containers that you should be using for this compose setup.
-Please see https://www.openproject.org/docs/installation-and-operations/installation/docker/#available-containers for more information on the containers and versions we push.
-
-## Configuration
-
-Environment variables can be added to `docker-compose.yml` under `x-op-app -> environment` to change
-OpenProject's configuration. Some are already defined and can be changed via the environment.
-
-You can pass those variables directly when starting the stack as follows.
-
-```
-VARIABLE=value docker-compose up -d
+```bash
+docker compose pull --ignore-buildable
 ```
 
-You can also put those variables into an `.env` file in your current working
-directory, and Docker Compose will pick it up automatically. See `.env.example`
-for details.
+## HTTPS / TLS
 
-## HTTPS
+OpenProject assumes HTTPS in production by default. You can disable the internal HTTPS mode for local testing:
 
-You can disable OpenProject's HTTPS option via:
-
-```
+```bash
 OPENPROJECT_HTTPS=false
 ```
 
-## PORT
+For production, terminate TLS at a reverse proxy (Nginx, Apache, or Caddy). If you use the integrated Caddy proxy, be careful to configure `trusted_proxies` and `X-Forwarded-*` headers appropriately. See the Caddy docs: https://caddyserver.com/docs/caddyfile/directives/reverse_proxy
 
-If you want to specify a different port, you can do so with:
+## Ports and binding
 
-```
+By default the service binds to `0.0.0.0` (publicly reachable). To change the port or listen address, set `PORT` in your `.env`:
+
+```bash
+# bind to a different port
 PORT=4000
-```
 
-If you don't want OpenProject to bind to `0.0.0.0` you can bind it to localhost only like this:
-
-```
+# or bind only to localhost
 PORT=127.0.0.1:8080
 ```
 
-## TAG
+## Image configuration and TAG
 
-If you want to specify a custom tag for the OpenProject docker image, you can do so with:
+OpenProject publishes `slim` containers suitable for this compose setup. To use a different image tag set `TAG` in `.env`:
 
-```
+```bash
+TAG=16-slim
+# or
 TAG=my-docker-tag
 ```
 
 ## BIM edition
 
-In order to install or change to BIM inside a Docker environment, please navigate to the [Docker Installation for OpenProject BIM](https://www.openproject.org/docs/installation-and-operations/bim-edition/#docker-installation-openproject-bim) paragraph at the BIM edition documentation.
+See the BIM documentation for Docker instructions: https://www.openproject.org/docs/installation-and-operations/bim-edition/#docker-installation-openproject-bim
 
 ## Upgrade
 
-Retrieve any changes from the `openproject-docker-compose` repository:
+Retrieve changes from the repo and rebuild control plane:
 
-    git pull origin stable/16
+```bash
+git pull origin stable/16
+docker compose -f docker-compose.yml -f docker-compose.control.yml build
+```
 
-Build the control plane:
+Take a backup of PostgreSQL data and OpenProject assets (control plane):
 
-    docker-compose -f docker-compose.yml -f docker-compose.control.yml build
-
-Take a backup of your existing postgresql data and openproject assets:
-
-    docker-compose -f docker-compose.yml -f docker-compose.control.yml run backup
+```bash
+docker compose -f docker-compose.yml -f docker-compose.control.yml run backup
+```
 
 Run the upgrade:
 
-    docker-compose -f docker-compose.yml -f docker-compose.control.yml run upgrade
+```bash
+docker compose -f docker-compose.yml -f docker-compose.control.yml run upgrade
+```
 
-Relaunch the containers, ensure you are pulling to use the latest version of the Docker images:
+Relaunch containers (pulling latest images):
 
-    docker compose up -d --build --pull always
-
-
+```bash
+docker compose up -d --build --pull=always
+```
 
 ## Backup
 
-Switch off your current installation:
+Stop the stack, build control scripts, and take a backup:
 
-    docker-compose down
+```bash
+docker compose down
+docker compose -f docker-compose.yml -f docker-compose.control.yml build
+docker compose -f docker-compose.yml -f docker-compose.control.yml run backup
+```
 
-Build the control scripts:
+Restart the stack:
 
-    docker-compose -f docker-compose.yml -f docker-compose.control.yml build
-
-Take a backup of your existing PostgreSQL data and OpenProject assets:
-
-    docker-compose -f docker-compose.yml -f docker-compose.control.yml run backup
-
-Restart your OpenProject installation
-
-    docker-compose up -d
-
-
+```bash
+docker compose up -d
+```
 
 ## Uninstall
 
-If you want to stop the containers without removing them directly:
+Stop containers without removing data:
 
 ```bash
-docker-compose stop
+docker compose stop
 ```
 
-You can remove the container stack with:
+Remove containers (volumes not removed):
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
-> [!NOTE]
-> This will not remove your data which is persisted in named volumes, likely called `compose_opdata` (for attachments) and `compose_pgdata` (for the database).
-> The exact name depends on the name of the directory where your `docker-compose.yml` and/or you `docker-compose.override.yml` files are stored (`compose` in this case).
+To remove data volumes (start from scratch):
 
-If you want to start from scratch and remove the existing data you will have to remove these volumes via
-`docker volume rm compose_opdata compose_pgdata`.
+```bash
+docker volume rm compose_opdata compose_pgdata
+```
 
-## Troubleshooting
+## Troubleshooting commands
 
-You can look at the logs with:
+Tail recent logs for a service:
 
-    docker-compose logs -n 1000
+```bash
+docker compose logs --tail 200 web
+```
 
-For the complete documentation, please refer to https://docs.openproject.org/installation-and-operations/.
+Check container health via HTTP probe (from host):
 
-### Network issues
+```bash
+curl -fsS -o /dev/null -w "%{http_code}" http://localhost:8080/StatesmenProjects/health_checks/default || true
+```
 
-If you're running into weird network issues and timeouts such as the one described in
-[OP#42802](https://community.openproject.org/work_packages/42802), you might have success in remove the two separate
-frontend and backend networks. This might be connected to using podman for orchestration, although we haven't been able
-to confirm this.
-
-### SMTP setup fails: Network is unreachable.
-
-Make sure your container has DNS resolution to access external SMTP server when set up as described in
-[OP#44515](https://community.openproject.org/work_packages/44515).
+If you see networking or DNS issues with worker containers, you can add DNS entries via compose:
 
 ```yml
 worker:
   dns:
-    - "Your DNS IP" # OR add a public DNS resolver like 8.8.8.8
+    - "YOUR_DNS_IP"
 ```
+
+---
+
+*For full documentation and operational guidance see https://docs.openproject.org/installation-and-operations/*
