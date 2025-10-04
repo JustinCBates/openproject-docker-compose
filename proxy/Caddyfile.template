@@ -1,16 +1,22 @@
 :80 {
-    reverse_proxy * http://${APP_HOST}:8080 {
-        # The following directives are needed to make the proxy forward explicitly the X-Forwarded-* headers. If unset,
-        # Caddy will reset them. See: https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#defaults
-        # This is needed, if you are using a reverse proxy in front of the compose stack and Caddy is NOT your first
-        # point of contact.
-        # When using Caddy is reachable as a first point of contact, it is highly recommended to configure the server's
-        # global `trusted_proxies` directive. See: https://caddyserver.com/docs/caddyfile/options#trusted-proxies
+    # Redirect root to the mounted application path
+    @root {
+        path /
+    }
+    redir @root /StatesmenProjects 302
 
-        header_up X-Forwarded-Proto {header.X-Forwarded-Proto}
-        header_up X-Forwarded-For {header.X-Forwarded-For}
-    # Forward Host header to the upstream so the app receives the original request host
-    header_up Host {host}
+    # Serve the OpenProject app under the /StatesmenProjects prefix.
+    # Use handle (not handle_path) so the prefix is preserved when proxying.
+    # OpenProject is configured with OPENPROJECT_RAILS__RELATIVE__URL__ROOT and
+    # expects requests to include the '/StatesmenProjects' prefix.
+    handle /StatesmenProjects* {
+        reverse_proxy http://${APP_HOST}:8080 {
+            # Forward common proxy headers so the app sees original request info
+            header_up X-Forwarded-Proto {header.X-Forwarded-Proto}
+            header_up X-Forwarded-For {header.X-Forwarded-For}
+            # Forward Host header to the upstream so the app receives the original request host
+            header_up Host {host}
+        }
     }
 
     file_server
