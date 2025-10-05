@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  proxy:
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - APP_HOST=web
+  db:
+    volumes:
+      - "/var/lib/openproject/pgdata:/var/lib/postgresql/data"
+  web:
+    volumes:
+      - "/var/lib/openproject/opdata:/var/openproject/assets"

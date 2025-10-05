@@ -1,4 +1,6 @@
 .env
+.env.host
+.env.*.bak
 
 docker-compose.override.yml
 backups/

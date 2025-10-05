@@ -1,8 +1,8 @@
 FROM caddy:2
 
 COPY ./Caddyfile.template /etc/caddy/Caddyfile.template
+COPY ./entrypoint.sh /usr/local/bin/proxy-entrypoint.sh
+RUN chmod +x /usr/local/bin/proxy-entrypoint.sh
 
-ARG APP_HOST
-RUN sed 's|${APP_HOST}|'"$APP_HOST"'|g' /etc/caddy/Caddyfile.template > /etc/caddy/Caddyfile
-
-ENTRYPOINT ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
+ENTRYPOINT ["/usr/local/bin/proxy-entrypoint.sh"]
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
