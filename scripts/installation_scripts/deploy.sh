@@ -12,7 +12,7 @@ echo
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-UTILITIES_DIR="$SCRIPT_DIR/utilities"
+UTILITIES_DIR="$SCRIPT_DIR/installation_utilities"
 CONFIG_FILE="$SCRIPT_DIR/deploy_interactive.cfg"
 
 # Check if configuration file exists
@@ -35,11 +35,11 @@ echo
 
 echo "Step 1: Configuring Git User..."
 echo "==============================="
-if [ -f "$UTILITIES_DIR/git_user.sh" ]; then
-    "$UTILITIES_DIR/git_user.sh"
+if [ -f "$UTILITIES_DIR/setup_git_user.sh" ]; then
+    "$UTILITIES_DIR/setup_git_user.sh"
     echo "✓ Git user configuration completed"
 else
-    echo "⚠ Warning: git_user.sh not found, skipping"
+    echo "⚠ Warning: setup_git_user.sh not found, skipping"
 fi
 echo
 
