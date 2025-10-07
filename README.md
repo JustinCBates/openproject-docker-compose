@@ -365,7 +365,7 @@ In order to install or change to BIM inside a Docker environment, please navigat
 
 Retrieve any changes from the `openproject-docker-compose` repository:
 
-    git pull origin stable/16
+    git pull origin feature/stepwise-rebuild
 
 Build the control plane:
 
