@@ -9,10 +9,71 @@ This repository contains the installation method for OpenProject using Docker Co
 
 ## Quick start
 
-First, you must clone the [openproject-docker-compose](https://github.com/opf/openproject-docker-compose) repository:
+### Prerequisites
+
+Before cloning the repository, ensure you have the required dependencies installed on your system.
+
+#### Installing Git and Dependencies by Linux Distribution
+
+**Debian/Ubuntu Family:**
+```shell
+sudo apt update
+sudo apt install git curl
+```
+
+**Red Hat Family (RHEL, CentOS, Fedora, Rocky Linux, AlmaLinux):**
+```shell
+# For RHEL/CentOS/Rocky/AlmaLinux (dnf/yum)
+sudo dnf install git curl
+# OR for older systems
+sudo yum install git curl
+
+# For Fedora
+sudo dnf install git curl
+```
+
+**SUSE Family (openSUSE Leap/Tumbleweed, SLES):**
+```shell
+sudo zypper refresh
+sudo zypper install git curl
+```
+
+**Arch Linux Family (Arch, Manjaro, EndeavourOS):**
+```shell
+sudo pacman -Sy git curl
+```
+
+**Slackware Family:**
+```shell
+# Install using slackpkg (if available)
+sudo slackpkg install git curl
+
+# Or build from SlackBuilds.org
+# Git and curl are often included in full Slackware installations
+```
+
+### Repository Setup
+
+First, choose a directory where you want to install OpenProject and clone this repository:
 
 ```shell
-git clone https://github.com/opf/openproject-docker-compose.git --depth=1 --branch=stable/16 openproject
+# Prompt user for installation directory
+echo "Enter the directory path where you want to install OpenProject (relative to root /)"
+echo "Example: opt, home/username, var/www, etc."
+read -p "Installation directory: " INSTALL_DIR
+
+# Set the full path and create if needed
+OPENPROJECT_PATH="/$INSTALL_DIR/openproject"
+echo "OpenProject will be installed to: $OPENPROJECT_PATH"
+
+# Create the directory if it doesn't exist
+sudo mkdir -p "$OPENPROJECT_PATH"
+
+# Clone the current enhanced version of the repository
+git clone https://github.com/JustinCBates/openproject-docker-compose.git --branch=feature/stepwise-rebuild "$OPENPROJECT_PATH"
+
+# Change to the OpenProject directory
+cd "$OPENPROJECT_PATH"
 ```
 
 Copy the example `.env` file and edit any values you want to change:
