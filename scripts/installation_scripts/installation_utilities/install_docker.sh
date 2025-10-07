@@ -35,7 +35,7 @@ fi
 echo "Detected OS family: $OS_FAMILY"
 
 # Check if OS-specific Docker installation script exists
-DOCKER_INSTALL_SCRIPT="$SCRIPT_DIR/$OS_FAMILY/install_docker.$OS_FAMILY.sh"
+DOCKER_INSTALL_SCRIPT="$SCRIPT_DIR/${OS_FAMILY}_install/install_docker.$OS_FAMILY.sh"
 if [ ! -f "$DOCKER_INSTALL_SCRIPT" ]; then
     echo "Error: Docker installation script not found: $DOCKER_INSTALL_SCRIPT"
     echo "Please ensure the OS-specific install_docker.$OS_FAMILY.sh script exists"
