@@ -12,7 +12,8 @@ echo "=========================================="
 echo
 
 # Configuration file for storing deployment settings
-DEPLOY_CONFIG=".deploy_interactive.cfg"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEPLOY_CONFIG="$SCRIPT_DIR/deploy_interactive.cfg"
 
 # Function to save configuration to .deploy_interactive.cfg file
 save_config() {

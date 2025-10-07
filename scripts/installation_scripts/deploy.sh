@@ -11,9 +11,9 @@ echo "=========================================="
 echo
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 UTILITIES_DIR="$SCRIPT_DIR/utilities"
-CONFIG_FILE="$PROJECT_DIR/.deploy_interactive.cfg"
+CONFIG_FILE="$SCRIPT_DIR/deploy_interactive.cfg"
 
 # Check if configuration file exists
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -40,6 +40,21 @@ if [ -f "$UTILITIES_DIR/git_user.sh" ]; then
     echo "✓ Git user configuration completed"
 else
     echo "⚠ Warning: git_user.sh not found, skipping"
+fi
+echo
+
+echo "Step 2: Installing Docker..."
+echo "============================"
+if [ -n "$OS_FAMILY" ] && [ -f "$UTILITIES_DIR/$OS_FAMILY/install_docker.sh" ]; then
+    echo "Installing Docker for $OS_FAMILY family..."
+    "$UTILITIES_DIR/$OS_FAMILY/install_docker.sh"
+    echo "✓ Docker installation completed"
+else
+    if [ -z "$OS_FAMILY" ]; then
+        echo "⚠ Warning: OS_FAMILY not set in configuration, skipping Docker installation"
+    else
+        echo "⚠ Warning: install_docker.sh for $OS_FAMILY not found, skipping"
+    fi
 fi
 echo
 

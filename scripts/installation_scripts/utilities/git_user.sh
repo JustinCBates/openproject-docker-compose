@@ -6,8 +6,8 @@
 set -e  # Exit on any error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-CONFIG_FILE="$PROJECT_DIR/.deploy_interactive.cfg"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+CONFIG_FILE="$SCRIPT_DIR/../deploy_interactive.cfg"
 
 echo "=========================================="
 echo "Git User Configuration Utility"
