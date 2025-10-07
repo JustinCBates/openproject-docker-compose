@@ -1,8 +1,44 @@
 #!/bin/bash
 
-# build_stack.redhat.sh - Red Hat/CentOS/Fedora-specific OpenProject Stack Builder
-# Builds, deploys, and manages the OpenProject Docker Compose stack with Red Hat family optimizations
+# build_stack.redhat.sh - Red Hat-specific OpenProject Stack Builder
 # Part of the OpenProject deployment framework
+
+echo "=========================================="
+echo "Red Hat Stack Builder (STUB)"
+echo "=========================================="
+
+echo "⚠ Red Hat/CentOS/Fedora implementation is not yet complete"
+echo "This is a stub implementation for future development"
+echo ""
+echo "Planned Red Hat family optimizations:"
+echo "  - DNF/YUM-optimized Docker builds"
+echo "  - SELinux policy configurations"
+echo "  - Firewalld integration"
+echo "  - Red Hat-specific performance tuning"
+echo ""
+echo "For now, using basic Docker Compose build..."
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$PROJECT_ROOT"
+
+# Basic Docker Compose build using override file created by configure_docker.redhat.sh
+if command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE_CMD="docker-compose"
+elif docker compose version >/dev/null 2>&1; then
+    COMPOSE_CMD="docker compose"
+else
+    echo "❌ Docker Compose not found"
+    exit 1
+fi
+
+echo "Starting basic OpenProject stack..."
+$COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml up -d
+
+echo "✓ Basic Red Hat stack deployment completed (stub implementation)"
+echo "🔧 Full Red Hat family optimizations coming soon!"
+echo ""
+echo "Stack status:"
+$COMPOSE_CMD ps
 
 set -e  # Exit on any error
 

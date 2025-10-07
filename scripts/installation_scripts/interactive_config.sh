@@ -370,14 +370,26 @@ fi
 # =============================================================================
 
 echo
-if confirm "Would you like to run the deployment now?"; then
-    echo
-    echo "Running deployment script..."
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    "$SCRIPT_DIR/deploy.sh"
+# Check if deploy.sh exists before offering to run it
+DEPLOY_SCRIPT="$SCRIPT_DIR/deploy.sh"
+if [ -f "$DEPLOY_SCRIPT" ]; then
+    if confirm "Would you like to run the deployment now?"; then
+        echo
+        echo "Running deployment script..."
+        "$DEPLOY_SCRIPT"
+    else
+        echo "Configuration saved. You can run the deployment later with:"
+        echo "  ./scripts/installation_scripts/deploy.sh"
+    fi
 else
-    echo "Configuration saved. You can run the deployment later with:"
-    echo "  ./scripts/deploy.sh"
+    echo "⚠ Deployment script not found: $DEPLOY_SCRIPT"
+    echo "Configuration has been saved to: $DEPLOY_CONFIG"
+    echo ""
+    echo "To deploy OpenProject, you can:"
+    echo "  1. Create a deploy.sh script that calls configure_docker.sh then build_stack.sh"
+    echo "  2. Run the utilities manually:"
+    echo "     ./scripts/installation_scripts/installation_utilities/configure_docker.sh"
+    echo "     ./scripts/installation_scripts/installation_utilities/build_stack.sh"
 fi
 
 echo "Deployment script completed!"
