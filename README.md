@@ -9,72 +9,139 @@ This repository contains the installation method for OpenProject using Docker Co
 
 ## Quick start
 
-### Prerequisites
+### Option 1: Interactive Deployment Script (Recommended)
 
-Before cloning the repository, ensure you have the required dependencies installed on your system.
+The easiest way to deploy OpenProject is using our interactive deployment script that automatically detects your OS, installs Docker, and configures the environment.
 
-#### Installing Git and Dependencies by Linux Distribution
+#### Prerequisites
+
+Before using the interactive deployment script, ensure you have Git installed:
+
+**Debian/Ubuntu Family:**
+```shell
+sudo apt update && sudo apt install git
+```
+
+**Red Hat Family (RHEL, CentOS, Fedora, Rocky Linux, AlmaLinux):**
+```shell
+sudo dnf install git  # or 'sudo yum install git' for older systems
+```
+
+**SUSE Family (openSUSE, SLES):**
+```shell
+sudo zypper install git
+```
+
+**Arch Linux Family (Arch, Manjaro, EndeavourOS):**
+```shell
+sudo pacman -S git
+```
+
+**Slackware Family:**
+```shell
+sudo slackpkg install git  # or build from SlackBuilds.org
+```
+
+#### Interactive Deployment
+
+1. **Clone the repository:**
+   ```shell
+   # Choose your installation directory
+   OPENPROJECT_PATH="/opt/openproject"  # or your preferred location
+   sudo mkdir -p "$OPENPROJECT_PATH"
+   git clone https://github.com/JustinCBates/openproject-docker-compose.git --branch=feature/stepwise-rebuild "$OPENPROJECT_PATH"
+   cd "$OPENPROJECT_PATH"
+   ```
+
+2. **Run the interactive deployment script:**
+   ```shell
+   sudo ./scripts/installation_scripts/deploy_interactive.sh
+   ```
+
+   This script will:
+   - Auto-detect your Linux distribution and OS family
+   - Prompt for environment type (development/staging/production)
+   - Configure domain settings and networking
+   - Set up Git user configuration
+   - Install and configure Docker automatically
+   - Generate optimized configuration files
+
+3. **Execute the deployment:**
+   ```shell
+   sudo ./scripts/installation_scripts/deploy.sh
+   ```
+
+4. **Start OpenProject:**
+   ```shell
+   # For development/staging
+   OPENPROJECT_HTTPS=false docker compose up -d --build --pull always
+   
+   # For production (with HTTPS)
+   docker compose up -d --build --pull always
+   ```
+
+After a few minutes, OpenProject will be available at your configured domain or `http://localhost:8080`.
+Default credentials: **Username:** `admin` **Password:** `admin`
+
+### Option 2: Manual Setup
+
+If you prefer manual configuration or need custom settings, follow these steps:
+
+#### Manual Prerequisites Installation
+
+Install Git, Docker, and Docker Compose manually for your distribution:
 
 **Debian/Ubuntu Family:**
 ```shell
 sudo apt update
 sudo apt install git curl
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
 ```
 
 **Red Hat Family (RHEL, CentOS, Fedora, Rocky Linux, AlmaLinux):**
 ```shell
-# For RHEL/CentOS/Rocky/AlmaLinux (dnf/yum)
 sudo dnf install git curl
-# OR for older systems
-sudo yum install git curl
-
-# For Fedora
-sudo dnf install git curl
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
 ```
 
-**SUSE Family (openSUSE Leap/Tumbleweed, SLES):**
+**SUSE Family (openSUSE, SLES):**
 ```shell
-sudo zypper refresh
-sudo zypper install git curl
+sudo zypper install git curl docker docker-compose
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
 ```
 
 **Arch Linux Family (Arch, Manjaro, EndeavourOS):**
 ```shell
-sudo pacman -Sy git curl
+sudo pacman -S git curl docker docker-compose
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
 ```
 
-**Slackware Family:**
-```shell
-# Install using slackpkg (if available)
-sudo slackpkg install git curl
-
-# Or build from SlackBuilds.org
-# Git and curl are often included in full Slackware installations
-```
-
-### Repository Setup
+#### Manual Repository Setup
 
 First, choose a directory where you want to install OpenProject and clone this repository:
 
 ```shell
-# Prompt user for installation directory
-echo "Enter the directory path where you want to install OpenProject (relative to root /)"
-echo "Example: opt, home/username, var/www, etc."
-read -p "Installation directory: " INSTALL_DIR
-
-# Set the full path and create if needed
-OPENPROJECT_PATH="/$INSTALL_DIR/openproject"
-echo "OpenProject will be installed to: $OPENPROJECT_PATH"
-
-# Create the directory if it doesn't exist
+# Set your preferred installation directory
+OPENPROJECT_PATH="/opt/openproject"  # or your preferred location
 sudo mkdir -p "$OPENPROJECT_PATH"
 
-# Clone the current enhanced version of the repository
+# Clone the enhanced version of the repository
 git clone https://github.com/JustinCBates/openproject-docker-compose.git --branch=feature/stepwise-rebuild "$OPENPROJECT_PATH"
 
 # Change to the OpenProject directory
 cd "$OPENPROJECT_PATH"
 ```
+
+#### Manual Configuration
 
 Copy the example `.env` file and edit any values you want to change:
 
@@ -99,6 +166,43 @@ OPENPROJECT_HTTPS=false docker compose up -d --build --pull always
 After a while, OpenProject should be up and running on `http://localhost:8080`. The default username and password is login: `admin`, and password: `admin`.
 The `OPENPROJECT_HTTPS=false` environment variable explicitly disables HTTPS mode for the first startup. Without this, OpenProject assumes it's running behind HTTPS in production by default.
 We do strongly recommend you use OpenProject behind a TLS terminated proxy for production purposes and remove this flag before actually starting to use it.
+
+## Enhanced Deployment Features
+
+This repository includes an enhanced deployment framework with the following features:
+
+### Automated Installation Scripts
+
+- **OS Detection**: Automatically detects your Linux distribution and family
+- **Docker Installation**: Smart Docker detection and installation for all major Linux distributions
+- **Version Checking**: Skips unnecessary reinstallation if Docker is already current
+- **Multi-Distribution Support**: 
+  - Debian family (Ubuntu, Debian, Linux Mint, Raspbian)
+  - Red Hat family (RHEL, CentOS, Fedora, Rocky Linux, AlmaLinux)
+  - SUSE family (openSUSE, SLES)
+  - Arch family (Arch, Manjaro, EndeavourOS)
+  - Slackware family
+
+### Interactive Configuration
+
+- **Environment Selection**: Choose between development, staging, or production configurations
+- **Domain Configuration**: Set up custom domains and subdomains
+- **Git Integration**: Configure Git user settings for deployment tracking
+- **HTTPS Setup**: Automatic HTTPS configuration for production environments
+
+### Deployment Scripts Location
+
+All deployment scripts are organized under:
+```
+scripts/installation_scripts/
+├── deploy_interactive.sh    # Interactive configuration
+├── deploy.sh               # Automated deployment orchestrator
+└── installation_utilities/ # OS-specific installation scripts
+```
+
+### Configuration Management
+
+The framework uses a configuration file (`deploy_interactive.cfg`) to store all deployment settings, ensuring consistent deployments and easy script reuse.
 
 ### Customization
 
