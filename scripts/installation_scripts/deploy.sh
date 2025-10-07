@@ -45,15 +45,15 @@ echo
 
 echo "Step 2: Installing Docker..."
 echo "============================"
-if [ -n "$OS_FAMILY" ] && [ -f "$UTILITIES_DIR/$OS_FAMILY/install_docker.sh" ]; then
+if [ -n "$OS_FAMILY" ] && [ -f "$UTILITIES_DIR/$OS_FAMILY/install_docker.$OS_FAMILY.sh" ]; then
     echo "Installing Docker for $OS_FAMILY family..."
-    "$UTILITIES_DIR/$OS_FAMILY/install_docker.sh"
+    "$UTILITIES_DIR/$OS_FAMILY/install_docker.$OS_FAMILY.sh"
     echo "✓ Docker installation completed"
 else
     if [ -z "$OS_FAMILY" ]; then
         echo "⚠ Warning: OS_FAMILY not set in configuration, skipping Docker installation"
     else
-        echo "⚠ Warning: install_docker.sh for $OS_FAMILY not found, skipping"
+        echo "⚠ Warning: install_docker.$OS_FAMILY.sh for $OS_FAMILY not found, skipping"
     fi
 fi
 echo
