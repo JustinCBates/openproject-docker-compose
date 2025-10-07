@@ -114,16 +114,25 @@ The easiest way to deploy OpenProject is using our interactive deployment script
 
 1. **Clone the repository:**
    ```shell
-   # Choose your installation directory
-   OPENPROJECT_PATH="/opt/openproject"  # or your preferred location
+   # Set your preferred installation directory as an environment variable
+   export OPENPROJECT_PATH="../opt/openproject"  # Change this to your preferred location
+   ```
+
+   ```shell
    sudo mkdir -p "$OPENPROJECT_PATH"
+   ```
+
+   ```shell
    git clone https://github.com/JustinCBates/openproject-docker-compose.git --branch=feature/stepwise-rebuild "$OPENPROJECT_PATH"
+   ```
+
+   ```shell
    cd "$OPENPROJECT_PATH"
    ```
 
 2. **Run the interactive deployment script:**
    ```shell
-   sudo ./scripts/installation_scripts/deploy_interactive.sh
+   sudo ./scripts/installation_scripts/interactive_config.sh
    ```
 
    This script will:
@@ -143,13 +152,17 @@ The easiest way to deploy OpenProject is using our interactive deployment script
    ```shell
    # For development/staging
    OPENPROJECT_HTTPS=false docker compose up -d --build --pull always
-   
+   ```
+   ```shell
    # For production (with HTTPS)
    docker compose up -d --build --pull always
    ```
 
 After a few minutes, OpenProject will be available at your configured domain or `http://localhost:8080`.
 Default credentials: **Username:** `admin` **Password:** `admin`
+
+
+
 
 ### Option 2: Manual Setup
 
@@ -260,14 +273,14 @@ This repository includes an enhanced deployment framework with the following fea
 All deployment scripts are organized under:
 ```
 scripts/installation_scripts/
-├── deploy_interactive.sh    # Interactive configuration
+├── interactive_config.sh    # Interactive configuration
 ├── deploy.sh               # Automated deployment orchestrator
 └── installation_utilities/ # OS-specific installation scripts
 ```
 
 ### Configuration Management
 
-The framework uses a configuration file (`deploy_interactive.cfg`) to store all deployment settings, ensuring consistent deployments and easy script reuse.
+The framework uses a configuration file (`interactive_config.cfg`) to store all deployment settings, ensuring consistent deployments and easy script reuse.
 
 ### Customization
 

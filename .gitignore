@@ -2,7 +2,7 @@
 .env.host
 .env.local
 .env.*.local
-scripts/installation_scripts/deploy_interactive.cfg
+scripts/installation_scripts/interactive_config.cfg
 
 docker-compose.override.yml
 backups/

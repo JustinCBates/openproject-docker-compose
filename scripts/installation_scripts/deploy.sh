@@ -13,13 +13,13 @@ echo
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 UTILITIES_DIR="$SCRIPT_DIR/installation_utilities"
-CONFIG_FILE="$SCRIPT_DIR/deploy_interactive.cfg"
+CONFIG_FILE="$SCRIPT_DIR/interactive_config.cfg"
 
 # Check if configuration file exists
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Error: Configuration file not found at $CONFIG_FILE"
     echo "Please run the interactive deployment script first:"
-    echo "  ./scripts/deploy_interactive.sh"
+    echo "  ./scripts/interactive_config.sh"
     exit 1
 fi
 

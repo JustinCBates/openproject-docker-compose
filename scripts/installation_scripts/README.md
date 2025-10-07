@@ -4,20 +4,21 @@ This directory contains all scripts related to installing, configuring, and depl
 
 ## Main Scripts
 
-### `deploy_interactive.sh` 
+### `interactive_config.sh` 
 Interactive configuration and deployment script that guides users through the entire setup process.
 
 **Features:**
 - OpenProject configuration (hostname, HTTPS, version)
+- Default admin password for initial installation
 - Git user configuration
 - Domain and subdomain setup
 - Environment type selection (localdev/remotedev/remotetest/production)
 - OS family detection and selection
-- Configuration persistence in `.deploy_interactive.cfg`
+- Configuration persistence in `.interactive_config.cfg`
 
 **Usage:**
 ```bash
-./deploy_interactive.sh
+./interactive_config.sh
 ```
 
 ### `deploy.sh`
@@ -57,13 +58,14 @@ Each OS directory contains:
 
 ## Configuration File
 
-### `.deploy_interactive.cfg`
+### `.interactive_config.cfg`
 Stores all user configuration choices for use by utility scripts:
 
 ```bash
 OPENPROJECT_HOST_NAME=example.com
 OPENPROJECT_HTTPS=true
 OPENPROJECT_TAG=16-slim
+DEFAULT_ADMIN_PASSWORD=your_secure_admin_password
 GIT_USERNAME=john.doe
 GIT_EMAIL=john.doe@example.com
 DOMAIN_NAME=example.com
@@ -74,7 +76,7 @@ OS_FAMILY=debian
 
 ## Workflow
 
-1. **Interactive Configuration** - Run `deploy_interactive.sh` to collect user preferences
+1. **Interactive Configuration** - Run `interactive_config.sh` to collect user preferences
 2. **Automatic Deployment** - Run `deploy.sh` to execute deployment using saved configuration
 3. **Individual Utilities** - Run specific utility scripts as needed
 
@@ -105,7 +107,7 @@ OS_FAMILY=debian
 ### Complete Deployment
 ```bash
 # Interactive setup and deployment
-./deploy_interactive.sh
+./interactive_config.sh
 
 # Or run deployment separately after configuration
 ./deploy.sh
@@ -126,7 +128,7 @@ OS_FAMILY=debian
 ### Re-configuration
 ```bash
 # Reconfigure settings
-./deploy_interactive.sh
+./interactive_config.sh
 
 # Deploy with new settings
 ./deploy.sh
@@ -135,8 +137,8 @@ OS_FAMILY=debian
 ## Troubleshooting
 
 ### Configuration Issues
-- Ensure `.deploy_interactive.cfg` exists and contains required variables
-- Run `deploy_interactive.sh` to recreate configuration
+- Ensure `.interactive_config.cfg` exists and contains required variables
+- Run `interactive_config.sh` to recreate configuration
 
 ### Permission Issues
 - Run scripts with `sudo` when required

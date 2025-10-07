@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Git User Configuration Utility Script
-# Sets git username and email based on variables from deploy_interactive.cfg
+# Sets git username and email based on variables from interactive_config.cfg
 
 set -e  # Exit on any error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/../deploy_interactive.cfg"
+CONFIG_FILE="$SCRIPT_DIR/../interactive_config.cfg"
 
 echo "=========================================="
 echo "Git User Configuration Utility"

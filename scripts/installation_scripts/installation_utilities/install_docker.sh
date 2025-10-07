@@ -11,13 +11,13 @@ echo "=========================================="
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/../deploy_interactive.cfg"
+CONFIG_FILE="$SCRIPT_DIR/../interactive_config.cfg"
 
 # Check if configuration file exists
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Error: Configuration file not found at $CONFIG_FILE"
     echo "Please run the interactive deployment script first:"
-    echo "  ./scripts/installation_scripts/deploy_interactive.sh"
+    echo "  ./scripts/installation_scripts/interactive_config.sh"
     exit 1
 fi
 
@@ -28,7 +28,7 @@ source "$CONFIG_FILE"
 if [ -z "$OS_FAMILY" ]; then
     echo "Error: OS_FAMILY not found in configuration file"
     echo "Please run the interactive deployment script to configure your OS family:"
-    echo "  ./scripts/installation_scripts/deploy_interactive.sh"
+    echo "  ./scripts/installation_scripts/interactive_config.sh"
     exit 1
 fi
 

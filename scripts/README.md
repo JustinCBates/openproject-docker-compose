@@ -28,7 +28,7 @@ Navigate to the appropriate subdirectory for the type of scripts you need:
 cd installation_scripts/
 
 # Run interactive deployment
-./deploy_interactive.sh
+./interactive_config.sh
 
 # Run deployment orchestrator
 ./deploy.sh
@@ -61,6 +61,6 @@ All scripts should follow these standards:
 - **Shebang line**: `#!/bin/bash`
 - **Error handling**: `set -e` for critical scripts
 - **Documentation**: Clear comments and usage instructions
-- **Configuration**: Use `.deploy_interactive.cfg` for shared settings
+- **Configuration**: Use `.interactive_config.cfg` for shared settings
 - **Logging**: Provide clear progress and error messages
 - **Cross-platform**: Support multiple OS families where applicable

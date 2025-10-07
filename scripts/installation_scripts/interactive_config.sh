@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# OpenProject Interactive Deployment Script
+#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+DEPLOY_CONFIG="$SCRIPT_DIR/interactive_config.cfg"penProject Interactive Deployment Script
 # This script provides an interactive way to deploy OpenProject with Docker Compose
 # Configuration is saved to .deploy file for use by utility scripts
 
@@ -13,9 +15,9 @@ echo
 
 # Configuration file for storing deployment settings
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEPLOY_CONFIG="$SCRIPT_DIR/deploy_interactive.cfg"
+DEPLOY_CONFIG="$SCRIPT_DIR/interactive_config.cfg"
 
-# Function to save configuration to .deploy_interactive.cfg file
+# Function to save configuration to interactive_config.cfg file
 save_config() {
     local key="$1"
     local value="$2"
@@ -28,7 +30,7 @@ save_config() {
     echo "$key=$value" >> "$DEPLOY_CONFIG"
 }
 
-# Function to load configuration from .deploy_interactive.cfg file
+# Function to load configuration from interactive_config.cfg file
 load_config() {
     if [ -f "$DEPLOY_CONFIG" ]; then
         source "$DEPLOY_CONFIG"
@@ -122,6 +124,44 @@ if confirm "Would you like to modify the configuration interactively?"; then
     prompt_with_default "Enter the hostname for OpenProject" "$current_host" "host_name"
     prompt_with_default "Enable HTTPS? (true/false)" "$current_https" "use_https"
     prompt_with_default "OpenProject version tag" "$current_tag" "op_tag"
+    
+    echo
+    echo "Database Configuration:"
+    echo "----------------------"
+    echo "Set the default admin password for OpenProject installation."
+    echo ""
+    echo "Password Security Recommendations:"
+    echo "• Use at least 12 characters"
+    echo "• Include uppercase, lowercase, numbers, and symbols"
+    echo "• Avoid dictionary words or personal information"
+    echo "• Consider using a password manager"
+    echo ""
+    
+    # Get current admin password from config if it exists (for re-runs)
+    current_default_admin_password=$(grep "^DEFAULT_ADMIN_PASSWORD=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "")
+    
+    if [ -n "$current_default_admin_password" ]; then
+        echo "Admin password is already configured."
+        if confirm "Keep current admin password?"; then
+            default_admin_password="$current_default_admin_password"
+            echo "✓ Using existing admin password"
+        else
+            echo -n "Enter new admin password: "
+            read -s default_admin_password
+            echo
+            echo "✓ Admin password updated"
+        fi
+    else
+        echo -n "Enter admin password: "
+        read -s default_admin_password
+        echo
+        if [ -z "$default_admin_password" ]; then
+            echo "⚠ No password entered. Using default 'admin123' (CHANGE THIS AFTER INSTALLATION!)"
+            default_admin_password="admin123"
+        else
+            echo "✓ Admin password set"
+        fi
+    fi
     
     echo
     echo "Git Configuration:"
@@ -287,10 +327,11 @@ if confirm "Would you like to modify the configuration interactively?"; then
     
     echo "✓ OS family set to: $os_family"
     
-    # Save all configuration to .deploy_interactive.cfg file
+    # Save all configuration to interactive_config.cfg file
     save_config "OPENPROJECT_HOST_NAME" "$host_name"
     save_config "OPENPROJECT_HTTPS" "$use_https"
     save_config "OPENPROJECT_TAG" "$op_tag"
+    save_config "DEFAULT_ADMIN_PASSWORD" "$default_admin_password"
     save_config "GIT_USERNAME" "$git_username"
     save_config "GIT_EMAIL" "$git_email"
     save_config "DOMAIN_NAME" "$domain_name"
@@ -302,6 +343,13 @@ if confirm "Would you like to modify the configuration interactively?"; then
     sed -i "s/^OPENPROJECT_HOST__NAME=.*/OPENPROJECT_HOST__NAME=$host_name/" .env
     sed -i "s/^OPENPROJECT_HTTPS=.*/OPENPROJECT_HTTPS=$use_https/" .env
     sed -i "s/^TAG=.*/TAG=$op_tag/" .env
+    
+    # Add or update admin password in .env file
+    if grep -q "^OPENPROJECT_ADMIN_PASSWORD=" .env 2>/dev/null; then
+        sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$default_admin_password/" .env
+    else
+        echo "OPENPROJECT_ADMIN_PASSWORD=$default_admin_password" >> .env
+    fi
     
     # Configure git if values were provided
     if [ -n "$git_username" ]; then

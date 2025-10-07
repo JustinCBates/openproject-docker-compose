@@ -11,7 +11,7 @@ echo "=========================================="
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/../../deploy_interactive.cfg"
+CONFIG_FILE="$SCRIPT_DIR/../../interactive_config.cfg"
 
 # Load configuration if available
 if [ -f "$CONFIG_FILE" ]; then
