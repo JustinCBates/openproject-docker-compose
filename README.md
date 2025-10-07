@@ -7,42 +7,110 @@ This repository contains the installation method for OpenProject using Docker Co
 > Looking for the Kubernetes installation method?
 > Please use the [OpenProject helm chart](https://charts.openproject.org) to install OpenProject on kubernetes.
 
+## Prerequisites
+
+### Supported Operating Systems
+
+This deployment framework supports the following Linux distributions and families:
+
+#### Debian Family
+- **Ubuntu** (18.04 LTS, 20.04 LTS, 22.04 LTS, 24.04 LTS)
+- **Debian** (10, 11, 12)
+- **Linux Mint** (20.x, 21.x, 22.x)
+- **Raspbian** (Buster, Bullseye, Bookworm)
+
+**Update package repositories and install Git:**
+```shell
+sudo apt update
+sudo apt upgrade -y
+sudo apt install git curl -y
+```
+
+#### Red Hat Family
+- **Red Hat Enterprise Linux (RHEL)** (8, 9)
+- **CentOS** (7, 8, Stream 8, Stream 9)
+- **Fedora** (38, 39, 40)
+- **Rocky Linux** (8, 9)
+- **AlmaLinux** (8, 9)
+
+**Update package repositories and install Git:**
+```shell
+# For modern systems (Fedora, RHEL 8+, Rocky, AlmaLinux)
+sudo dnf update -y
+sudo dnf install git curl -y
+
+# For older systems (CentOS 7, RHEL 7)
+sudo yum update -y
+sudo yum install git curl -y
+```
+
+#### SUSE Family
+- **openSUSE Leap** (15.4, 15.5, 15.6)
+- **openSUSE Tumbleweed** (Rolling release)
+- **SUSE Linux Enterprise Server (SLES)** (15 SP4, 15 SP5)
+
+**Update package repositories and install Git:**
+```shell
+sudo zypper refresh
+sudo zypper update -y
+sudo zypper install git curl -y
+```
+
+#### Arch Family
+- **Arch Linux** (Rolling release)
+- **Manjaro** (Rolling release)
+- **EndeavourOS** (Rolling release)
+- **ArcoLinux** (Rolling release)
+
+**Update package repositories and install Git:**
+```shell
+sudo pacman -Syu --noconfirm
+sudo pacman -S git curl --noconfirm
+```
+
+#### Slackware Family
+- **Slackware** (15.0+)
+- **Slackware64** (15.0+)
+
+**Update package repositories and install Git:**
+```shell
+# Update package database (if using slackpkg)
+sudo slackpkg update
+
+# Install Git and curl
+sudo slackpkg install git curl
+
+# Alternative: Build from SlackBuilds.org if packages not available
+# Git and curl are often included in full Slackware installations
+```
+
+### System Requirements
+
+**Minimum Requirements:**
+- 4 GB RAM
+- 20 GB available disk space
+- 64-bit processor architecture
+- Root or sudo access
+
+**Recommended for Production:**
+- 8 GB+ RAM
+- 50 GB+ available disk space
+- SSD storage for better performance
+- Dedicated server or VPS
+
+### Network Requirements
+
+- Internet connectivity for downloading Docker images and packages
+- Ports 80 and 443 available for HTTP/HTTPS (production)
+- Port 8080 available for development/staging deployments
+
 ## Quick start
 
 ### Option 1: Interactive Deployment Script (Recommended)
 
 The easiest way to deploy OpenProject is using our interactive deployment script that automatically detects your OS, installs Docker, and configures the environment.
 
-#### Prerequisites
-
-Before using the interactive deployment script, ensure you have Git installed:
-
-**Debian/Ubuntu Family:**
-```shell
-sudo apt update && sudo apt install git
-```
-
-**Red Hat Family (RHEL, CentOS, Fedora, Rocky Linux, AlmaLinux):**
-```shell
-sudo dnf install git  # or 'sudo yum install git' for older systems
-```
-
-**SUSE Family (openSUSE, SLES):**
-```shell
-sudo zypper install git
-```
-
-**Arch Linux Family (Arch, Manjaro, EndeavourOS):**
-```shell
-sudo pacman -S git
-```
-
-**Slackware Family:**
-```shell
-sudo slackpkg install git  # or build from SlackBuilds.org
-```
-
-#### Interactive Deployment
+#### Interactive Deployment Steps
 
 1. **Clone the repository:**
    ```shell
@@ -87,40 +155,37 @@ Default credentials: **Username:** `admin` **Password:** `admin`
 
 If you prefer manual configuration or need custom settings, follow these steps:
 
-#### Manual Prerequisites Installation
+#### Install Docker (Manual)
 
-Install Git, Docker, and Docker Compose manually for your distribution:
+After completing the prerequisites above, install Docker manually for your distribution:
 
-**Debian/Ubuntu Family:**
+**All Distributions (Universal Docker Install):**
 ```shell
-sudo apt update
-sudo apt install git curl
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
-```
-
-**Red Hat Family (RHEL, CentOS, Fedora, Rocky Linux, AlmaLinux):**
-```shell
-sudo dnf install git curl
-# Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo systemctl enable --now docker
 sudo usermod -aG docker $USER
 ```
 
-**SUSE Family (openSUSE, SLES):**
+**Distribution-Specific Docker Installation:**
+
+**Debian/Ubuntu:**
 ```shell
-sudo zypper install git curl docker docker-compose
+sudo apt install docker.io docker-compose -y
 sudo systemctl enable --now docker
 sudo usermod -aG docker $USER
 ```
 
-**Arch Linux Family (Arch, Manjaro, EndeavourOS):**
+**SUSE:**
 ```shell
-sudo pacman -S git curl docker docker-compose
+sudo zypper install docker docker-compose -y
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
+```
+
+**Arch:**
+```shell
+sudo pacman -S docker docker-compose --noconfirm
 sudo systemctl enable --now docker
 sudo usermod -aG docker $USER
 ```
