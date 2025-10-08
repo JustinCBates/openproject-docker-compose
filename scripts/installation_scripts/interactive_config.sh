@@ -66,15 +66,8 @@ confirm() {
     local default="$2"
     
     if [ -n "$default" ]; then
-        local display_default
-        if [ "$default" = "y" ]; then
-            display_default="Y/n"
-        else
-            display_default="y/N"
-        fi
-        
         while true; do
-            read -p "$prompt ($display_default): " yn
+            read -p "$prompt (y/n) [$default]: " yn
             # If empty input, use default
             if [ -z "$yn" ]; then
                 yn="$default"
