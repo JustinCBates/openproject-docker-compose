@@ -64,20 +64,34 @@ subsection() {
     fi
 
     if [ -n "$body" ]; then
+        # Compute the max width among body lines (so footer matches content)
+        local IFS=$'\n'
+        local maxb=0
         for line in $body; do
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
                 printf "%b\n" "${SUBDUED}${line}${RESET}"
             else
                 printf "%s\n" "$line"
             fi
+            local l=${#line}
+            if [ "$l" -gt "$maxb" ]; then
+                maxb=$l
+            fi
         done
-        # Footer underscore line spans the full terminal width as well
-        if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+
+        # Cap footer width to terminal width
+        local footw=$maxb
+        if [ "$footw" -gt "$term_w" ]; then
+            footw=$term_w
+        fi
+        if [ "$footw" -gt 0 ]; then
             local foot
-            foot=$(printf '%*s' "$term_w" '' | tr ' ' '_')
-            printf "%b\n" "${BRONZE}${foot}${RESET}"
-        else
-            printf '%*s\n' "$term_w" '' | tr ' ' '_'
+            foot=$(printf '%*s' "$footw" '' | tr ' ' '_')
+            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+                printf "%b\n" "${BRONZE}${foot}${RESET}"
+            else
+                printf '%s\n' "$foot"
+            fi
         fi
     fi
 }
