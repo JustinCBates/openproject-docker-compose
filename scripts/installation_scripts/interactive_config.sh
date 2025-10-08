@@ -176,44 +176,6 @@ if confirm "Would you like to modify the configuration interactively?"; then
     prompt_with_default "OpenProject version tag" "$current_tag" "op_tag"
     
     echo
-    echo "Database Configuration:"
-    echo "----------------------"
-    echo "Set the default admin password for OpenProject installation."
-    echo ""
-    echo "Password Security Recommendations:"
-    echo "• Use at least 12 characters"
-    echo "• Include uppercase, lowercase, numbers, and symbols"
-    echo "• Avoid dictionary words or personal information"
-    echo "• Consider using a password manager"
-    echo ""
-    
-    # Get current admin password from config if it exists (for re-runs)
-    current_default_admin_password=$(grep "^DEFAULT_ADMIN_PASSWORD=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "")
-    
-    if [ -n "$current_default_admin_password" ]; then
-        echo "Admin password is already configured."
-        if confirm "Keep current admin password?"; then
-            default_admin_password="$current_default_admin_password"
-            echo "✓ Using existing admin password"
-        else
-            echo -n "Enter new admin password: "
-            read -s default_admin_password
-            echo
-            echo "✓ Admin password updated"
-        fi
-    else
-        echo -n "Enter admin password: "
-        read -s default_admin_password
-        echo
-        if [ -z "$default_admin_password" ]; then
-            echo "⚠ No password entered. Using default 'admin123' (CHANGE THIS AFTER INSTALLATION!)"
-            default_admin_password="admin123"
-        else
-            echo "✓ Admin password set"
-        fi
-    fi
-    
-    echo
     echo "Git Configuration:"
     echo "-----------------"
     prompt_with_default "Git username" "$current_git_user" "git_username"
@@ -326,6 +288,44 @@ if confirm "Would you like to modify the configuration interactively?"; then
     esac
     
     echo "✓ OS family set to: $os_family"
+    
+    echo
+    echo "Database Configuration:"
+    echo "----------------------"
+    echo "Set the default admin password for OpenProject installation."
+    echo ""
+    echo "Password Security Recommendations:"
+    echo "• Use at least 12 characters"
+    echo "• Include uppercase, lowercase, numbers, and symbols"
+    echo "• Avoid dictionary words or personal information"
+    echo "• Consider using a password manager"
+    echo ""
+    
+    # Get current admin password from config if it exists (for re-runs)
+    current_default_admin_password=$(grep "^DEFAULT_ADMIN_PASSWORD=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "")
+    
+    if [ -n "$current_default_admin_password" ]; then
+        echo "Admin password is already configured."
+        if confirm "Keep current admin password?"; then
+            default_admin_password="$current_default_admin_password"
+            echo "✓ Using existing admin password"
+        else
+            echo -n "Enter new admin password: "
+            read -s default_admin_password
+            echo
+            echo "✓ Admin password updated"
+        fi
+    else
+        echo -n "Enter admin password: "
+        read -s default_admin_password
+        echo
+        if [ -z "$default_admin_password" ]; then
+            echo "⚠ No password entered. Using default 'admin123' (CHANGE THIS AFTER INSTALLATION!)"
+            default_admin_password="admin123"
+        else
+            echo "✓ Admin password set"
+        fi
+    fi
     
     # Save all configuration to interactive_config.cfg file
     save_config "OPENPROJECT_HOST_NAME" "$host_name"
