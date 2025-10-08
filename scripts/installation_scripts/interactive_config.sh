@@ -120,7 +120,9 @@ echo
 if validate_yn "Would you like to modify the configuration interactively?" "y"; then
     echo
     interactive_body=$(cat <<'EOF'
-Follow a guided prompt sequence to gather deployment settings. Press Enter to accept any default shown. Changes are saved to interactive_config.cfg.
+Follow a guided prompt sequence to gather deployment settings. 
+Press <Enter> to accept any default shown. 
+Changes are saved to interactive_config.cfg.
 EOF
 )
     supersection "Interactive Configuration:" "$interactive_body"
