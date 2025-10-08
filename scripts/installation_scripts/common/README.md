@@ -1,31 +1,37 @@
-# Common helpers for OpenProject installer
+# Common helpers for the installer
 
 This folder contains shared helper scripts used by the interactive installer
-and OS-specific installation utilities.
+and the installation utilities.
 
-Files
-- `common.sh` - Core non-UI helpers (compose detection, service helpers) and
-  common UI primitives (color detection and basic helpers like `warn`,
-  `note`, `section`, and `format_default`). Source this file from any script
-  that needs these capabilities.
-- `common_ui.sh` - Convenience UI helpers that build on `common.sh` and
-  provide additional formatting helpers like `subsection` and `numbered_list`.
+Files present
 
-Usage
+- `common.sh` - Core helpers used across scripts (compose/docker helpers,
+  color detection, and small UI building blocks such as `warn`, `note`,
+  `section`, and `format_default`).
 
-From any script under `scripts/installation_scripts` or
-`scripts/installation_scripts/installation_utilities`, source the UI helpers
-like this (using `SCRIPT_DIR` computed via `BASH_SOURCE`):
+- `common_ui.sh` - Higher-level UI helpers built on `common.sh` (for example
+  `subsection`, `numbered_list`, and `numbered_list_prompt`).
+
+How to source
+
+From a script in `scripts/installation_scripts` or one of the utility
+subdirectories, compute the script directory and source the UI helpers like
+this:
 
 ```bash
+# where this script lives
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# source the shared UI helpers
 if [ -f "$SCRIPT_DIR/../common/common_ui.sh" ]; then
     # shellcheck source=/dev/null
     source "$SCRIPT_DIR/../common/common_ui.sh"
 fi
 ```
 
-Notes
-- Avoid duplicating color/UI logic in multiple files. Keep helpers in
-  `common.sh` and `common_ui.sh` to ensure consistent output across the
-  installer and utilities.
+Guidelines
+
+- Keep UI and color logic in this folder so all installer scripts display
+  consistent output.
+- Avoid copying these helpers into other directories; update the central
+  files here and then source them.

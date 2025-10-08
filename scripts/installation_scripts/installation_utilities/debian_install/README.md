@@ -16,3 +16,9 @@ Uses `systemctl` for service management.
 - Config files: `/etc/`
 - Logs: `/var/log/`
 - Services: `/lib/systemd/system/`
+
+Scripts in this directory
+
+- `install_docker.debian.sh` - OS-specific Docker installation script
+- `configure_docker.debian.sh` - Docker configuration helper
+- `build_stack.debian.sh` - Helper to assemble the stack for Debian-family systems

@@ -15,3 +15,9 @@ Uses `systemctl` for service management.
 - Config files: `/etc/`
 - Logs: `/var/log/`
 - Services: `/usr/lib/systemd/system/`
+
+Scripts in this directory
+
+- `install_docker.redhat.sh` - OS-specific Docker installation script
+- `configure_docker.redhat.sh` - Docker configuration helper
+- `build_stack.redhat.sh` - Helper to assemble the stack for RedHat-family systems

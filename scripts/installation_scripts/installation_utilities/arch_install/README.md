@@ -16,3 +16,9 @@ Uses `systemctl` for service management.
 - Config files: `/etc/`
 - Logs: `/var/log/`
 - Services: `/usr/lib/systemd/system/`
+
+Scripts in this directory
+
+- `install_docker.arch.sh` - OS-specific Docker installation script
+- `configure_docker.arch.sh` - Docker configuration helper
+- `build_stack.arch.sh` - Helper to assemble the stack for Arch-family systems
