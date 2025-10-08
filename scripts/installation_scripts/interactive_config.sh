@@ -97,7 +97,8 @@ fi
 
 echo
 cfg_preview_body=$(cat <<'EOF'
-Preview of the existing `interactive_config.cfg` (truncated). Confirm or update values in the following prompts.
+Preview of the existing `interactive_config.cfg` (truncated). 
+Confirm or update values in the following prompts.
 EOF
 )
 section "Current configuration preview:" "$cfg_preview_body"
@@ -118,7 +119,11 @@ echo
 
 if validate_yn "Would you like to modify the configuration interactively?" "y"; then
     echo
-    supersection "Interactive Configuration:" "Follow a guided prompt sequence to gather deployment settings. Press Enter to accept any default shown. Changes are saved to interactive_config.cfg."
+    interactive_body=$(cat <<'EOF'
+Follow a guided prompt sequence to gather deployment settings. Press Enter to accept any default shown. Changes are saved to interactive_config.cfg.
+EOF
+)
+    supersection "Interactive Configuration:" "$interactive_body"
     
     # Read current values from config file if they exist. This enumerates
     # known keys found in interactive_config.cfg so the interactive prompts
@@ -165,7 +170,8 @@ EOF
 )
     section "Repo Settings" "$repo_body"
     git_version_body=$(cat <<'EOF'
-Choose the OpenProject repository tag (release or branch) to deploy. If unsure, use the default stable tag.
+Choose the OpenProject repository tag (release or branch) to deploy. 
+If unsure, use the default stable tag.
 EOF
 )
     subsection "OpenProject Version Configuration" "$git_version_body"
@@ -174,7 +180,9 @@ EOF
     echo " "
 
     git_cfg_body=$(cat <<'EOF'
-Enter the Git user.name and user.email used by installer scripts when creating or patching local artifacts (commits, config templates). These values become global git config if provided.
+Enter the Git user.name and user.email used by installer scripts when creating 
+or patching local artifacts (commits, config templates). 
+These values become global git config if provided.
 EOF
 )
     subsection "Git Configuration" "$git_cfg_body"
@@ -202,7 +210,11 @@ EOF
     prompt_with_default "Git email" "$current_git_email" "git_email"
 
     # Environment Configuration
-    section "Environment Configuration:"    
+    env_section_body=$(cat <<'EOF'
+Select the environment type that best matches your deployment goals. Defaults are provided when possible.
+EOF
+)
+    section "Environment Configuration:" "$env_section_body"
     # Get current environment type from config if it exists
     current_env_type=$(grep "^ENVIRONMENT_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "localdev")
     
@@ -250,7 +262,9 @@ EOF
     
     # Operating System Configuration (moved under Environment Configuration)
     os_sub_body=$(cat <<'EOF'
-Select the OS family (Debian, RedHat, SUSE, Arch, Slackware). Installer steps and package commands will be tailored to this choice. Use the detected OS when possible.
+Select the OS family (Debian, RedHat, SUSE, Arch, Slackware). 
+Installer steps and package commands will be tailored to this choice. 
+Use the detected OS when possible.
 EOF
 )
     subsection "Operating System Configuration" "$os_sub_body"
@@ -336,7 +350,8 @@ EOF
     fi
     echo
     web_host_body=$(cat <<'EOF'
-Provide the public hostname where OpenProject will be served (e.g., example.com). Enable HTTPS if you have or will configure TLS certificates.
+Provide the public hostname where OpenProject will be served (e.g., example.com). 
+Enable HTTPS if you have or will configure TLS certificates.
 EOF
 )
     subsection "Web Configuration" "$web_host_body"
@@ -344,7 +359,11 @@ EOF
     prompt_with_default "Enable HTTPS? (true/false)" "$current_https" "use_https"
 
     echo
-    subsection "Web Configuration" "Proxy and TLS redirect settings."
+    proxy_intro_body=$(cat <<'EOF'
+Proxy and TLS redirect settings.
+EOF
+)
+    subsection "Web Configuration" "$proxy_intro_body"
     # Default redirect behavior: true if HTTPS enabled, false otherwise
     use_https_lc=$(echo "$use_https" | tr '[:upper:]' '[:lower:]')
     if [ "$use_https_lc" = "true" ]; then
@@ -355,7 +374,10 @@ EOF
 
     echo
     proxy_body=$(cat <<'EOF'
-Security note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP. This exposes credentials, cookies, and session tokens to on-path attackers (MITM), and prevents automatic TLS enforcement by browsers. Only disable redirects if you understand and accept these risks.
+Security note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP. 
+This exposes credentials, cookies, and session tokens to on-path attackers (MITM), 
+and prevents automatic TLS enforcement by browsers. 
+Only disable redirects if you understand and accept these risks.
 EOF
 )
     subsection "Proxy HTTPS redirect configuration" "$proxy_body"
@@ -388,7 +410,8 @@ EOF
     prompt_with_default "Domain name (e.g., Statesmen.com)" "$current_domain" "domain_name"
 
     subdomain_body=$(cat <<'EOF'
-Optional subdomain used to namespace projects (leave empty for none). To keep an existing subdomain you must retype it below.
+Optional subdomain used to namespace projects (leave empty for none). 
+To keep an existing subdomain you must retype it below.
 EOF
 )
     subsection "Subdomain Configuration" "$subdomain_body"
@@ -407,7 +430,11 @@ EOF
     
     
     echo
-    section "Database Configuration:"
+    db_section_body=$(cat <<'EOF'
+Database and storage configuration for PostgreSQL. Choose passwords and storage options.
+EOF
+)
+    section "Database Configuration:" "$db_section_body"
     dbpw_body=$(cat <<'EOF'
 PostgreSQL administrator password used for DB initialization and maintenance.
 
@@ -518,7 +545,11 @@ fi
 # CONFIGURATION COMPLETION
 # =============================================================================
 
-section "Configuration saved to: $DEPLOY_CONFIG"
+cfg_saved_body=$(cat <<'EOF'
+Configuration saved to: $DEPLOY_CONFIG
+EOF
+)
+section "Configuration saved to: $DEPLOY_CONFIG" "$cfg_saved_body"
 echo
 echo "To deploy OpenProject, run:"
 echo "  ./scripts/installation_scripts/deploy.sh"
