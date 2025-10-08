@@ -107,9 +107,11 @@ separator() {
     local style="$1"
     local title="$2"
     local body="${3-}"
+    local header_char="${4:-}"
+    local foot_char="${5:-_}"
     local IFS=$'\n'
 
-    # Terminal width detection helper
+    # Terminal width detection
     local term_w=80
     if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
         local tw
@@ -121,70 +123,79 @@ separator() {
         term_w=${COLUMNS}
     fi
 
+    # Compute content width: max of title and any body lines
+    local content_w=${#title}
+    if [ -n "$body" ]; then
+        for line in $body; do
+            local l=${#line}
+            if [ "$l" -gt "$content_w" ]; then
+                content_w=$l
+            fi
+        done
+    fi
+    # Cap to terminal width
+    if [ "$content_w" -gt "$term_w" ]; then
+        content_w=$term_w
+    fi
+
+    # Determine header char defaults per style
+    if [ -z "$header_char" ]; then
+        case "$style" in
+            supersection) header_char='#' ;;
+            subsection) header_char='-' ;;
+            *) header_char='=' ;;
+        esac
+    fi
+
+    # Render header according to style (preserve blanks/padding)
     case "$style" in
         supersection)
-            # supersection: extra padding and full-width hash rule
             printf "\n\n\n"
-            local rule
-            rule=$(printf '%*s' "$term_w" '' | tr ' ' '#')
+            local header
+            header=$(printf '%*s' "$content_w" '' | tr ' ' "$header_char")
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${BRONZE}${rule}${RESET}"
+                printf "%b\n" "${BRONZE}${header}${RESET}"
                 printf "%b\n" "${YELLOW}${title}${RESET}"
-                printf "%b\n" "${BRONZE}${rule}${RESET}"
+                printf "%b\n" "${BRONZE}${header}${RESET}"
             else
-                printf "%s\n" "$rule"
+                printf "%s\n" "$header"
                 printf "%s\n" "$title"
-                printf "%s\n" "$rule"
+                printf "%s\n" "$header"
             fi
             ;;
         subsection)
-            # subsection: single leading blank line and full-width dash rule
             printf "\n"
-            local rule
-            rule=$(printf '%*s' "$term_w" '' | tr ' ' '-')
+            local header
+            header=$(printf '%*s' "$content_w" '' | tr ' ' "$header_char")
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${BRONZE}${rule}${RESET}"
+                printf "%b\n" "${BRONZE}${header}${RESET}"
                 printf "%b\n" "${BRONZE}${title}${RESET}"
-                printf "%b\n" "${BRONZE}${rule}${RESET}"
+                printf "%b\n" "${BRONZE}${header}${RESET}"
             else
-                printf "%s\n" "$rule"
+                printf "%s\n" "$header"
                 printf "%s\n" "$title"
-                printf "%s\n" "$rule"
+                printf "%s\n" "$header"
             fi
             ;;
         *)
-            # default: 'section' behavior - two leading blank lines
             printf "\n\n"
-            # compute max width between title and body lines
-            local maxw=${#title}
-            if [ -n "$body" ]; then
-                for line in $body; do
-                    local l=${#line}
-                    if [ "$l" -gt "$maxw" ]; then
-                        maxw=$l
-                    fi
-                done
-            fi
-            if [ "$maxw" -gt "$term_w" ]; then
-                maxw=$term_w
-            fi
-            local rule
-            rule=$(printf '%*s' "$maxw" '' | tr ' ' '=')
+            local header
+            header=$(printf '%*s' "$content_w" '' | tr ' ' "$header_char")
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${BRONZE}${rule}${RESET}"
+                printf "%b\n" "${BRONZE}${header}${RESET}"
             else
-                printf "%s\n" "$rule"
+                printf "%s\n" "$header"
             fi
             echo -e "${BRONZE}${title}${RESET}"
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${BRONZE}${rule}${RESET}"
+                printf "%b\n" "${BRONZE}${header}${RESET}"
             else
-                printf "%s\n" "$rule"
+                printf "%s\n" "$header"
             fi
             ;;
     esac
 
-    # If body present, print subdued body lines and footer underscore
+    # Body and footer
     if [ -n "$body" ]; then
         local maxb=0
         for line in $body; do
@@ -199,14 +210,12 @@ separator() {
             fi
         done
 
-        # Foot width: for subsection and supersection we cap to terminal width
-        # For section we already capped rule width earlier; ensure foot <= term_w
         if [ "$maxb" -gt "$term_w" ]; then
             maxb=$term_w
         fi
         if [ "$maxb" -gt 0 ]; then
             local foot
-            foot=$(printf '%*s' "$maxb" '' | tr ' ' '_')
+            foot=$(printf '%*s' "$maxb" '' | tr ' ' "$foot_char")
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
                 printf "%b\n" "${BRONZE}${foot}${RESET}"
             else
@@ -216,17 +225,18 @@ separator() {
     fi
 }
 
-# Backwards-compatible wrappers that preserve the original API
+# Backwards-compatible wrappers that preserve the original API and pass
+# header/footer characters for each style (footer defaults to '_').
 section() {
-    separator "section" "$1" "${2-}"
+    separator "section" "$1" "${2-}" '=' '_'
 }
 
 supersection() {
-    separator "supersection" "$1" "${2-}"
+    separator "supersection" "$1" "${2-}" '#' '_'
 }
 
 subsection() {
-    separator "subsection" "$1" "${2-}"
+    separator "subsection" "$1" "${2-}" '-' '_'
 }
 
 # Prompt with default helper: prompt text, default, and variable name to set
