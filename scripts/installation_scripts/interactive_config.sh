@@ -61,7 +61,7 @@ prompt_with_default() {
 }
 
 # Function to validate yes/no input
-confirm() {
+validate_yn() {
     local prompt="$1"
     local default="$2"
     
@@ -91,6 +91,37 @@ confirm() {
     fi
 }
 
+# Function to validate true/false input
+validate_tf() {
+    local prompt="$1"
+    local default="$2"
+    
+    if [ -n "$default" ]; then
+        while true; do
+            read -p "$prompt (true/false) [$default]: " tf
+            # If empty input, use default
+            if [ -z "$tf" ]; then
+                tf="$default"
+            fi
+            case $tf in
+                [Tt]rue|[Tt] ) return 0;;
+                [Ff]alse|[Ff] ) return 1;;
+                * ) echo "Please answer true or false.";;
+            esac
+        done
+    else
+        # Original behavior when no default provided
+        while true; do
+            read -p "$prompt (true/false): " tf
+            case $tf in
+                [Tt]rue|[Tt] ) return 0;;
+                [Ff]alse|[Ff] ) return 1;;
+                * ) echo "Please answer true or false.";;
+            esac
+        done
+    fi
+}
+
 echo "This script will help you deploy OpenProject using Docker Compose."
 echo "You can press Enter to accept default values shown in brackets."
 echo
@@ -105,38 +136,32 @@ if [ ! -f "docker-compose.yml" ]; then
     exit 1
 fi
 
-# Check if .env file exists
-if [ ! -f ".env" ]; then
-    echo "No .env file found. Creating one from .env.example..."
-    if [ -f ".env.example" ]; then
-        cp .env.example .env
-        echo "Created .env file from .env.example"
-    else
-        echo "Error: .env.example not found. Cannot create .env file."
-        exit 1
-    fi
-else
-    echo "Found existing .env file."
-fi
-
 echo
 echo "Current configuration preview:"
 echo "=============================="
-if [ -f ".env" ]; then
-    echo "Key settings from .env:"
-    grep -E "^(OPENPROJECT_HOST|OPENPROJECT_HTTPS|TAG)" .env | head -5
+if [ -f "$DEPLOY_CONFIG" ]; then
+    echo "Key settings from configuration:"
+    grep -E "^(ENVIRONMENT_TYPE|OPENPROJECT_HOST|OPENPROJECT_HTTPS|OPENPROJECT_TAG)" "$DEPLOY_CONFIG" 2>/dev/null | head -5 || echo "No previous configuration found"
+else
+    echo "No previous configuration found"
 fi
 echo
 
-if confirm "Would you like to modify the configuration interactively?" "y"; then
+if validate_yn "Would you like to modify the configuration interactively?" "y"; then
     echo
     echo "Interactive Configuration:"
     echo "========================="
     
-    # Read current values from .env if they exist
-    current_host=$(grep "^OPENPROJECT_HOST__NAME=" .env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "localhost")
-    current_https=$(grep "^OPENPROJECT_HTTPS=" .env 2>/dev/null | cut -d'=' -f2 || echo "false")
-    current_tag=$(grep "^TAG=" .env 2>/dev/null | cut -d'=' -f2 || echo "16")
+    # Read current values from config file if they exist
+    current_host=$(grep "^OPENPROJECT_HOST=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+    current_https=$(grep "^OPENPROJECT_HTTPS=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "false")
+    current_tag=$(grep "^OPENPROJECT_TAG=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "16")
+    
+    # If no hostname in config, try to detect from system
+    if [ -z "$current_host" ]; then
+        detected_hostname=$(hostname -f 2>/dev/null || hostname 2>/dev/null || echo "localhost")
+        current_host="$detected_hostname"
+    fi
     
     # Get current git configuration if it exists
     current_git_user=$(git config --global user.name 2>/dev/null || echo "")
@@ -145,7 +170,7 @@ if confirm "Would you like to modify the configuration interactively?" "y"; then
     echo "Environment Configuration:"
     echo "-------------------------"
     # Get current environment type from config if it exists
-    current_env_type=$(grep "^ENVIRONMENT_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "localdev")
+    current_env_type=$(grep "^ENVIRONMENT_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "localdev")
     
     # Convert current environment to number for display
     case "$current_env_type" in
@@ -233,7 +258,15 @@ if confirm "Would you like to modify the configuration interactively?" "y"; then
     current_subdomain=$(grep "^SUBDOMAIN=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
     
     prompt_with_default "Domain name (e.g., example.com)" "$current_domain" "domain_name"
-    prompt_with_default "Subdomain (e.g., openproject, leave empty for none)" "$current_subdomain" "subdomain"
+    
+    # Handle subdomain differently - inform user of current value, no default
+    if [ -n "$current_subdomain" ]; then
+        echo "Current subdomain: $current_subdomain"
+        prompt_with_default "Subdomain (leave empty to remove current subdomain, or enter new value)" "" "subdomain"
+    else
+        echo "No subdomain currently set"
+        prompt_with_default "Subdomain (e.g., openproject, leave empty for none)" "" "subdomain"
+    fi
     
     echo
     echo "Operating System Configuration:"
@@ -299,7 +332,12 @@ if confirm "Would you like to modify the configuration interactively?" "y"; then
     
     # Show detected OS if available
     if [ "$current_os_family" != "unknown" ]; then
-        echo "Detected OS family: $current_os_family"
+        echo "Detected OS family: \"$current_os_family\""
+        echo
+        echo "⚠ WARNING: Changing from the detected OS family may cause errors"
+        echo "   in the configure and build process. The installation utilities"
+        echo "   are optimized for the detected OS family."
+        echo
     fi
     
     # Prompt for OS family selection
@@ -311,27 +349,47 @@ if confirm "Would you like to modify the configuration interactively?" "y"; then
     # Convert number to OS family name
     case "$os_input" in
         1|debian)
-            os_family="debian"
+            selected_os_family="debian"
             ;;
         2|redhat)
-            os_family="redhat"
+            selected_os_family="redhat"
             ;;
         3|suse)
-            os_family="suse"
+            selected_os_family="suse"
             ;;
         4|arch)
-            os_family="arch"
+            selected_os_family="arch"
             ;;
         5|slackware)
-            os_family="slackware"
+            selected_os_family="slackware"
             ;;
         *)
             echo "⚠ Invalid selection '$os_input'. Using detected/default: $current_os_family"
-            os_family="$current_os_family"
+            selected_os_family="$current_os_family"
             ;;
     esac
     
-    echo "✓ OS family set to: $os_family"
+    # Check if user selected different OS from detected and ask for confirmation
+    if [ "$current_os_family" != "unknown" ] && [ "$selected_os_family" != "$current_os_family" ]; then
+        echo
+        echo "⚠ WARNING: You selected '$selected_os_family' but detected OS is '$current_os_family'"
+        echo "   This may cause compatibility issues with:"
+        echo "   • Package installation commands"
+        echo "   • Service management"
+        echo "   • File paths and configurations"
+        echo "   • Docker setup procedures"
+        echo
+        if validate_yn "Are you sure you want to use '$selected_os_family' instead of '$current_os_family'?" "n"; then
+            os_family="$selected_os_family"
+            echo "✓ Using user-selected OS family: $os_family"
+        else
+            os_family="$current_os_family"
+            echo "✓ Using detected OS family: $os_family"
+        fi
+    else
+        os_family="$selected_os_family"
+        echo "✓ OS family set to: $os_family"
+    fi
     
     echo
     echo "Database Configuration:"
@@ -354,8 +412,8 @@ if confirm "Would you like to modify the configuration interactively?" "y"; then
     current_default_admin_password=$(grep "^DEFAULT_DBADMIN_PASSWORD=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
     
     if [ -n "$current_default_admin_password" ]; then
-        echo "PostgreSQL database admin password is already configured."
-        if confirm "Keep current database admin password?"; then
+        echo "Current PostgreSQL database admin password: $current_default_admin_password"
+        if validate_yn "Keep current database admin password?" "y"; then
             default_admin_password="$current_default_admin_password"
             echo "✓ Using existing database admin password"
         else
@@ -464,3 +522,23 @@ echo "  1. ./scripts/installation_scripts/installation_utilities/configure_docke
 echo "  2. ./scripts/installation_scripts/installation_utilities/build_stack.sh"
 echo
 echo "Configuration complete!"
+echo
+
+# Ask if user wants to run deployment now
+if validate_yn "Would you like to run the deployment now?" "y"; then
+    echo
+    echo "Starting OpenProject deployment..."
+    echo "=================================="
+    
+    # Check if deploy.sh exists
+    if [ -f "./scripts/installation_scripts/deploy.sh" ]; then
+        ./scripts/installation_scripts/deploy.sh
+    else
+        echo "❌ Error: deploy.sh not found at ./scripts/installation_scripts/deploy.sh"
+        echo "Please run the deployment manually using the commands shown above."
+        exit 1
+    fi
+else
+    echo
+    echo "Deployment skipped. Run './scripts/installation_scripts/deploy.sh' when ready."
+fi
