@@ -87,9 +87,29 @@ pull_images() {
     # Use BuildKit for improved performance (set in .env by configure_docker.debian.sh)
     export DOCKER_BUILDKIT=1
     export COMPOSE_DOCKER_CLI_BUILD=1
-    
-    # Pull images using both base and override files
-    $COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml pull
+    # Determine services that do NOT have a local build context and pull only those
+    # Get rendered compose config and service list
+    rendered_cfg=$($COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml config 2>/dev/null || true)
+    services=$($COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml config --services 2>/dev/null || true)
+
+    no_build_services=()
+    for svc in $services; do
+        # Use docker compose to render the service config and check for a 'build' key
+        svc_cfg=$($COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml config --service "$svc" 2>/dev/null || true)
+        if printf "%s" "$svc_cfg" | grep -q "^[[:space:]]*build:"; then
+            # service has a build context; skip pulling
+            continue
+        else
+            no_build_services+=("$svc")
+        fi
+    done
+
+    if [ ${#no_build_services[@]} -eq 0 ]; then
+        echo "✓ No remote-only images to pull"
+    else
+        echo "Pulling images for services: ${no_build_services[*]}"
+        $COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml pull "${no_build_services[@]}"
+    fi
     
     echo "✓ Docker images pulled successfully"
 }
@@ -316,12 +336,18 @@ main() {
     create_directories
     echo
     
-    # Pull images
-    pull_images
+    # Build proxy image via helper if present (keeps proxy build logic in its own script)
+    if [ -f "$SCRIPT_DIR/../proxy/build_proxy.sh" ]; then
+        "$SCRIPT_DIR/../proxy/build_proxy.sh"
+        echo
+    fi
+
+    # Build custom images if needed (do this before pulling so services with local build contexts are built locally)
+    build_images
     echo
     
-    # Build custom images if needed
-    build_images
+    # Pull images for services without local build contexts
+    pull_images
     echo
     
     # Start the stack

@@ -30,10 +30,17 @@ update_env_file() {
     
     echo "Updating .env file with configuration and Debian-specific variables..."
     
-    # Ensure .env file exists
+    # Ensure .env file exists. If it's missing but .env.example is present, create it
     if [ ! -f "$env_file" ]; then
-        echo "❌ .env file not found: $env_file"
-        exit 1
+        if [ -f "$PROJECT_ROOT/.env.example" ]; then
+            echo "No .env found at $env_file. Creating from .env.example..."
+            cp "$PROJECT_ROOT/.env.example" "$env_file"
+            echo "Created $env_file from .env.example"
+        else
+            echo "❌ .env file not found: $env_file"
+            echo "Please create a .env file or run interactive_config.sh to generate configuration."
+            exit 1
+        fi
     fi
     
     # Update .env file with values from interactive_config.cfg
@@ -270,6 +277,12 @@ main() {
     
     # Load configuration
     load_config
+    echo
+
+    # Configure proxy (render Caddyfile/template) if proxy utility exists
+    if [ -f "$SCRIPT_DIR/../proxy/configure_proxy.sh" ]; then
+        "$SCRIPT_DIR/../proxy/configure_proxy.sh"
+    fi
     echo
     
     # Update .env file with Debian-specific variables
