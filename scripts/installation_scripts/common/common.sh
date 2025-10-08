@@ -211,11 +211,10 @@ section() {
         for line in $body; do
             # Print the body in a less prominent color (use SUBDUED)
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b
-" "${SUBDUED}${line}${RESET}"
+                # Use %s so the body text is printed literally (preserve here-doc content)
+                printf "%s\n" "${SUBDUED}${line}${RESET}"
             else
-                printf "%s
-" "${line}"
+                printf "%s\n" "${line}"
             fi
             local l=${#line}
             if [ "$l" -gt "$maxw" ]; then
@@ -303,7 +302,8 @@ supersection() {
         local maxb=0
         for line in $body; do
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${SUBDUED}${line}${RESET}"
+                # Print literally with %s to preserve here-doc content
+                printf "%s\n" "${SUBDUED}${line}${RESET}"
             else
                 printf "%s\n" "$line"
             fi

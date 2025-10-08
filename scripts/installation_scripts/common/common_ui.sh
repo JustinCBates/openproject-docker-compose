@@ -69,7 +69,8 @@ subsection() {
         local maxb=0
         for line in $body; do
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${SUBDUED}${line}${RESET}"
+                # Print body literally so here-doc content remains unchanged
+                printf "%s\n" "${SUBDUED}${line}${RESET}"
             else
                 printf "%s\n" "$line"
             fi
