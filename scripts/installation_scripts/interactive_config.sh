@@ -256,20 +256,11 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     # Get current environment type from config if it exists
     current_env_type=$(grep "^ENVIRONMENT_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "localdev")
     
-    # Convert current environment to number for display
-    case "$current_env_type" in
-        localdev) current_env_num="1" ;;
-        remotedev) current_env_num="2" ;;
-        remotetest) current_env_num="3" ;;
-        production) current_env_num="4" ;;
-        *) current_env_num="1" ;;
-    esac
-    
     echo "Available environment types:"
-    # Use numbered_list_prompt to print list, prompt and validate selection
-    # Prompt for environment type; numbered_list_prompt now returns the token
-    # (e.g. 'localdev', 'remotedev') in the provided out variable.
-    numbered_list_prompt "$current_env_num" env_token env_idx \
+    # Use numbered_list_prompt to print list, prompt and validate selection.
+    # Pass the token default (e.g. 'localdev') and let the helper map it to
+    # the numeric default internally.
+    numbered_list_prompt "$current_env_type" env_token env_idx \
         "localdev    - Local development environment" \
         "remotedev   - Remote development server" \
         "remotetest  - Remote testing/staging server" \

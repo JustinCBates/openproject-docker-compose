@@ -42,7 +42,7 @@ numbered_list() {
 #   numbered_list_prompt 2 CHOICE CHOICE_IDX "dev" "prod" "test"
 # After call: CHOICE contains chosen string, CHOICE_IDX contains numeric index
 numbered_list_prompt() {
-    local default_num="$1"; shift || return 1
+    local default_arg="$1"; shift || return 1
     local out_var="$1"; shift || return 1
     local out_idx_var="${1:-}";
     if [ -n "$out_idx_var" ]; then
@@ -53,22 +53,59 @@ numbered_list_prompt() {
     local items=("$@")
     local count=${#items[@]}
 
+    # If default_arg is not a number, treat it as a token and try to find
+    # the index of the matching item. Extract tokens from items using the
+    # same logic used later for selected items.
+    local default_index=""
+    local default_token=""
+    if printf "%s" "$default_arg" | grep -Eq '^[0-9]+$'; then
+        default_index="$default_arg"
+    else
+        default_token="$default_arg"
+        # Normalize and search items for a matching token
+        local i=1
+        for it in "${items[@]}"; do
+            local it_token
+            it_token=$(printf "%s" "$it" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/\s*-\s*/ - /')
+            if printf "%s" "$it_token" | grep -q " - "; then
+                it_token=$(printf "%s" "$it_token" | cut -d'-' -f1 | sed -e 's/[[:space:]]*$//')
+            else
+                it_token=$(printf "%s" "$it_token" | awk '{print $1}')
+            fi
+            if [ "$it_token" = "$default_token" ]; then
+                default_index="$i"
+                break
+            fi
+            i=$((i+1))
+        done
+        # If we didn't find the token, fall back to 1
+        if [ -z "$default_index" ]; then
+            default_index="1"
+        fi
+    fi
+
     # Print the list (highlight default)
-    numbered_list "$default_num" "${items[@]}"
+    numbered_list "$default_index" "${items[@]}"
+
+    # Prepare display default: prefer showing token when provided
+    local display_default="$default_index"
+    if [ -n "$default_token" ]; then
+        display_default="$default_token"
+    fi
 
     # Prompt loop
     local input
     while true; do
-        if [ -n "$default_num" ] && [ "${COLOR_ENABLED:-0}" = "1" ]; then
-            printf "Select an option [%b]: " "${GREEN}${default_num}${RESET}"
-        elif [ -n "$default_num" ]; then
-            printf "Select an option [%s]: " "$default_num"
+        if [ -n "$display_default" ] && [ "${COLOR_ENABLED:-0}" = "1" ]; then
+            printf "Select an option [%b]: " "${GREEN}${display_default}${RESET}"
+        elif [ -n "$display_default" ]; then
+            printf "Select an option [%s]: " "$display_default"
         else
             printf "Select an option: "
         fi
         read -r input
         if [ -z "$input" ]; then
-            input="$default_num"
+            input="$default_index"
         fi
         # Validate numeric
         if ! printf "%s" "$input" | grep -Eq '^[0-9]+$'; then
