@@ -12,9 +12,9 @@ echo "=========================================="
 echo
 
 # Source common helpers (colors, warn(), note())
-if [ -f "$(dirname "${BASH_SOURCE[0]}")/common.sh" ]; then
+if [ -f "$(dirname "${BASH_SOURCE[0]}")/common_ui.sh" ]; then
     # shellcheck source=/dev/null
-    source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
+    source "$(dirname "${BASH_SOURCE[0]}")/common_ui.sh"
 fi
 
 # Configuration file for storing deployment settings

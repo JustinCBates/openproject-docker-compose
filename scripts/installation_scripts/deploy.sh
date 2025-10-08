@@ -15,11 +15,11 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 UTILITIES_DIR="$SCRIPT_DIR/installation_utilities"
 CONFIG_FILE="$SCRIPT_DIR/interactive_config.cfg"
 
-# Source common helpers if available
-if [ -f "$SCRIPT_DIR/common.sh" ]; then
-    # shellcheck source=/dev/null
-    source "$SCRIPT_DIR/common.sh"
-fi
+ # Source common UI helpers if available
+ if [ -f "$SCRIPT_DIR/common_ui.sh" ]; then
+     # shellcheck source=/dev/null
+     source "$SCRIPT_DIR/common_ui.sh"
+ fi
 
 # Parse top-level options
 DRY_RUN=0
