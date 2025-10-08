@@ -101,28 +101,15 @@ format_default() {
 # Section and supersection are UI helpers that render headings and optional
 # multi-line bodies. They were previously defined in common.sh but belong
 # here with the other UI helpers.
-section() {
-    # Two leading blank lines before a top-level section
-    printf "\n\n"
-    # Usage: section "Title" ["optional multi-line body"]
-    local title="$1"
-    local body="${2-}"
-    local underline
-    # Compute max width between title and any body lines so all decorations
-    # share the same width.
+# Generic separator that renders headings and optional multi-line bodies.
+# style: one of 'section', 'supersection', 'subsection'
+separator() {
+    local style="$1"
+    local title="$2"
+    local body="${3-}"
     local IFS=$'\n'
-    local maxw=${#title}
-    if [ -n "$body" ]; then
-        for line in $body; do
-            local l=${#line}
-            if [ "$l" -gt "$maxw" ]; then
-                maxw=$l
-            fi
-        done
-    fi
 
-    # Cap the computed width to the terminal width to avoid generating
-    # extremely long decoration lines that can make the UI appear hung.
+    # Terminal width detection helper
     local term_w=80
     if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
         local tw
@@ -133,129 +120,75 @@ section() {
     elif [ -n "${COLUMNS:-}" ] && [ "${COLUMNS:-0}" -gt 0 ]; then
         term_w=${COLUMNS}
     fi
-    if [ "$maxw" -gt "$term_w" ]; then
-        maxw=$term_w
-    fi
 
-    # Top '=' rule
-    local rule
-    rule=$(printf '%*s' "$maxw" '' | tr ' ' '=')
-    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-        printf "%b\n" "${BRONZE}${rule}${RESET}"
-    else
-        printf "%s\n" "$rule"
-    fi
-
-    # Title and underline (same width)
-    echo -e "${BRONZE}${title}${RESET}"
-    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-        printf "%b\n" "${BRONZE}${rule}${RESET}"
-    else
-        printf "%s\n" "$rule"
-    fi
-
-    if [ -n "$body" ]; then
-        # Subdued color: use BRONZE but dim by reducing brightness if terminal
-        # doesn't support dim, fallback to RESET. We'll box the body with a
-        # bottom underscore line matching width.
-        # Print body lines and compute max width
-        local IFS=$'\n'
-        local maxw=0
-        for line in $body; do
-            # Print the body in a less prominent color (use SUBDUED)
+    case "$style" in
+        supersection)
+            # supersection: extra padding and full-width hash rule
+            printf "\n\n\n"
+            local rule
+            rule=$(printf '%*s' "$term_w" '' | tr ' ' '#')
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                # Use %s so the body text is printed literally (preserve here-doc content)
-                printf "%s\n" "${SUBDUED}${line}${RESET}"
+                printf "%b\n" "${BRONZE}${rule}${RESET}"
+                printf "%b\n" "${YELLOW}${title}${RESET}"
+                printf "%b\n" "${BRONZE}${rule}${RESET}"
             else
-                printf "%s\n" "${line}"
+                printf "%s\n" "$rule"
+                printf "%s\n" "$title"
+                printf "%s\n" "$rule"
             fi
-            local l=${#line}
-            if [ "$l" -gt "$maxw" ]; then
-                maxw=$l
-            fi
-        done
-        # Print bottom underscore box in BRONZE
-        if [ "$maxw" -gt 0 ]; then
-            local underscore
-            underscore=$(printf '%*s' "$maxw" '' | tr ' ' '_')
+            ;;
+        subsection)
+            # subsection: single leading blank line and full-width dash rule
+            printf "\n"
+            local rule
+            rule=$(printf '%*s' "$term_w" '' | tr ' ' '-')
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${BRONZE}${underscore}${RESET}"
+                printf "%b\n" "${BRONZE}${rule}${RESET}"
+                printf "%b\n" "${BRONZE}${title}${RESET}"
+                printf "%b\n" "${BRONZE}${rule}${RESET}"
             else
-                printf '%s\n' "$underscore"
+                printf "%s\n" "$rule"
+                printf "%s\n" "$title"
+                printf "%s\n" "$rule"
             fi
-        fi
-    fi
-}
-
-# Print a stronger top-level section (supersection) with bolder decoration.
-# This is visually distinct from `section()`: it uses an emphasized title color
-# and extra spacing so callers can mark a super-container (e.g. "Interactive
-# Configuration").
-supersection() {
-    # Usage: supersection "Title" ["optional multi-line body"]
-    local title="$1"
-    local body="${2-}"
-    local IFS=$'\n'
-    local maxw=${#title}
-    if [ -n "$body" ]; then
-        for line in $body; do
-            local l=${#line}
-            if [ "$l" -gt "$maxw" ]; then
-                maxw=$l
+            ;;
+        *)
+            # default: 'section' behavior - two leading blank lines
+            printf "\n\n"
+            # compute max width between title and body lines
+            local maxw=${#title}
+            if [ -n "$body" ]; then
+                for line in $body; do
+                    local l=${#line}
+                    if [ "$l" -gt "$maxw" ]; then
+                        maxw=$l
+                    fi
+                done
             fi
-        done
-    fi
+            if [ "$maxw" -gt "$term_w" ]; then
+                maxw=$term_w
+            fi
+            local rule
+            rule=$(printf '%*s' "$maxw" '' | tr ' ' '=')
+            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+                printf "%b\n" "${BRONZE}${rule}${RESET}"
+            else
+                printf "%s\n" "$rule"
+            fi
+            echo -e "${BRONZE}${title}${RESET}"
+            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+                printf "%b\n" "${BRONZE}${rule}${RESET}"
+            else
+                printf "%s\n" "$rule"
+            fi
+            ;;
+    esac
 
-    # Determine terminal width cap
-    local term_w=80
-    if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
-        local tw
-        tw=$(tput cols 2>/dev/null || echo 0)
-        if [ "$tw" -gt 0 ]; then
-            term_w=$tw
-        fi
-    elif [ -n "${COLUMNS:-}" ] && [ "${COLUMNS:-0}" -gt 0 ]; then
-        term_w=${COLUMNS}
-    fi
-    if [ "$maxw" -gt "$term_w" ]; then
-        maxw=$term_w
-    fi
-
-    # Determine terminal width so the supersection uses the full width
-    local term_w=80
-    if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
-        local tw
-        tw=$(tput cols 2>/dev/null || echo 0)
-        if [ "$tw" -gt 0 ]; then
-            term_w=$tw
-        fi
-    elif [ -n "${COLUMNS:-}" ] && [ "${COLUMNS:-0}" -gt 0 ]; then
-        term_w=${COLUMNS}
-    fi
-
-    # Top rule: full terminal width using '#' for stronger emphasis
-    local rule
-    rule=$(printf '%*s' "$term_w" '' | tr ' ' '#')
-
-    # Leading blank lines to make the supersection stand out
-    printf "\n\n\n"
-
-    # Print rule, title (in YELLOW to emphasize), and rule again
-    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-        printf "%b\n" "${BRONZE}${rule}${RESET}"
-        printf "%b\n" "${YELLOW}${title}${RESET}"
-        printf "%b\n" "${BRONZE}${rule}${RESET}"
-    else
-        printf "%s\n" "$rule"
-        printf "%s\n" "$title"
-        printf "%s\n" "$rule"
-    fi
-
+    # If body present, print subdued body lines and footer underscore
     if [ -n "$body" ]; then
         local maxb=0
         for line in $body; do
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                # Print literally with %s to preserve here-doc content
                 printf "%s\n" "${SUBDUED}${line}${RESET}"
             else
                 printf "%s\n" "$line"
@@ -265,14 +198,15 @@ supersection() {
                 maxb=$l
             fi
         done
+
+        # Foot width: for subsection and supersection we cap to terminal width
+        # For section we already capped rule width earlier; ensure foot <= term_w
+        if [ "$maxb" -gt "$term_w" ]; then
+            maxb=$term_w
+        fi
         if [ "$maxb" -gt 0 ]; then
-            # Cap footer width to the terminal width to avoid overflow
-            local footw=$maxb
-            if [ "$footw" -gt "$term_w" ]; then
-                footw=$term_w
-            fi
             local foot
-            foot=$(printf '%*s' "$footw" '' | tr ' ' '_')
+            foot=$(printf '%*s' "$maxb" '' | tr ' ' '_')
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
                 printf "%b\n" "${BRONZE}${foot}${RESET}"
             else
@@ -282,91 +216,17 @@ supersection() {
     fi
 }
 
-# Print a smaller subsection heading (single-line bronze label)
+# Backwards-compatible wrappers that preserve the original API
+section() {
+    separator "section" "$1" "${2-}"
+}
+
+supersection() {
+    separator "supersection" "$1" "${2-}"
+}
+
 subsection() {
-    # Leading blank line before a subsection
-    printf "\n"
-    # Usage: subsection "Title" ["optional multi-line body"]
-    local title="$1"
-    local body="${2-}"
-    local underline
-    # Compute max width between title and body
-    local IFS=$'\n'
-    local maxw=${#title}
-    if [ -n "$body" ]; then
-        for line in $body; do
-            local l=${#line}
-            if [ "$l" -gt "$maxw" ]; then
-                maxw=$l
-            fi
-        done
-    fi
-
-    # Determine terminal width and cap decorations to it. For subsections we
-    # intentionally use the full terminal width for the top/bottom rule so the
-    # dash line spans the screen.
-    local term_w=80
-    if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
-        local tw
-        tw=$(tput cols 2>/dev/null || echo 0)
-        if [ "$tw" -gt 0 ]; then
-            term_w=$tw
-        fi
-    elif [ -n "${COLUMNS:-}" ] && [ "${COLUMNS:-0}" -gt 0 ]; then
-        term_w=${COLUMNS}
-    fi
-
-    # Top '-' rule stretched to full terminal width
-    local rule
-    rule=$(printf '%*s' "$term_w" '' | tr ' ' '-')
-    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-        printf "%b\n" "${BRONZE}${rule}${RESET}"
-    else
-        printf "%s\n" "$rule"
-    fi
-    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-        printf "%b\n" "${BRONZE}${title}${RESET}"
-    else
-        printf "%s\n" "$title"
-    fi
-    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-        printf "%b\n" "${BRONZE}${rule}${RESET}"
-    else
-        printf "%s\n" "$rule"
-    fi
-
-    if [ -n "$body" ]; then
-        # Compute the max width among body lines (so footer matches content)
-        local IFS=$'\n'
-        local maxb=0
-        for line in $body; do
-            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                # Print body literally so here-doc content remains unchanged
-                printf "%s\n" "${SUBDUED}${line}${RESET}"
-            else
-                printf "%s\n" "$line"
-            fi
-            local l=${#line}
-            if [ "$l" -gt "$maxb" ]; then
-                maxb=$l
-            fi
-        done
-
-        # Cap footer width to terminal width
-        local footw=$maxb
-        if [ "$footw" -gt "$term_w" ]; then
-            footw=$term_w
-        fi
-        if [ "$footw" -gt 0 ]; then
-            local foot
-            foot=$(printf '%*s' "$footw" '' | tr ' ' '_')
-            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${BRONZE}${foot}${RESET}"
-            else
-                printf '%s\n' "$foot"
-            fi
-        fi
-    fi
+    separator "subsection" "$1" "${2-}"
 }
 
 # Prompt with default helper: prompt text, default, and variable name to set
