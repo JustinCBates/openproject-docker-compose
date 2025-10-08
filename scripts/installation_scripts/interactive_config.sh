@@ -12,9 +12,11 @@ echo "=========================================="
 echo
 
 # Source common helpers (colors, warn(), note())
-if [ -f "$(dirname "${BASH_SOURCE[0]}")/common_ui.sh" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source common UI helpers from common/ if available
+if [ -f "$SCRIPT_DIR/common/common_ui.sh" ]; then
     # shellcheck source=/dev/null
-    source "$(dirname "${BASH_SOURCE[0]}")/common_ui.sh"
+    source "$SCRIPT_DIR/common/common_ui.sh"
 fi
 
 # Configuration file for storing deployment settings
@@ -264,54 +266,24 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     esac
     
     echo "Available environment types:"
-    # Print environment types using the helper, which highlights the default
-    # Print environment types using the numbered_list helper
-    numbered_list "$current_env_num" \
+    # Use numbered_list_prompt to print list, prompt and validate selection
+    numbered_list_prompt "$current_env_num" _env_choice env_idx \
         "localdev    - Local development environment" \
         "remotedev   - Remote development server" \
         "remotetest  - Remote testing/staging server" \
         "production  - Production server"
-    echo
-    
 
-
-    # Prompt for environment selection (show default in green)
-    if type format_default >/dev/null 2>&1; then
-        def_display=$(format_default "$current_env_num")
-        printf "%s [%b]: " "Select environment type (1-4)" "$def_display"
-        read env_input
-        if [ -z "$env_input" ]; then
-            env_input="$current_env_num"
-        fi
-    else
-        # Fallback: use printf + read so ANSI escapes render correctly in some shells
-        printf "%s [%s]: " "Select environment type (1-4)" "$current_env_num"
-        read env_input
-        if [ -z "$env_input" ]; then
-            env_input="$current_env_num"
-        fi
-    fi
-    
-    # Convert number to environment name
-    case "$env_input" in
-        1|localdev)
-            environment_type="localdev"
-            ;;
-        2|remotedev)
-            environment_type="remotedev"
-            ;;
-        3|remotetest)
-            environment_type="remotetest"
-            ;;
-        4|production)
-            environment_type="production"
-            ;;
+    # Map numeric selection to environment name
+    case "$env_idx" in
+        1) environment_type="localdev" ;;
+        2) environment_type="remotedev" ;;
+        3) environment_type="remotetest" ;;
+        4) environment_type="production" ;;
         *)
-            echo "⚠ Invalid selection '$env_input'. Using default: localdev"
-            environment_type="localdev"
-            ;;
+            echo "⚠ Invalid selection '$env_idx'. Using default: localdev"
+            environment_type="localdev" ;;
     esac
-    
+
     echo "✓ Environment type set to: $environment_type"
     
     echo
@@ -458,15 +430,13 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     esac
     
     echo "Available OS families:"
-    # Print OS families using the numbered_list helper
-    numbered_list "$current_os_num" \
+    numbered_list_prompt "$current_os_num" _os_choice os_idx \
         "debian     - Debian, Ubuntu, Mint, Raspbian" \
         "redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux" \
         "suse       - openSUSE, SLES" \
         "arch       - Arch Linux, Manjaro, EndeavourOS" \
         "slackware  - Slackware"
-    echo
-    
+
     # Show detected OS if available
     if [ "$current_os_family" != "unknown" ]; then
         echo "Detected OS family: $current_os_family"
@@ -476,45 +446,17 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
         echo "   are optimized for the detected OS family."
         echo
     fi
-    
-    # Prompt for OS family selection (show default in green)
-    if type format_default >/dev/null 2>&1; then
-        def_display=$(format_default "$current_os_num")
-        printf "%s [%b]: " "Select OS family (1-5)" "$def_display"
-        read os_input
-        if [ -z "$os_input" ]; then
-            os_input="$current_os_num"
-        fi
-    else
-        # Fallback: use printf + read so ANSI escapes render correctly in some shells
-        printf "%s [%s]: " "Select OS family (1-5)" "$current_os_num"
-        read os_input
-        if [ -z "$os_input" ]; then
-            os_input="$current_os_num"
-        fi
-    fi
-    
-    # Convert number to OS family name
-    case "$os_input" in
-        1|debian)
-            selected_os_family="debian"
-            ;;
-        2|redhat)
-            selected_os_family="redhat"
-            ;;
-        3|suse)
-            selected_os_family="suse"
-            ;;
-        4|arch)
-            selected_os_family="arch"
-            ;;
-        5|slackware)
-            selected_os_family="slackware"
-            ;;
+
+    # Map numeric selection to OS family
+    case "$os_idx" in
+        1) selected_os_family="debian" ;;
+        2) selected_os_family="redhat" ;;
+        3) selected_os_family="suse" ;;
+        4) selected_os_family="arch" ;;
+        5) selected_os_family="slackware" ;;
         *)
-            echo "⚠ Invalid selection '$os_input'. Using detected/default: $current_os_family"
-            selected_os_family="$current_os_family"
-            ;;
+            echo "⚠ Invalid selection '$os_idx'. Using detected/default: $current_os_family"
+            selected_os_family="$current_os_family" ;;
     esac
     
     # Check if user selected different OS from detected and ask for confirmation.
@@ -589,43 +531,34 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     echo
     section "Database Storage Configuration:"
     echo "Choose how to store database data:"
-    # Print database storage options using the numbered_list helper
-    numbered_list "$current_storage_num" \
-        "docker-volumes  - Use Docker managed volumes (recommended for most cases)" \
-        "bind-mounts     - Use host filesystem paths (easier for backups)"
-    
-    # Get current storage type from config if it exists
-    current_db_storage=$(grep "^DATABASE_STORAGE_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "docker-volumes")
-    
-    # Convert current storage type to number for display
+    # Determine current storage type (fallback to docker-volumes) and index for display
+    current_db_storage=$(grep "^DATABASE_STORAGE_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "docker-volumes")
     case "$current_db_storage" in
         docker-volumes) current_storage_num="1" ;;
         bind-mounts) current_storage_num="2" ;;
         *) current_storage_num="1" ;;
     esac
-    
-    # Use printf + read to allow colored default display when available
-    printf "%s [%s]: " "Select database storage type (1-2)" "$current_storage_num"
-    read storage_input
-    if [ -z "$storage_input" ]; then
-        storage_input="$current_storage_num"
-    fi
-    
-    case "$storage_input" in
-        1|docker-volumes)
+
+    # Print database storage options and prompt with helper
+    numbered_list_prompt "$current_storage_num" _storage_choice storage_idx \
+        "docker-volumes  - Use Docker managed volumes (recommended for most cases)" \
+        "bind-mounts     - Use host filesystem paths (easier for backups)"
+
+    case "$storage_idx" in
+        1)
             db_storage_type="docker-volumes"
             echo "✓ Using Docker managed volumes for database storage"
             ;;
-        2|bind-mounts)
+        2)
             db_storage_type="bind-mounts"
             echo "✓ Using host filesystem bind mounts for database storage"
-            
+
             # Get the bind mount path if using bind mounts
             current_db_path=$(grep "^DATABASE_HOST_PATH=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "/opt/openproject/data")
             prompt_with_default "Host path for database data" "$current_db_path" "db_host_path"
             ;;
         *)
-            echo "⚠ Invalid selection '$storage_input'. Using default: docker-volumes"
+            echo "⚠ Invalid selection '$storage_idx'. Using default: docker-volumes"
             db_storage_type="docker-volumes"
             ;;
     esac

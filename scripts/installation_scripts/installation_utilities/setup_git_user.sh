@@ -7,9 +7,9 @@ set -e  # Exit on any error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Source UI helpers if available
-if [ -f "$SCRIPT_DIR/../common_ui.sh" ]; then
+if [ -f "$SCRIPT_DIR/../common/common_ui.sh" ]; then
     # shellcheck source=/dev/null
-    source "$SCRIPT_DIR/../common_ui.sh"
+    source "$SCRIPT_DIR/../common/common_ui.sh"
 fi
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/../interactive_config.cfg"

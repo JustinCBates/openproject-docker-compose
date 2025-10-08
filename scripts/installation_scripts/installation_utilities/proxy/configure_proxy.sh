@@ -8,9 +8,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 # Source UI helpers if available
-if [ -f "$SCRIPT_DIR/../../common_ui.sh" ]; then
+if [ -f "$SCRIPT_DIR/../../common/common_ui.sh" ]; then
     # shellcheck source=/dev/null
-    source "$SCRIPT_DIR/../../common_ui.sh"
+    source "$SCRIPT_DIR/../../common/common_ui.sh"
 fi
 # The central interactive_config.cfg lives two levels up from installation_utilities/proxy
 CONFIG_FILE="$SCRIPT_DIR/../../interactive_config.cfg"

@@ -16,9 +16,9 @@ UTILITIES_DIR="$SCRIPT_DIR/installation_utilities"
 CONFIG_FILE="$SCRIPT_DIR/interactive_config.cfg"
 
  # Source common UI helpers if available
- if [ -f "$SCRIPT_DIR/common_ui.sh" ]; then
+ if [ -f "$SCRIPT_DIR/common/common_ui.sh" ]; then
      # shellcheck source=/dev/null
-     source "$SCRIPT_DIR/common_ui.sh"
+     source "$SCRIPT_DIR/common/common_ui.sh"
  fi
 
 # Parse top-level options
