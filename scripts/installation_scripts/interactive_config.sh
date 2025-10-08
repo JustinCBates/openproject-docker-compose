@@ -358,42 +358,11 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     echo
     section "Operating System Configuration:"
     
-    # Function to detect OS family
-    detect_os_family() {
-        if [ -f /etc/os-release ]; then
-            . /etc/os-release
-            case "$ID" in
-                ubuntu|debian|raspbian|linuxmint)
-                    echo "debian"
-                    ;;
-                rhel|centos|fedora|rocky|almalinux|ol)
-                    echo "redhat"
-                    ;;
-                opensuse*|sles|sled)
-                    echo "suse"
-                    ;;
-                arch|manjaro|endeavouros|artix)
-                    echo "arch"
-                    ;;
-                slackware)
-                    echo "slackware"
-                    ;;
-                *)
-                    echo "unknown"
-                    ;;
-            esac
-        elif [ -f /etc/redhat-release ]; then
-            echo "redhat"
-        elif [ -f /etc/debian_version ]; then
-            echo "debian"
-        elif [ -f /etc/arch-release ]; then
-            echo "arch"
-        elif [ -f /etc/slackware-version ]; then
-            echo "slackware"
-        else
-            echo "unknown"
-        fi
-    }
+    # Source OS detection helper from common/
+    if [ -f "$SCRIPT_DIR/common/common_os.sh" ]; then
+        # shellcheck source=/dev/null
+        source "$SCRIPT_DIR/common/common_os.sh"
+    fi
     
     # Prefer system detection for OS family. Only fall back to the saved
     # `OS_FAMILY` from the deployment config when the detection cannot
