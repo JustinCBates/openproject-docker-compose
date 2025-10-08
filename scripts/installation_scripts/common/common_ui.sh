@@ -12,6 +12,8 @@ fi
 
 # Print a smaller subsection heading (single-line bronze label)
 subsection() {
+    # Leading blank line before a subsection
+    printf "\n"
     # Usage: subsection "Title" ["optional multi-line body"]
     local title="$1"
     local body="${2-}"
@@ -28,7 +30,9 @@ subsection() {
         done
     fi
 
-    # Cap computed width to terminal columns (mirror common.sh behavior)
+    # Determine terminal width and cap decorations to it. For subsections we
+    # intentionally use the full terminal width for the top/bottom rule so the
+    # dash line spans the screen.
     local term_w=80
     if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
         local tw
@@ -39,13 +43,10 @@ subsection() {
     elif [ -n "${COLUMNS:-}" ] && [ "${COLUMNS:-0}" -gt 0 ]; then
         term_w=${COLUMNS}
     fi
-    if [ "$maxw" -gt "$term_w" ]; then
-        maxw=$term_w
-    fi
 
-    # Top '=' rule and title
+    # Top '-' rule stretched to full terminal width
     local rule
-    rule=$(printf '%*s' "$maxw" '' | tr ' ' '=')
+    rule=$(printf '%*s' "$term_w" '' | tr ' ' '-')
     if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
         printf "%b\n" "${BRONZE}${rule}${RESET}"
     else
@@ -63,26 +64,20 @@ subsection() {
     fi
 
     if [ -n "$body" ]; then
-        local maxw=0
         for line in $body; do
-                if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                    printf "%b\n" "${SUBDUED}${line}${RESET}"
-                else
-                    printf "%s\n" "$line"
-                fi
-            local l=${#line}
-            if [ "$l" -gt "$maxw" ]; then
-                maxw=$l
+            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+                printf "%b\n" "${SUBDUED}${line}${RESET}"
+            else
+                printf "%s\n" "$line"
             fi
         done
-        if [ "$maxw" -gt 0 ]; then
-            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                local foot
-                foot=$(printf '%*s' "$maxw" '' | tr ' ' '_')
-                printf "%b\n" "${BRONZE}${foot}${RESET}"
-            else
-                printf '%*s\n' "$maxw" '' | tr ' ' '_'
-            fi
+        # Footer underscore line spans the full terminal width as well
+        if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+            local foot
+            foot=$(printf '%*s' "$term_w" '' | tr ' ' '_')
+            printf "%b\n" "${BRONZE}${foot}${RESET}"
+        else
+            printf '%*s\n' "$term_w" '' | tr ' ' '_'
         fi
     fi
 }

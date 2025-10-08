@@ -1,0 +1,171 @@
+==========================================
+OpenProject Interactive Deployment Script
+==========================================
+
+This script will help you deploy OpenProject using Docker Compose.
+You can press Enter to accept default values shown in brackets.
+
+
+[38;5;136m================================================================================[0m
+[38;5;136mCurrent configuration preview:[0m
+[38;5;136m================================================================================[0m
+[2m[38;5;136mSaved configuration (first 200 lines). Review these values before modifying the installer settings.[0m
+[38;5;136m___________________________________________________________________________________________________[0m
+Key settings from configuration:
+PROXY_HTTP_TO_HTTPS_REDIRECT="false"
+OPENPROJECT_HOST_NAME="srv1035368.hstgr.cloud"
+OPENPROJECT_HTTPS="false"
+OPENPROJECT_TAG="16"
+DEFAULT_DBADMIN_PASSWORD="St@tesman1"
+DATABASE_STORAGE_TYPE="docker-volumes"
+GIT_USERNAME="Justin Bates"
+GIT_EMAIL="justincbates@proton.me"
+DOMAIN_NAME="srv1035368.hstgr.cloud"
+SUBDOMAIN=""
+ENVIRONMENT_TYPE="remotedev"
+OS_FAMILY="debian"
+
+Would you like to modify the configuration interactively? (y/n) [[32my[0m]: 
+[38;5;136m================================================================================[0m
+[38;5;136mInteractive Configuration:[0m
+[38;5;136m================================================================================[0m
+[2m[38;5;136mRun through the guided prompts to update deployment settings. Leave a prompt empty to accept the shown default.[0m
+[38;5;136m_______________________________________________________________________________________________________________[0m
+[38;5;136m=================================[0m
+[38;5;136mOpenProject Version Configuration[0m
+[38;5;136m=================================[0m
+This is the tag for the OpenProject repo that this was forked from.
+Not critical for anything right now.  Leaving as default is recommended.
+OpenProject version tag [[32m16[0m]:  
+[38;5;136m==========================[0m
+[38;5;136mEnvironment Configuration:[0m
+[38;5;136m==========================[0m
+[38;5;136m===============================================================================[0m
+[38;5;136mEnvironment Configuration:[0m
+[38;5;136m===============================================================================[0m
+[2m[38;5;136mAvailable environment types:[0m
+[2m[38;5;136mlocaldev    - Local development: single-machine setup for developers. Runs[0m
+[2m[38;5;136m    services in a way that optimizes for quick iteration and debugging, may[0m
+[2m[38;5;136m    enable extra development-only features, and is NOT tuned for production[0m
+[2m[38;5;136m    reliability or security. Use this for local testing, feature work, and when[0m
+[2m[38;5;136m    you don't need high availability.[0m
+[2m[38;5;136mremotedev   - Remote development server: suitable for remote development teams[0m
+[2m[38;5;136m    or staging where multiple developers need access. This configuration is[0m
+[2m[38;5;136m    closer to production in security and networking but still intended for[0m
+[2m[38;5;136m    iterative feature testing rather than live production traffic. Backups and[0m
+[2m[38;5;136m    snapshots are recommended.[0m
+[2m[38;5;136mremotetest  - Remote testing/staging: an environment that mirrors production as[0m
+[2m[38;5;136m    closely as possible for automated testing, QA and pre-release verification.[0m
+[2m[38;5;136m    Use this for load testing and acceptance testing before promoting images to[0m
+[2m[38;5;136m    production. Expect stricter access controls and possibly separate data[0m
+[2m[38;5;136m    stores.[0m
+[2m[38;5;136mproduction  - Production server: configured for security, reliability, and[0m
+[2m[38;5;136m    maintainability. Enables TLS, appropriate persistence, backups, and[0m
+[2m[38;5;136m    monitoring. Only use this configuration when hosting real user data and[0m
+[2m[38;5;136m    traffic.[0m
+[38;5;136m_______________________________________________________________________________[0m
+  1) localdev    - Local development environment
+  [32m2) remotedev   - Remote development server[0m
+  3) remotetest  - Remote testing/staging server
+  4) production  - Production server
+Select an option [[32mremotedev[0m]: ✓ Environment type set to: remotedev
+
+[38;5;136m==========================[0m
+[38;5;136mOpenProject Configuration:[0m
+[38;5;136m==========================[0m
+Enter the hostname for OpenProject [[32msrv1035368.hstgr.cloud[0m]: Enable HTTPS? (true/false) [[32mfalse[0m]: 
+[38;5;136m===================================[0m
+[38;5;136mProxy HTTPS redirect configuration:[0m
+[38;5;136m===================================[0m
+
+[38;5;136m================================================================================[0m
+[38;5;136mProxy HTTPS redirect configuration:[0m
+[38;5;136m================================================================================[0m
+[2m[38;5;136mSecurity note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP. This exposes credentials, cookies, and session tokens to on-path attackers (MITM), and prevents automatic TLS enforcement by browsers. Only disable redirects if you understand and accept these risks.[0m
+[38;5;136m___________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________[0m
+Redirect HTTP to HTTPS? (true/false) [[32mfalse[0m]: ✓ PROXY_HTTP_TO_HTTPS_REDIRECT set to: false
+
+[38;5;136m==================[0m
+[38;5;136mGit Configuration:[0m
+[38;5;136m==================[0m
+Git username [[32mJustin Bates[0m]: Git email [[32mjustincbates@proton.me[0m]: 
+[38;5;136m=======================[0m
+[38;5;136mEndpoint Configuration:[0m
+[38;5;136m=======================[0m
+[38;5;136m================================================================================[0m
+[38;5;136mDomain Configuration:[0m
+[38;5;136m================================================================================[0m
+[2m[38;5;136mDomain is the public host where OpenProject will be available (e.g., example.com).[0m
+[38;5;136m__________________________________________________________________________________[0m
+Domain name (e.g., Statesmen.com) [[32msrv1035368.hstgr.cloud[0m]: [38;5;136m================================================================================[0m
+[38;5;136mSubdomain Configuration:[0m
+[38;5;136m================================================================================[0m
+[2m[38;5;136mOptional subdomain used to namespace projects (leave empty for none). To keep an existing subdomain you must retype it below.[0m
+[38;5;136m_____________________________________________________________________________________________________________________________[0m
+No subdomain currently set
+Subdomain (e.g., StatesmenProjects, leave empty for none): 
+[38;5;136m===============================[0m
+[38;5;136mOperating System Configuration:[0m
+[38;5;136m===============================[0m
+Detected OS family: debian
+
+[31m⚠ WARNING:[0m Changing from the detected OS family may cause errors
+   in the configure and build process. The installation utilities
+   are optimized for the detected OS family.
+
+Available OS families:
+  [32m1) debian     - Debian, Ubuntu, Mint, Raspbian[0m
+  2) redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux
+  3) suse       - openSUSE, SLES
+  4) arch       - Arch Linux, Manjaro, EndeavourOS
+  5) slackware  - Slackware
+Select an option [[32mdebian[0m]: ✓ OS family set to: debian
+
+Database Configuration:
+----------------------
+Set the PostgreSQL database admin password for OpenProject.
+
+This password will be used for:
+• PostgreSQL database administrator access
+• Database initialization and maintenance
+• NOT the OpenProject web application login
+
+Password Security Recommendations:
+• Use at least 12 characters
+• Include uppercase, lowercase, numbers, and symbols
+• Avoid dictionary words or personal information
+• Consider using a password manager
+
+Current PostgreSQL database admin password: St@tesman1
+Keep current database admin password? (y/n) [[32my[0m]: ✓ Using existing database admin password
+
+[38;5;136m===============================[0m
+[38;5;136mDatabase Storage Configuration:[0m
+[38;5;136m===============================[0m
+Choose how to store database data:
+  [32m1) docker-volumes  - Use Docker managed volumes (recommended for most cases)[0m
+  2) bind-mounts     - Use host filesystem paths (easier for backups)
+Select an option [[32mdocker-volumes[0m]: ⚠ Invalid selection '1'. Using default: docker-volumes
+Git username set to: Justin Bates
+Git email set to: justincbates@proton.me
+
+Configuration saved to interactive_config.cfg!
+Note: .env file will be updated during deployment by configure_docker scripts.
+[38;5;136m================================================================================[0m
+[38;5;136mConfiguration saved to: /opt/openproject/scripts/installation_scripts/interactive_config.cfg[0m
+[38;5;136m================================================================================[0m
+
+To deploy OpenProject, run:
+  ./scripts/installation_scripts/deploy.sh
+
+Or use the utility scripts manually:
+  1. ./scripts/installation_scripts/installation_utilities/configure_docker.sh
+  2. ./scripts/installation_scripts/installation_utilities/build_stack.sh
+
+Configuration complete!
+
+Would you like to run the deployment now? (y/n) [[32my[0m]: 
+Starting OpenProject deployment...
+==================================
+(deploy suppressed by --no-deploy flag)
+

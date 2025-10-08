@@ -7,9 +7,39 @@ actually present in this folder.
 Files in this directory
 
 - `interactive_config.sh` - Interactive configuration script. Guides a user
-	through collecting configuration values (hostname, HTTPS choice, tag, domain,
-	subdomain, environment type, OS family, storage selection, and proxy options)
-	and writes them to `interactive_config.cfg` in this directory.
+
+- `interactive_config.sh` - Interactive configuration script.
+		- Purpose: Guides a user through collecting deployment configuration values
+			(OpenProject repo tag, hostname, HTTPS enablement, proxy redirect choice,
+			domain/subdomain, environment type, OS family, DB storage and admin
+			password, Git user/email, and other settings). It persists choices to
+			`interactive_config.cfg` in this directory for use by the deployment
+			orchestrator and utility scripts.
+		- Important flags:
+				- `--no-deploy`  — When provided, the script will save configuration but
+					will not run the full `deploy.sh` at the end. Useful for automated
+					UI tests and demos.
+				- `-h`/`--help`  — Show brief usage information.
+		- Developer notes:
+				- The script uses shared UI helpers from `common/` which provide
+					`section()`, `subsection()`, `supersection()`, color helpers, and
+					prompt helpers. Sections and subsections are used to group related
+					configuration prompts; `supersection()` is a visually stronger
+					heading used for the top-level Interactive Configuration container.
+				- Output coloring is automatic when stdout is a TTY and the terminal
+					reports color support. You can force color by exporting
+					`INSTALLER_FORCE_COLOR=1` into the environment before running the
+					script (useful for capturing colorized transcripts).
+		- Non-interactive / test-friendly usage:
+				- Capture a safe, reproducible transcript by running the script with
+					`--no-deploy` under a pty recorder (the repository includes
+					`scripts/installation_scripts/tests/generate_interactive_transcript.sh`
+					to automate this). The generated transcript file preserves ANSI
+					escapes and can be replayed to a terminal using the provided
+					`play_interactive_transcript.sh` helper (also located under
+					`scripts/installation_scripts/tests/`).
+				- For automated tests you can pipe default answers into the script or
+					use the `--no-deploy` flag to avoid performing a full deployment.
 
 - `interactive_config.cfg` - (Generated) configuration file created by
 	`interactive_config.sh`. It stores OPENPROJECT_* environment variables that are

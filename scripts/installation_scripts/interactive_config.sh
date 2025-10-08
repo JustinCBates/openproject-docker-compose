@@ -42,6 +42,9 @@ if [ -f "$SCRIPT_DIR/common/common_ui.sh" ]; then
     source "$SCRIPT_DIR/common/common_ui.sh"
 fi
 
+# `supersection()` is provided by the shared common helpers (common.sh).
+# The shared implementation renders a stronger, more prominent heading.
+
 # Configuration file for storing deployment settings
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_CONFIG="$SCRIPT_DIR/interactive_config.cfg"
@@ -93,7 +96,11 @@ if [ ! -f "docker-compose.yml" ]; then
 fi
 
 echo
-section "Current configuration preview:" "Saved configuration (first 200 lines). Review these values before modifying the installer settings."
+cfg_preview_body=$(cat <<'EOF'
+Preview of the existing `interactive_config.cfg` (truncated). Confirm or update values in the following prompts.
+EOF
+)
+section "Current configuration preview:" "$cfg_preview_body"
 if [ -f "$DEPLOY_CONFIG" ]; then
     echo "Key settings from configuration:"
     # Print all non-empty lines from the deployment config so users can see the full saved state.
@@ -111,7 +118,7 @@ echo
 
 if validate_yn "Would you like to modify the configuration interactively?" "y"; then
     echo
-    section "Interactive Configuration:" "Run through the guided prompts to update deployment settings. Leave a prompt empty to accept the shown default."
+    supersection "Interactive Configuration:" "Follow a guided prompt sequence to gather deployment settings. Press Enter to accept any default shown. Changes are saved to interactive_config.cfg."
     
     # Read current values from config file if they exist. This enumerates
     # known keys found in interactive_config.cfg so the interactive prompts
@@ -151,15 +158,51 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     current_git_user=$(git config --global user.name 2>/dev/null || echo "")
     current_git_email=$(git config --global user.email 2>/dev/null || echo "")
 
-    subsection "OpenProject Version Configuration"
-    echo "This is the tag for the OpenProject repo that this was forked from."
-    echo "Not critical for anything right now.  Leaving as default is recommended."
+    # Repo Settings
+    repo_body=$(cat <<'EOF'
+Repository and git configuration for OpenProject.
+EOF
+)
+    section "Repo Settings" "$repo_body"
+    git_version_body=$(cat <<'EOF'
+Choose the OpenProject repository tag (release or branch) to deploy. If unsure, use the default stable tag.
+EOF
+)
+    subsection "OpenProject Version Configuration" "$git_version_body"
     # Prompt for OpenProject version tag before environment selection
     prompt_with_default "OpenProject version tag" "$current_tag" "op_tag"
     echo " "
 
-    section "Environment Configuration:"    
+    git_cfg_body=$(cat <<'EOF'
+Enter the Git user.name and user.email used by installer scripts when creating or patching local artifacts (commits, config templates). These values become global git config if provided.
+EOF
+)
+    subsection "Git Configuration" "$git_cfg_body"
+    # Get Git configuration from config file first, then fall back to global git config
+    current_git_user_cfg=$(grep "^GIT_USERNAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+    current_git_email_cfg=$(grep "^GIT_EMAIL=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+    
+    # Use config file values if they exist, otherwise use global git config
+    if [ -n "$current_git_user_cfg" ]; then
+        current_git_user="$current_git_user_cfg"
+    fi
+    if [ -n "$current_git_email_cfg" ]; then
+        current_git_email="$current_git_email_cfg"
+    fi
+    
+    # If still no values, provide helpful defaults
+    if [ -z "$current_git_user" ]; then
+        current_git_user="$(whoami)"
+    fi
+    if [ -z "$current_git_email" ]; then
+        current_git_email="$(whoami)@$(hostname -f)"
+    fi
+    
+    prompt_with_default "Git username" "$current_git_user" "git_username"
+    prompt_with_default "Git email" "$current_git_email" "git_email"
 
+    # Environment Configuration
+    section "Environment Configuration:"    
     # Get current environment type from config if it exists
     current_env_type=$(grep "^ENVIRONMENT_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "localdev")
     
@@ -191,8 +234,8 @@ production  - Production server: configured for security, reliability, and
     traffic.
 EOF
 )
-        section "Environment Configuration:" "$env_body"
-        # Use numbered_list_prompt to print list, prompt and validate selection.
+    subsection "Environment Configuration" "$env_body"
+    # Use numbered_list_prompt to print list, prompt and validate selection.
     # Pass the token default (e.g. 'localdev') and let the helper map it to
     # the numeric default internally.
     numbered_list_prompt "$current_env_type" env_token env_idx \
@@ -205,89 +248,19 @@ EOF
     environment_type="$env_token"
     echo "✓ Environment type set to: $environment_type"
     
-    echo
-    section "OpenProject Configuration:"
-    prompt_with_default "Enter the hostname for OpenProject" "$current_host" "host_name"
-    prompt_with_default "Enable HTTPS? (true/false)" "$current_https" "use_https"
-
-    echo
-    section "Proxy HTTPS redirect configuration:"
-    # Default redirect behavior: true if HTTPS enabled, false otherwise
-    use_https_lc=$(echo "$use_https" | tr '[:upper:]' '[:lower:]')
-    if [ "$use_https_lc" = "true" ]; then
-        default_redirect="true"
-    else
-        default_redirect="false"
-    fi
-
-    echo
-    section "Proxy HTTPS redirect configuration:" "Security note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP. This exposes credentials, cookies, and session tokens to on-path attackers (MITM), and prevents automatic TLS enforcement by browsers. Only disable redirects if you understand and accept these risks."
-
-    if validate_tf "Redirect HTTP to HTTPS?" "$default_redirect"; then
-        proxy_redirect="true"
-    else
-        proxy_redirect="false"
-    fi
-
-    # Persist the choice to the deployment config
-    save_config "PROXY_HTTP_TO_HTTPS_REDIRECT" "$proxy_redirect"
-    echo "✓ PROXY_HTTP_TO_HTTPS_REDIRECT set to: $proxy_redirect"
-    
-    echo
-    section "Git Configuration:"
-    
-    # Get Git configuration from config file first, then fall back to global git config
-    current_git_user_cfg=$(grep "^GIT_USERNAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
-    current_git_email_cfg=$(grep "^GIT_EMAIL=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
-    
-    # Use config file values if they exist, otherwise use global git config
-    if [ -n "$current_git_user_cfg" ]; then
-        current_git_user="$current_git_user_cfg"
-    fi
-    if [ -n "$current_git_email_cfg" ]; then
-        current_git_email="$current_git_email_cfg"
-    fi
-    
-    # If still no values, provide helpful defaults
-    if [ -z "$current_git_user" ]; then
-        current_git_user="$(whoami)"
-    fi
-    if [ -z "$current_git_email" ]; then
-        current_git_email="$(whoami)@$(hostname -f)"
-    fi
-    
-    prompt_with_default "Git username" "$current_git_user" "git_username"
-    prompt_with_default "Git email" "$current_git_email" "git_email"
-    
-    echo
-    section "Endpoint Configuration:"
-    # Get current domain values from config if they exist
-    subsection "Domain Configuration:" "Domain is the public host where OpenProject will be available (e.g., example.com)."
-    current_domain=$(grep "^DOMAIN_NAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
-    prompt_with_default "Domain name (e.g., Statesmen.com)" "$current_domain" "domain_name"
-
-    subsection "Subdomain Configuration:" "Optional subdomain used to namespace projects (leave empty for none). To keep an existing subdomain you must retype it below."
-    current_subdomain=$(grep "^SUBDOMAIN=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
-        
-    # Handle subdomain differently - inform user of current value, no default
-    if [ -n "$current_subdomain" ]; then
-    # Use caution() to print a yellow caution message with a symbol
-    caution "To keep the current subdomain [$current_subdomain] you must retype it below; leaving the prompt empty will remove the subdomain."
-    prompt_with_default "Subdomain (leave empty to remove current subdomain, or enter new value)" "" "subdomain"
-    else
-        echo "No subdomain currently set"
-        prompt_with_default "Subdomain (e.g., StatesmenProjects, leave empty for none)" "" "subdomain"
-    fi
-    
-    echo
-    section "Operating System Configuration:"
+    # Operating System Configuration (moved under Environment Configuration)
+    os_sub_body=$(cat <<'EOF'
+Select the OS family (Debian, RedHat, SUSE, Arch, Slackware). Installer steps and package commands will be tailored to this choice. Use the detected OS when possible.
+EOF
+)
+    subsection "Operating System Configuration" "$os_sub_body"
     
     # Source OS detection helper from common/
     if [ -f "$SCRIPT_DIR/common/common_os.sh" ]; then
         # shellcheck source=/dev/null
         source "$SCRIPT_DIR/common/common_os.sh"
     fi
-    
+
     # Prefer system detection for OS family. Only fall back to the saved
     # `OS_FAMILY` from the deployment config when the detection cannot
     # identify the system (returns 'unknown' or empty).
@@ -304,7 +277,6 @@ EOF
             current_os_family="$detected_os_family"
         fi
     fi
-    
 
     # Show detected OS if available
     if [ "$current_os_family" != "unknown" ]; then
@@ -362,23 +334,96 @@ EOF
         os_family="$selected_os_family"
         echo "✓ OS family set to: $os_family"
     fi
+    echo
+    web_host_body=$(cat <<'EOF'
+Provide the public hostname where OpenProject will be served (e.g., example.com). Enable HTTPS if you have or will configure TLS certificates.
+EOF
+)
+    subsection "Web Configuration" "$web_host_body"
+    prompt_with_default "Enter the hostname for OpenProject" "$current_host" "host_name"
+    prompt_with_default "Enable HTTPS? (true/false)" "$current_https" "use_https"
+
+    echo
+    subsection "Web Configuration" "Proxy and TLS redirect settings."
+    # Default redirect behavior: true if HTTPS enabled, false otherwise
+    use_https_lc=$(echo "$use_https" | tr '[:upper:]' '[:lower:]')
+    if [ "$use_https_lc" = "true" ]; then
+        default_redirect="true"
+    else
+        default_redirect="false"
+    fi
+
+    echo
+    proxy_body=$(cat <<'EOF'
+Security note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP. This exposes credentials, cookies, and session tokens to on-path attackers (MITM), and prevents automatic TLS enforcement by browsers. Only disable redirects if you understand and accept these risks.
+EOF
+)
+    subsection "Proxy HTTPS redirect configuration" "$proxy_body"
+
+    if validate_tf "Redirect HTTP to HTTPS?" "$default_redirect"; then
+        proxy_redirect="true"
+    else
+        proxy_redirect="false"
+    fi
+
+    # Persist the choice to the deployment config
+    save_config "PROXY_HTTP_TO_HTTPS_REDIRECT" "$proxy_redirect"
+    echo "✓ PROXY_HTTP_TO_HTTPS_REDIRECT set to: $proxy_redirect"
     
     echo
-    echo "Database Configuration:"
-    echo "----------------------"
-    echo "Set the PostgreSQL database admin password for OpenProject."
-    echo ""
-    echo "This password will be used for:"
-    echo "• PostgreSQL database administrator access"
-    echo "• Database initialization and maintenance"
-    echo "• NOT the OpenProject web application login"
-    echo ""
-    echo "Password Security Recommendations:"
-    echo "• Use at least 12 characters"
-    echo "• Include uppercase, lowercase, numbers, and symbols"
-    echo "• Avoid dictionary words or personal information"
-    echo "• Consider using a password manager"
-    echo ""
+    
+    echo
+    web_endpoint_body=$(cat <<'EOF'
+Domain and subdomain endpoint settings.
+EOF
+)
+    section "Web Endpoint URL Configuration" "$web_endpoint_body"
+    # Get current domain values from config if they exist
+    domain_body=$(cat <<'EOF'
+Domain is the public host where OpenProject will be available (e.g., example.com).
+EOF
+)
+    subsection "Domain Configuration:" "$domain_body"
+    current_domain=$(grep "^DOMAIN_NAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+    prompt_with_default "Domain name (e.g., Statesmen.com)" "$current_domain" "domain_name"
+
+    subdomain_body=$(cat <<'EOF'
+Optional subdomain used to namespace projects (leave empty for none). To keep an existing subdomain you must retype it below.
+EOF
+)
+    subsection "Subdomain Configuration" "$subdomain_body"
+    current_subdomain=$(grep "^SUBDOMAIN=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+        
+    # Handle subdomain differently - inform user of current value, no default
+    if [ -n "$current_subdomain" ]; then
+    # Use caution() to print a yellow caution message with a symbol
+    caution "To keep the current subdomain [$current_subdomain] you must retype it below; leaving the prompt empty will remove the subdomain."
+    prompt_with_default "Subdomain (leave empty to remove current subdomain, or enter new value)" "" "subdomain"
+    else
+        echo "No subdomain currently set"
+        prompt_with_default "Subdomain (e.g., StatesmenProjects, leave empty for none)" "" "subdomain"
+    fi
+    
+    
+    
+    echo
+    section "Database Configuration:"
+    dbpw_body=$(cat <<'EOF'
+PostgreSQL administrator password used for DB initialization and maintenance.
+
+This password will be used for:
+• PostgreSQL database administrator access
+• Database initialization and maintenance
+• NOT the OpenProject web application login
+
+Password Security Recommendations:
+• Use at least 12 characters
+• Include uppercase, lowercase, numbers, and symbols
+• Avoid dictionary words or personal information
+• Consider using a password manager
+EOF
+)
+    subsection "Database Password" "$dbpw_body"
     
     # Get current database admin password from config if it exists (for re-runs)
     current_default_admin_password=$(grep "^DEFAULT_DBADMIN_PASSWORD=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
@@ -407,8 +452,11 @@ EOF
     fi
     
     echo
-    section "Database Storage Configuration:"
-    echo "Choose how to store database data:"
+    db_storage_body=$(cat <<'EOF'
+Choose how to store database data and where it will reside on the host.
+EOF
+)
+    subsection "Database Storage" "$db_storage_body"
     # Determine current storage type (fallback to docker-volumes) and index for display
     current_db_storage=$(grep "^DATABASE_STORAGE_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "docker-volumes")
     case "$current_db_storage" in
