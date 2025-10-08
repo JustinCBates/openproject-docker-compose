@@ -15,6 +15,25 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 UTILITIES_DIR="$SCRIPT_DIR/installation_utilities"
 CONFIG_FILE="$SCRIPT_DIR/interactive_config.cfg"
 
+# Parse top-level options
+DRY_RUN=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -n|--dry-run)
+            DRY_RUN=1
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            # stop parsing other arguments (not supported)
+            break
+            ;;
+    esac
+done
+
 # Check if configuration file exists
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Error: Configuration file not found at $CONFIG_FILE"
@@ -54,86 +73,32 @@ else
 fi
 echo
 
-# TODO: Add more utility scripts as they are created
-# echo "Step 2: Validating Environment..."
-# echo "================================="
-# if [ -f "$UTILITIES_DIR/01-validate-environment.sh" ]; then
-#     "$UTILITIES_DIR/01-validate-environment.sh"
-#     echo "✓ Environment validation completed"
-# else
-#     echo "⚠ Warning: 01-validate-environment.sh not found, skipping"
-# fi
-# echo
+echo "Step 3: Configuring Docker..."
+echo "============================"
+if [ -f "$UTILITIES_DIR/configure_docker.sh" ]; then
+    echo "Executing Docker configuration dispatcher..."
+    "$UTILITIES_DIR/configure_docker.sh"
+    echo "✓ Docker configuration completed"
+else
+    echo "⚠ Warning: configure_docker.sh dispatcher not found, skipping Docker configuration"
+fi
+echo
 
-# echo "Step 3: Setting up Directories..."
-# echo "================================="
-# if [ -f "$UTILITIES_DIR/02-setup-directories.sh" ]; then
-#     "$UTILITIES_DIR/02-setup-directories.sh"
-#     echo "✓ Directory setup completed"
-# else
-#     echo "⚠ Warning: 02-setup-directories.sh not found, skipping"
-# fi
-# echo
-
-# echo "Step 4: Configuring Docker Compose..."
-# echo "====================================="
-# if [ -f "$UTILITIES_DIR/03-configure-docker-compose.sh" ]; then
-#     "$UTILITIES_DIR/03-configure-docker-compose.sh"
-#     echo "✓ Docker Compose configuration completed"
-# else
-#     echo "⚠ Warning: 03-configure-docker-compose.sh not found, skipping"
-# fi
-# echo
-
-# echo "Step 5: Setting up HTTPS..."
-# echo "=========================="
-# if [ -f "$UTILITIES_DIR/04-setup-https.sh" ]; then
-#     "$UTILITIES_DIR/04-setup-https.sh"
-#     echo "✓ HTTPS setup completed"
-# else
-#     echo "⚠ Warning: 04-setup-https.sh not found, skipping"
-# fi
-# echo
-
-# echo "Step 6: Configuring Networking..."
-# echo "================================="
-# if [ -f "$UTILITIES_DIR/05-configure-networking.sh" ]; then
-#     "$UTILITIES_DIR/05-configure-networking.sh"
-#     echo "✓ Networking configuration completed"
-# else
-#     echo "⚠ Warning: 05-configure-networking.sh not found, skipping"
-# fi
-# echo
-
-# echo "Step 7: Setting up SMTP..."
-# echo "========================="
-# if [ -f "$UTILITIES_DIR/06-setup-smtp.sh" ]; then
-#     "$UTILITIES_DIR/06-setup-smtp.sh"
-#     echo "✓ SMTP setup completed"
-# else
-#     echo "⚠ Warning: 06-setup-smtp.sh not found, skipping"
-# fi
-# echo
-
-# echo "Step 8: Applying Configuration..."
-# echo "================================="
-# if [ -f "$UTILITIES_DIR/07-apply-configuration.sh" ]; then
-#     "$UTILITIES_DIR/07-apply-configuration.sh"
-#     echo "✓ Configuration applied"
-# else
-#     echo "⚠ Warning: 07-apply-configuration.sh not found, skipping"
-# fi
-# echo
-
-# echo "Step 9: Health Check..."
-# echo "======================"
-# if [ -f "$UTILITIES_DIR/08-health-check.sh" ]; then
-#     "$UTILITIES_DIR/08-health-check.sh"
-#     echo "✓ Health check completed"
-# else
-#     echo "⚠ Warning: 08-health-check.sh not found, skipping"
-# fi
-# echo
+echo "Step 4: Building the stack..."
+echo "============================"
+if [ -f "$UTILITIES_DIR/build_stack.sh" ]; then
+    echo "Executing Build Stack dispatcher..."
+    if [ "$DRY_RUN" -eq 1 ]; then
+        echo "Note: running in dry-run mode — no images will be built or pulled"
+        "$UTILITIES_DIR/build_stack.sh" --dry-run
+    else
+        "$UTILITIES_DIR/build_stack.sh"
+    fi
+    echo "✓ Docker Build Stack  completed"
+else
+    echo "⚠ Warning: build_stack.sh dispatcher not found, skipping Docker Build Stack"
+fi
+echo
 
 echo "=========================================="
 echo "Deployment process completed!"

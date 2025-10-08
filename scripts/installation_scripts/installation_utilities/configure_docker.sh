@@ -10,7 +10,7 @@ CONFIG_FILE="$SCRIPT_DIR/../interactive_config.cfg"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 echo "=========================================="
-echo "Universal Docker Configuration Utility"
+echo " Docker Configuration Utility"
 echo "=========================================="
 
 # Function to load configuration

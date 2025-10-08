@@ -1,0 +1,3 @@
+[2025-10-08T03:38:05+00:00] docker compose stderr (exit=0):
+services must be a mapping
+

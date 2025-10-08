@@ -9,6 +9,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/../../interactive_config.cfg"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 
+# Source common helpers if present
+COMMON_SH="$SCRIPT_DIR/../../common/common.sh"
+if [ -f "$COMMON_SH" ]; then
+    # shellcheck source=/dev/null
+    source "$COMMON_SH"
+fi
+
 echo "=========================================="
 echo "Debian-specific OpenProject Stack Builder"
 echo "=========================================="
@@ -87,17 +94,36 @@ pull_images() {
     # Use BuildKit for improved performance (set in .env by configure_docker.debian.sh)
     export DOCKER_BUILDKIT=1
     export COMPOSE_DOCKER_CLI_BUILD=1
-    # Determine services that do NOT have a local build context and pull only those
+    # Prefer Compose's built-in behavior when available: pull --ignore-buildable
+    # This avoids heuristics and prevents pull from failing on locally-buildable services.
+    cd "$PROJECT_ROOT"
+
+    # Check if the compose command supports --ignore-buildable
+    if $COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml pull --help 2>/dev/null | grep -q -- '--ignore-buildable'; then
+        echo "Using compose pull --ignore-buildable to skip locally-buildable services"
+        $COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml pull --ignore-buildable || true
+        echo "✓ Docker images pulled (ignored buildable services)"
+        return 0
+    fi
+
+    # Fallback: determine services that do NOT have a local build context and pull only those
     # Get rendered compose config and service list
     rendered_cfg=$($COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml config 2>/dev/null || true)
     services=$($COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml config --services 2>/dev/null || true)
 
     no_build_services=()
     for svc in $services; do
-        # Use docker compose to render the service config and check for a 'build' key
+        # Fast heuristic: if there's a local directory matching the service that contains a Dockerfile,
+        # treat it as a local-build service and skip pulling.
+        if [ -d "$svc" ] && [ -f "$svc/Dockerfile" ]; then
+            echo "Skipping pull for locally-built service (found $svc/Dockerfile): $svc"
+            continue
+        fi
+
+        # Fallback: inspect the rendered service config for a 'build:' key
         svc_cfg=$($COMPOSE_CMD -f docker-compose.yml -f docker-compose.override.yml config --service "$svc" 2>/dev/null || true)
         if printf "%s" "$svc_cfg" | grep -q "^[[:space:]]*build:"; then
-            # service has a build context; skip pulling
+            echo "Skipping pull for service with build context in compose: $svc"
             continue
         else
             no_build_services+=("$svc")
@@ -112,6 +138,88 @@ pull_images() {
     fi
     
     echo "✓ Docker images pulled successfully"
+}
+
+# Function to show plan (dry-run): which services will be built vs pulled
+show_plan() {
+    set +e
+    echo "Dry-run: computing build vs pull plan for services..."
+    # Ensure compose is run from the project root to avoid context-dependent failures
+    cd "$PROJECT_ROOT"
+
+    # Prefer to detect compose command using the common helper if available
+    if command -v detect_compose_cmd >/dev/null 2>&1; then
+        compose_cmd=$(detect_compose_cmd) || compose_cmd="docker compose"
+    else
+        if command -v docker-compose >/dev/null 2>&1; then
+            compose_cmd="docker-compose"
+        else
+            compose_cmd="docker compose"
+        fi
+    fi
+
+    # Ensure logs directory exists and prepare dated logfile
+    mkdir -p "$PROJECT_ROOT/logs"
+    log_file="$PROJECT_ROOT/logs/compose-$(date +%F).log"
+
+    # Capture stderr to the dated log file and also to a temp file for immediate tailing
+    tmperr=$(mktemp /tmp/compose_services.err.XXXXXX)
+    services=$($compose_cmd -f docker-compose.yml -f docker-compose.override.yml config --services 2>"$tmperr" || true)
+    compose_exit=$?
+
+    # Append the captured stderr to the persistent log with a timestamped header
+    if [ -s "$tmperr" ]; then
+        printf "[%s] docker compose stderr (exit=%s):\n" "$(date --iso-8601=seconds)" "$compose_exit" >> "$log_file" || true
+        cat "$tmperr" >> "$log_file" || true
+        printf "\n" >> "$log_file" || true
+    fi
+
+    if [ $compose_exit -ne 0 ]; then
+        echo "docker compose returned exit code: $compose_exit" >&2
+        echo "---- compose stderr (tail, persisted in $log_file) ----" >&2
+        tail -n 200 "$tmperr" >&2 || true
+        echo "---- end compose stderr ----" >&2
+    fi
+
+    # Remove temp file
+    rm -f "$tmperr" || true
+
+    if [ -z "$services" ]; then
+        echo "No services found or compose config failed. Run 'docker compose config' for details." >&2
+        # If we captured a stderr file, show first lines to help debugging
+        if [ -f /tmp/compose_services.err ]; then
+            echo "Captured compose stderr (first 200 lines):" >&2
+            sed -n '1,200p' /tmp/compose_services.err >&2 || true
+        fi
+        set -e
+        return 1
+    fi
+
+    printf "%-20s %-10s %s\n" "SERVICE" "ACTION" "REASON"
+    printf "%-20s %-10s %s\n" "-------" "------" "------"
+
+    build_count=0
+    pull_count=0
+
+    for svc in $services; do
+        action_reason=$(decide_service_action "$PROJECT_ROOT" "$svc" 2>/dev/null || true)
+        action=${action_reason%%|*}
+        reason=${action_reason#*|}
+
+        if [ "$action" = "build" ]; then
+            printf "%-20s %-10s %s\n" "$svc" "build" "$reason"
+            ((build_count++))
+        else
+            printf "%-20s %-10s %s\n" "$svc" "pull" "$reason"
+            ((pull_count++))
+        fi
+    done
+
+    echo
+    echo "Plan summary: $build_count services will be built locally, $pull_count services will be pulled." 
+
+    set -e
+    return 0
 }
 
 # Function to build custom images if needed
@@ -337,9 +445,19 @@ main() {
     echo
     
     # Build proxy image via helper if present (keeps proxy build logic in its own script)
-    if [ -f "$SCRIPT_DIR/../proxy/build_proxy.sh" ]; then
-        "$SCRIPT_DIR/../proxy/build_proxy.sh"
-        echo
+    if [ "${DRY_RUN:-0}" != "1" ]; then
+        if [ -f "$SCRIPT_DIR/../proxy/build_proxy.sh" ]; then
+            "$SCRIPT_DIR/../proxy/build_proxy.sh"
+            echo
+        fi
+    else
+        echo "Dry-run: skipping proxy build helper"
+    fi
+
+    # If dry-run requested, show the plan and exit
+    if [ "${DRY_RUN:-0}" = "1" ]; then
+        show_plan
+        return 0
     fi
 
     # Build custom images if needed (do this before pulling so services with local build contexts are built locally)

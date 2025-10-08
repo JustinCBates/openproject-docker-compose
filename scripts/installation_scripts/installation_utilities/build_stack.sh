@@ -9,6 +9,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/../interactive_config.cfg"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
+# Parse common options
+DRY_RUN=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -n|--dry-run)
+            DRY_RUN=1
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            # stop parsing on first non-option
+            break
+            ;;
+    esac
+done
+export DRY_RUN
+
 echo "=========================================="
 echo "Universal OpenProject Stack Builder"
 echo "=========================================="
