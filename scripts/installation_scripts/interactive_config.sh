@@ -396,7 +396,7 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     esac
 
     # Prompt for OS family and use token directly
-    numbered_list_prompt "$current_os_num" os_token os_idx \
+    numbered_list_prompt "$current_os_family" os_token os_idx \
         "debian     - Debian, Ubuntu, Mint, Raspbian" \
         "redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux" \
         "suse       - openSUSE, SLES" \
@@ -485,7 +485,7 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     esac
 
     # Print database storage options and prompt with helper
-    numbered_list_prompt "$current_storage_num" storage_token storage_idx \
+    numbered_list_prompt "$current_db_storage" storage_token storage_idx \
         "docker-volumes  - Use Docker managed volumes (recommended for most cases)" \
         "bind-mounts     - Use host filesystem paths (easier for backups)"
 
