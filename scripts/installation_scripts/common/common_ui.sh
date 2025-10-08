@@ -104,11 +104,15 @@ format_default() {
 # Generic separator that renders headings and optional multi-line bodies.
 # style: one of 'section', 'supersection', 'subsection'
 separator() {
+    # separator style, title, body, header_char, foot_char, header_color, title_color, body_color
     local style="$1"
     local title="$2"
     local body="${3-}"
     local header_char="${4:-}"
     local foot_char="${5:-_}"
+    local header_color="${6:-}"
+    local title_color="${7:-}"
+    local body_color="${8:-}"
     local IFS=$'\n'
 
     # Terminal width detection
@@ -147,6 +151,21 @@ separator() {
         esac
     fi
 
+    # Determine color defaults if not passed in
+    if [ -z "$header_color" ]; then
+        header_color="${BRONZE}"
+    fi
+    if [ -z "$title_color" ]; then
+        if [ "$style" = "supersection" ]; then
+            title_color="${YELLOW}"
+        else
+            title_color="${BRONZE}"
+        fi
+    fi
+    if [ -z "$body_color" ]; then
+        body_color="${SUBDUED}"
+    fi
+
     # Render header according to style (preserve blanks/padding)
     case "$style" in
         supersection)
@@ -154,9 +173,9 @@ separator() {
             local header
             header=$(printf '%*s' "$content_w" '' | tr ' ' "$header_char")
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${BRONZE}${header}${RESET}"
-                printf "%b\n" "${YELLOW}${title}${RESET}"
-                printf "%b\n" "${BRONZE}${header}${RESET}"
+                printf "%b\n" "${header_color}${header}${RESET}"
+                printf "%b\n" "${title_color}${title}${RESET}"
+                printf "%b\n" "${header_color}${header}${RESET}"
             else
                 printf "%s\n" "$header"
                 printf "%s\n" "$title"
@@ -168,9 +187,9 @@ separator() {
             local header
             header=$(printf '%*s' "$content_w" '' | tr ' ' "$header_char")
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${BRONZE}${header}${RESET}"
-                printf "%b\n" "${BRONZE}${title}${RESET}"
-                printf "%b\n" "${BRONZE}${header}${RESET}"
+                printf "%b\n" "${header_color}${header}${RESET}"
+                printf "%b\n" "${title_color}${title}${RESET}"
+                printf "%b\n" "${header_color}${header}${RESET}"
             else
                 printf "%s\n" "$header"
                 printf "%s\n" "$title"
@@ -182,13 +201,17 @@ separator() {
             local header
             header=$(printf '%*s' "$content_w" '' | tr ' ' "$header_char")
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${BRONZE}${header}${RESET}"
+                printf "%b\n" "${header_color}${header}${RESET}"
             else
                 printf "%s\n" "$header"
             fi
-            echo -e "${BRONZE}${title}${RESET}"
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${BRONZE}${header}${RESET}"
+                printf "%b\n" "${title_color}${title}${RESET}"
+            else
+                printf "%s\n" "$title"
+            fi
+            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+                printf "%b\n" "${header_color}${header}${RESET}"
             else
                 printf "%s\n" "$header"
             fi
@@ -200,7 +223,8 @@ separator() {
         local maxb=0
         for line in $body; do
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%s\n" "${SUBDUED}${line}${RESET}"
+                # Use provided body_color so callers can customize subdued style
+                printf "%s\n" "${body_color}${line}${RESET}"
             else
                 printf "%s\n" "$line"
             fi
