@@ -1,10 +1,8 @@
 #!/bin/bash
 
-#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-DEPLOY_CONFIG="$SCRIPT_DIR/interactive_config.cfg"penProject Interactive Deployment Script
+# OpenProject Interactive Deployment Script
 # This script provides an interactive way to deploy OpenProject with Docker Compose
-# Configuration is saved to .deploy file for use by utility scripts
+# Configuration is saved to interactive_config.cfg for use by utility scripts
 
 set -e  # Exit on any error
 
@@ -27,13 +25,20 @@ save_config() {
         grep -v "^$key=" "$DEPLOY_CONFIG" > "${DEPLOY_CONFIG}.tmp" 2>/dev/null || true
         mv "${DEPLOY_CONFIG}.tmp" "$DEPLOY_CONFIG" 2>/dev/null || true
     fi
-    echo "$key=$value" >> "$DEPLOY_CONFIG"
+    # Quote the value to handle spaces and special characters
+    echo "$key=\"$value\"" >> "$DEPLOY_CONFIG"
 }
 
 # Function to load configuration from interactive_config.cfg file
 load_config() {
     if [ -f "$DEPLOY_CONFIG" ]; then
-        source "$DEPLOY_CONFIG"
+        # Source the config file, which now contains properly quoted values
+        source "$DEPLOY_CONFIG" 2>/dev/null || {
+            echo "⚠ Warning: Could not load configuration file. It may be corrupted."
+            echo "  File: $DEPLOY_CONFIG"
+            echo "  Starting with fresh configuration..."
+            return 1
+        }
     fi
 }
 
@@ -58,14 +63,39 @@ prompt_with_default() {
 # Function to validate yes/no input
 confirm() {
     local prompt="$1"
-    while true; do
-        read -p "$prompt (y/n): " yn
-        case $yn in
-            [Yy]* ) return 0;;
-            [Nn]* ) return 1;;
-            * ) echo "Please answer yes or no.";;
-        esac
-    done
+    local default="$2"
+    
+    if [ -n "$default" ]; then
+        local display_default
+        if [ "$default" = "y" ]; then
+            display_default="Y/n"
+        else
+            display_default="y/N"
+        fi
+        
+        while true; do
+            read -p "$prompt ($display_default): " yn
+            # If empty input, use default
+            if [ -z "$yn" ]; then
+                yn="$default"
+            fi
+            case $yn in
+                [Yy]* ) return 0;;
+                [Nn]* ) return 1;;
+                * ) echo "Please answer yes or no.";;
+            esac
+        done
+    else
+        # Original behavior when no default provided
+        while true; do
+            read -p "$prompt (y/n): " yn
+            case $yn in
+                [Yy]* ) return 0;;
+                [Nn]* ) return 1;;
+                * ) echo "Please answer yes or no.";;
+            esac
+        done
+    fi
 }
 
 echo "This script will help you deploy OpenProject using Docker Compose."
@@ -105,7 +135,7 @@ if [ -f ".env" ]; then
 fi
 echo
 
-if confirm "Would you like to modify the configuration interactively?"; then
+if confirm "Would you like to modify the configuration interactively?" "y"; then
     echo
     echo "Interactive Configuration:"
     echo "========================="
@@ -178,6 +208,27 @@ if confirm "Would you like to modify the configuration interactively?"; then
     echo
     echo "Git Configuration:"
     echo "-----------------"
+    
+    # Get Git configuration from config file first, then fall back to global git config
+    current_git_user_cfg=$(grep "^GIT_USERNAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+    current_git_email_cfg=$(grep "^GIT_EMAIL=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+    
+    # Use config file values if they exist, otherwise use global git config
+    if [ -n "$current_git_user_cfg" ]; then
+        current_git_user="$current_git_user_cfg"
+    fi
+    if [ -n "$current_git_email_cfg" ]; then
+        current_git_email="$current_git_email_cfg"
+    fi
+    
+    # If still no values, provide helpful defaults
+    if [ -z "$current_git_user" ]; then
+        current_git_user="$(whoami)"
+    fi
+    if [ -z "$current_git_email" ]; then
+        current_git_email="$(whoami)@$(hostname -f)"
+    fi
+    
     prompt_with_default "Git username" "$current_git_user" "git_username"
     prompt_with_default "Git email" "$current_git_email" "git_email"
     
@@ -185,8 +236,8 @@ if confirm "Would you like to modify the configuration interactively?"; then
     echo "Domain Configuration:"
     echo "--------------------"
     # Get current domain values from config if they exist
-    current_domain=$(grep "^DOMAIN_NAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "")
-    current_subdomain=$(grep "^SUBDOMAIN=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "")
+    current_domain=$(grep "^DOMAIN_NAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+    current_subdomain=$(grep "^SUBDOMAIN=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
     
     prompt_with_default "Domain name (e.g., example.com)" "$current_domain" "domain_name"
     prompt_with_default "Subdomain (e.g., openproject, leave empty for none)" "$current_subdomain" "subdomain"
@@ -292,7 +343,12 @@ if confirm "Would you like to modify the configuration interactively?"; then
     echo
     echo "Database Configuration:"
     echo "----------------------"
-    echo "Set the default admin password for OpenProject installation."
+    echo "Set the PostgreSQL database admin password for OpenProject."
+    echo ""
+    echo "This password will be used for:"
+    echo "• PostgreSQL database administrator access"
+    echo "• Database initialization and maintenance"
+    echo "• NOT the OpenProject web application login"
     echo ""
     echo "Password Security Recommendations:"
     echo "• Use at least 12 characters"
@@ -301,37 +357,83 @@ if confirm "Would you like to modify the configuration interactively?"; then
     echo "• Consider using a password manager"
     echo ""
     
-    # Get current admin password from config if it exists (for re-runs)
-    current_default_admin_password=$(grep "^DEFAULT_ADMIN_PASSWORD=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "")
+    # Get current database admin password from config if it exists (for re-runs)
+    current_default_admin_password=$(grep "^DEFAULT_DBADMIN_PASSWORD=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
     
     if [ -n "$current_default_admin_password" ]; then
-        echo "Admin password is already configured."
-        if confirm "Keep current admin password?"; then
+        echo "PostgreSQL database admin password is already configured."
+        if confirm "Keep current database admin password?"; then
             default_admin_password="$current_default_admin_password"
-            echo "✓ Using existing admin password"
+            echo "✓ Using existing database admin password"
         else
-            echo -n "Enter new admin password: "
+            echo -n "Enter new PostgreSQL database admin password: "
             read -s default_admin_password
             echo
-            echo "✓ Admin password updated"
+            echo "✓ Database admin password updated"
         fi
     else
-        echo -n "Enter admin password: "
+        echo -n "Enter PostgreSQL database admin password: "
         read -s default_admin_password
         echo
         if [ -z "$default_admin_password" ]; then
             echo "⚠ No password entered. Using default 'admin123' (CHANGE THIS AFTER INSTALLATION!)"
             default_admin_password="admin123"
         else
-            echo "✓ Admin password set"
+            echo "✓ Database admin password set"
         fi
     fi
+    
+    echo
+    echo "Database Storage Configuration:"
+    echo "------------------------------"
+    echo "Choose how to store database data:"
+    echo "  1) docker-volumes  - Use Docker managed volumes (recommended for most cases)"
+    echo "  2) bind-mounts     - Use host filesystem paths (easier for backups)"
+    echo
+    
+    # Get current storage type from config if it exists
+    current_db_storage=$(grep "^DATABASE_STORAGE_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "docker-volumes")
+    
+    # Convert current storage type to number for display
+    case "$current_db_storage" in
+        docker-volumes) current_storage_num="1" ;;
+        bind-mounts) current_storage_num="2" ;;
+        *) current_storage_num="1" ;;
+    esac
+    
+    read -p "Select database storage type (1-2) [$current_storage_num]: " storage_input
+    if [ -z "$storage_input" ]; then
+        storage_input="$current_storage_num"
+    fi
+    
+    case "$storage_input" in
+        1|docker-volumes)
+            db_storage_type="docker-volumes"
+            echo "✓ Using Docker managed volumes for database storage"
+            ;;
+        2|bind-mounts)
+            db_storage_type="bind-mounts"
+            echo "✓ Using host filesystem bind mounts for database storage"
+            
+            # Get the bind mount path if using bind mounts
+            current_db_path=$(grep "^DATABASE_HOST_PATH=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "/opt/openproject/data")
+            prompt_with_default "Host path for database data" "$current_db_path" "db_host_path"
+            ;;
+        *)
+            echo "⚠ Invalid selection '$storage_input'. Using default: docker-volumes"
+            db_storage_type="docker-volumes"
+            ;;
+    esac
     
     # Save all configuration to interactive_config.cfg file
     save_config "OPENPROJECT_HOST_NAME" "$host_name"
     save_config "OPENPROJECT_HTTPS" "$use_https"
     save_config "OPENPROJECT_TAG" "$op_tag"
-    save_config "DEFAULT_ADMIN_PASSWORD" "$default_admin_password"
+    save_config "DEFAULT_DBADMIN_PASSWORD" "$default_admin_password"
+    save_config "DATABASE_STORAGE_TYPE" "$db_storage_type"
+    if [ "$db_storage_type" = "bind-mounts" ] && [ -n "$db_host_path" ]; then
+        save_config "DATABASE_HOST_PATH" "$db_host_path"
+    fi
     save_config "GIT_USERNAME" "$git_username"
     save_config "GIT_EMAIL" "$git_email"
     save_config "DOMAIN_NAME" "$domain_name"
@@ -355,30 +457,17 @@ if confirm "Would you like to modify the configuration interactively?"; then
 fi
 
 # =============================================================================
-# DEPLOYMENT EXECUTION
+# CONFIGURATION COMPLETION
 # =============================================================================
 
 echo
-# Check if deploy.sh exists before offering to run it
-DEPLOY_SCRIPT="$SCRIPT_DIR/deploy.sh"
-if [ -f "$DEPLOY_SCRIPT" ]; then
-    if confirm "Would you like to run the deployment now?"; then
-        echo
-        echo "Running deployment script..."
-        "$DEPLOY_SCRIPT"
-    else
-        echo "Configuration saved. You can run the deployment later with:"
-        echo "  ./scripts/installation_scripts/deploy.sh"
-    fi
-else
-    echo "⚠ Deployment script not found: $DEPLOY_SCRIPT"
-    echo "Configuration has been saved to: $DEPLOY_CONFIG"
-    echo ""
-    echo "To deploy OpenProject, you can:"
-    echo "  1. Create a deploy.sh script that calls configure_docker.sh then build_stack.sh"
-    echo "  2. Run the utilities manually:"
-    echo "     ./scripts/installation_scripts/installation_utilities/configure_docker.sh"
-    echo "     ./scripts/installation_scripts/installation_utilities/build_stack.sh"
-fi
-
-echo "Deployment script completed!"
+echo "✓ Configuration saved to: $DEPLOY_CONFIG"
+echo
+echo "To deploy OpenProject, run:"
+echo "  ./scripts/installation_scripts/deploy.sh"
+echo
+echo "Or use the utility scripts manually:"
+echo "  1. ./scripts/installation_scripts/installation_utilities/configure_docker.sh"
+echo "  2. ./scripts/installation_scripts/installation_utilities/build_stack.sh"
+echo
+echo "Configuration complete!"

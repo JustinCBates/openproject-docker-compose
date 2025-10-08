@@ -64,11 +64,11 @@ update_env_file() {
         echo "✓ Updated OpenProject tag: $OPENPROJECT_TAG"
     fi
     
-    if [ -n "$DEFAULT_ADMIN_PASSWORD" ]; then
+    if [ -n "$DEFAULT_DBADMIN_PASSWORD" ]; then
         if grep -q "^OPENPROJECT_ADMIN_PASSWORD=" "$env_file"; then
-            sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD/" "$env_file"
+            sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_DBADMIN_PASSWORD/" "$env_file"
         else
-            echo "OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD" >> "$env_file"
+            echo "OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_DBADMIN_PASSWORD" >> "$env_file"
         fi
         echo "✓ Updated admin password"
     fi

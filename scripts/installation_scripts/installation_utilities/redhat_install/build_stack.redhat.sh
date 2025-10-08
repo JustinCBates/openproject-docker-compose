@@ -463,8 +463,8 @@ show_deployment_summary() {
         echo "OS: $PRETTY_NAME"
     fi
     
-    if [ -n "$DEFAULT_ADMIN_PASSWORD" ]; then
-        if [ "$DEFAULT_ADMIN_PASSWORD" = "admin123" ]; then
+    if [ -n "$DEFAULT_DBADMIN_PASSWORD" ]; then
+        if [ "$DEFAULT_DBADMIN_PASSWORD" = "admin123" ]; then
             echo "Admin Login: admin / admin123 (⚠ CHANGE THIS PASSWORD!)"
         else
             echo "Admin Login: admin / [your configured password]"

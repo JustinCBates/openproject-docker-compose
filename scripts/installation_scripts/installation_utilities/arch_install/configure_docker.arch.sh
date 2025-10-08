@@ -40,11 +40,11 @@ if [ -f "$env_file" ]; then
     if [ -n "$OPENPROJECT_TAG" ]; then
         sed -i "s/^TAG=.*/TAG=$OPENPROJECT_TAG/" "$env_file"
     fi
-    if [ -n "$DEFAULT_ADMIN_PASSWORD" ]; then
+    if [ -n "$DEFAULT_DBADMIN_PASSWORD" ]; then
         if grep -q "^OPENPROJECT_ADMIN_PASSWORD=" "$env_file"; then
-            sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD/" "$env_file"
+            sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_DBADMIN_PASSWORD/" "$env_file"
         else
-            echo "OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD" >> "$env_file"
+            echo "OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_DBADMIN_PASSWORD" >> "$env_file"
         fi
     fi
 fi

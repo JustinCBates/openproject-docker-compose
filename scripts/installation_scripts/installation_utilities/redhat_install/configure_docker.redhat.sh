@@ -26,11 +26,11 @@ if [ -f "$env_file" ]; then
     [ -n "$OPENPROJECT_HOST_NAME" ] && sed -i "s/^OPENPROJECT_HOST__NAME=.*/OPENPROJECT_HOST__NAME=$OPENPROJECT_HOST_NAME/" "$env_file"
     [ -n "$OPENPROJECT_HTTPS" ] && sed -i "s/^OPENPROJECT_HTTPS=.*/OPENPROJECT_HTTPS=$OPENPROJECT_HTTPS/" "$env_file"
     [ -n "$OPENPROJECT_TAG" ] && sed -i "s/^TAG=.*/TAG=$OPENPROJECT_TAG/" "$env_file"
-    if [ -n "$DEFAULT_ADMIN_PASSWORD" ]; then
+    if [ -n "$DEFAULT_DBADMIN_PASSWORD" ]; then
         if grep -q "^OPENPROJECT_ADMIN_PASSWORD=" "$env_file"; then
-            sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD/" "$env_file"
+            sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_DBADMIN_PASSWORD/" "$env_file"
         else
-            echo "OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD" >> "$env_file"
+            echo "OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_DBADMIN_PASSWORD" >> "$env_file"
         fi
     fi
 fi
