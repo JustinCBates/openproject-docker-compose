@@ -241,9 +241,13 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     # Get current git configuration if it exists
     current_git_user=$(git config --global user.name 2>/dev/null || echo "")
     current_git_email=$(git config --global user.email 2>/dev/null || echo "")
-    
+
+    subsection "OpenProject Version Configuration"
+    echo "This is the tag for the OpenProject repo that this was forked from."
+    echo "Not critical for anything right now.  Leaving as default is recommended."
     # Prompt for OpenProject version tag before environment selection
     prompt_with_default "OpenProject version tag" "$current_tag" "op_tag"
+    echo " "
 
     section "Environment Configuration:"    
 
@@ -260,27 +264,13 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     esac
     
     echo "Available environment types:"
-    # Print environment types, highlight the default line in green
-    if type format_default >/dev/null 2>&1; then
-        for num in 1 2 3 4; do
-            case "$num" in
-                1) label="localdev    - Local development environment";;
-                2) label="remotedev   - Remote development server";;
-                3) label="remotetest  - Remote testing/staging server";;
-                4) label="production  - Production server";;
-            esac
-            if [ "$num" = "$current_env_num" ]; then
-                printf "%b\n" "  ${GREEN}${num}) ${label}${RESET}"
-            else
-                printf "%s\n" "  ${num}) ${label}"
-            fi
-        done
-    else
-        echo "  1) localdev    - Local development environment"
-        echo "  2) remotedev   - Remote development server"
-        echo "  3) remotetest  - Remote testing/staging server"
-        echo "  4) production  - Production server"
-    fi
+    # Print environment types using the helper, which highlights the default
+    # Print environment types using the numbered_list helper
+    numbered_list "$current_env_num" \
+        "localdev    - Local development environment" \
+        "remotedev   - Remote development server" \
+        "remotetest  - Remote testing/staging server" \
+        "production  - Production server"
     echo
     
 
@@ -381,13 +371,15 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     prompt_with_default "Git email" "$current_git_email" "git_email"
     
     echo
-    section "Domain Configuration:"
+    section "Endpoint Configuration:"
     # Get current domain values from config if they exist
+    subsection "Domain Configuration:"
     current_domain=$(grep "^DOMAIN_NAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
-    current_subdomain=$(grep "^SUBDOMAIN=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
-    
     prompt_with_default "Domain name (e.g., Statesmen.com)" "$current_domain" "domain_name"
-    
+
+    subsection "Subdomain Configuration:"
+    current_subdomain=$(grep "^SUBDOMAIN=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+        
     # Handle subdomain differently - inform user of current value, no default
     if [ -n "$current_subdomain" ]; then
     # Use caution() to print a yellow caution message with a symbol
@@ -466,29 +458,13 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     esac
     
     echo "Available OS families:"
-    # Print OS families and highlight the detected/default one in green
-    if type format_default >/dev/null 2>&1; then
-        for num in 1 2 3 4 5; do
-            case "$num" in
-                1) label="debian     - Debian, Ubuntu, Mint, Raspbian";;
-                2) label="redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux";;
-                3) label="suse       - openSUSE, SLES";;
-                4) label="arch       - Arch Linux, Manjaro, EndeavourOS";;
-                5) label="slackware  - Slackware";;
-            esac
-            if [ "$num" = "$current_os_num" ]; then
-                printf "%b\n" "  ${GREEN}${num}) ${label}${RESET}"
-            else
-                printf "%s\n" "  ${num}) ${label}"
-            fi
-        done
-    else
-        echo "  1) debian     - Debian, Ubuntu, Mint, Raspbian"
-        echo "  2) redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux"
-        echo "  3) suse       - openSUSE, SLES"
-        echo "  4) arch       - Arch Linux, Manjaro, EndeavourOS"
-        echo "  5) slackware  - Slackware"
-    fi
+    # Print OS families using the numbered_list helper
+    numbered_list "$current_os_num" \
+        "debian     - Debian, Ubuntu, Mint, Raspbian" \
+        "redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux" \
+        "suse       - openSUSE, SLES" \
+        "arch       - Arch Linux, Manjaro, EndeavourOS" \
+        "slackware  - Slackware"
     echo
     
     # Show detected OS if available
@@ -613,9 +589,10 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     echo
     section "Database Storage Configuration:"
     echo "Choose how to store database data:"
-    echo "  1) docker-volumes  - Use Docker managed volumes (recommended for most cases)"
-    echo "  2) bind-mounts     - Use host filesystem paths (easier for backups)"
-    echo
+    # Print database storage options using the numbered_list helper
+    numbered_list "$current_storage_num" \
+        "docker-volumes  - Use Docker managed volumes (recommended for most cases)" \
+        "bind-mounts     - Use host filesystem paths (easier for backups)"
     
     # Get current storage type from config if it exists
     current_db_storage=$(grep "^DATABASE_STORAGE_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "docker-volumes")
