@@ -4,6 +4,11 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source UI helpers if available
+if [ -f "$SCRIPT_DIR/../common_ui.sh" ]; then
+    # shellcheck source=/dev/null
+    source "$SCRIPT_DIR/../common_ui.sh"
+fi
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 COMPOSE_CMD="docker compose"
 

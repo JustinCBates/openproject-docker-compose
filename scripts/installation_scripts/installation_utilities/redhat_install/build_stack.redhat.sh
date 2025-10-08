@@ -43,6 +43,11 @@ $COMPOSE_CMD ps
 set -e  # Exit on any error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source UI helpers if available
+if [ -f "$SCRIPT_DIR/../common_ui.sh" ]; then
+    # shellcheck source=/dev/null
+    source "$SCRIPT_DIR/../common_ui.sh"
+fi
 CONFIG_FILE="$SCRIPT_DIR/../../interactive_config.cfg"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 
