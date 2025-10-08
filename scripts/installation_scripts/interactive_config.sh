@@ -11,6 +11,12 @@ echo "OpenProject Interactive Deployment Script"
 echo "=========================================="
 echo
 
+# Source common helpers (colors, warn(), note())
+if [ -f "$(dirname "${BASH_SOURCE[0]}")/common.sh" ]; then
+    # shellcheck source=/dev/null
+    source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
+fi
+
 # Configuration file for storing deployment settings
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_CONFIG="$SCRIPT_DIR/interactive_config.cfg"
@@ -47,16 +53,26 @@ prompt_with_default() {
     local prompt="$1"
     local default="$2"
     local varname="$3"
-    
+    # If we have a default and terminal supports colors, show it green in the prompt
     if [ -n "$default" ]; then
-        read -p "$prompt [$default]: " input
+        # Build a colored default display only if stdout is a TTY. Avoid
+        # calling format_default in a subshell, because command substitution
+        # makes stdout non-tty and the color check would fail.
+        if [ -t 1 ] && [ -n "$GREEN" ]; then
+            def_display="${GREEN}${default}${RESET}"
+            printf "%s [%b]: " "$prompt" "$def_display"
+        else
+            printf "%s [%s]: " "$prompt" "$default"
+        fi
+        read input
         if [ -z "$input" ]; then
             input="$default"
         fi
     else
-        read -p "$prompt: " input
+        printf "%s: " "$prompt"
+        read input
     fi
-    
+
     eval "$varname='$input'"
 }
 
@@ -64,10 +80,25 @@ prompt_with_default() {
 validate_yn() {
     local prompt="$1"
     local default="$2"
-    
+    format_default() {
+        local val="$1"
+        if [ -t 1 ] && [ -n "$GREEN" ]; then
+            printf "%s" "${GREEN}${val}${RESET}"
+        else
+            printf "%s" "$val"
+        fi
+    }
+
     if [ -n "$default" ]; then
         while true; do
-            read -p "$prompt (y/n) [$default]: " yn
+            # Avoid command substitution for the same reason as above
+            if [ -t 1 ] && [ -n "$GREEN" ]; then
+                def_display="${GREEN}${default}${RESET}"
+                printf "%s (y/n) [%b]: " "$prompt" "$def_display"
+            else
+                printf "%s (y/n) [%s]: " "$prompt" "$default"
+            fi
+            read yn
             # If empty input, use default
             if [ -z "$yn" ]; then
                 yn="$default"
@@ -81,7 +112,8 @@ validate_yn() {
     else
         # Original behavior when no default provided
         while true; do
-            read -p "$prompt (y/n): " yn
+            printf "%s (y/n): " "$prompt"
+            read yn
             case $yn in
                 [Yy]* ) return 0;;
                 [Nn]* ) return 1;;
@@ -95,10 +127,24 @@ validate_yn() {
 validate_tf() {
     local prompt="$1"
     local default="$2"
-    
+    format_default() {
+        local val="$1"
+        if [ -t 1 ] && [ -n "$GREEN" ]; then
+            printf "%s" "${GREEN}${val}${RESET}"
+        else
+            printf "%s" "$val"
+        fi
+    }
+
     if [ -n "$default" ]; then
         while true; do
-            read -p "$prompt (true/false) [$default]: " tf
+            if [ -t 1 ] && [ -n "$GREEN" ]; then
+                def_display="${GREEN}${default}${RESET}"
+                printf "%s (true/false) [%b]: " "$prompt" "$def_display"
+            else
+                printf "%s (true/false) [%s]: " "$prompt" "$default"
+            fi
+            read tf
             # If empty input, use default
             if [ -z "$tf" ]; then
                 tf="$default"
@@ -112,7 +158,8 @@ validate_tf() {
     else
         # Original behavior when no default provided
         while true; do
-            read -p "$prompt (true/false): " tf
+            printf "%s (true/false): " "$prompt"
+            read tf
             case $tf in
                 [Tt]rue|[Tt] ) return 0;;
                 [Ff]alse|[Ff] ) return 1;;
@@ -137,11 +184,17 @@ if [ ! -f "docker-compose.yml" ]; then
 fi
 
 echo
-echo "Current configuration preview:"
-echo "=============================="
+section "Current configuration preview:"
 if [ -f "$DEPLOY_CONFIG" ]; then
     echo "Key settings from configuration:"
-    grep -E "^(ENVIRONMENT_TYPE|OPENPROJECT_HOST|OPENPROJECT_HTTPS|OPENPROJECT_TAG)" "$DEPLOY_CONFIG" 2>/dev/null | head -5 || echo "No previous configuration found"
+    # Print all non-empty lines from the deployment config so users can see the full saved state.
+    # Limit to the first 200 lines to avoid overwhelming the terminal in pathological cases.
+    if [ -s "$DEPLOY_CONFIG" ]; then
+        # Print lines that look like KEY="value" or KEY=value
+        sed -n '1,200p' "$DEPLOY_CONFIG" | sed -e '/^[[:space:]]*$/d' || echo "No previous configuration found"
+    else
+        echo "No previous configuration found"
+    fi
 else
     echo "No previous configuration found"
 fi
@@ -149,14 +202,36 @@ echo
 
 if validate_yn "Would you like to modify the configuration interactively?" "y"; then
     echo
-    echo "Interactive Configuration:"
-    echo "========================="
+    section "Interactive Configuration:"
     
-    # Read current values from config file if they exist
-    current_host=$(grep "^OPENPROJECT_HOST=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
-    current_https=$(grep "^OPENPROJECT_HTTPS=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "false")
-    current_tag=$(grep "^OPENPROJECT_TAG=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "16")
+    # Read current values from config file if they exist. This enumerates
+    # known keys found in interactive_config.cfg so the interactive prompts
+    # can show sensible defaults.
+    get_cfg() {
+        local key="$1"
+        grep -E "^${key}=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2- | sed -e 's/^"//' -e 's/"$//' || true
+    }
+
+    current_host=$(get_cfg "OPENPROJECT_HOST_NAME")
+    current_https=$(get_cfg "OPENPROJECT_HTTPS")
+    current_tag=$(get_cfg "OPENPROJECT_TAG")
+    current_db_password=$(get_cfg "DEFAULT_DBADMIN_PASSWORD")
+    current_db_storage=$(get_cfg "DATABASE_STORAGE_TYPE")
+    current_git_user_cfg=$(get_cfg "GIT_USERNAME")
+    current_git_email_cfg=$(get_cfg "GIT_EMAIL")
+    current_domain=$(get_cfg "DOMAIN_NAME")
+    current_subdomain=$(get_cfg "SUBDOMAIN")
+    current_env_type=$(get_cfg "ENVIRONMENT_TYPE")
+    current_os_family_raw=$(get_cfg "OS_FAMILY")
+    current_relative_root=$(get_cfg "OPENPROJECT_RAILS__RELATIVE__URL__ROOT")
+
+    # Provide sensible fallbacks for any keys that were empty
+    if [ -z "$current_https" ]; then current_https="false"; fi
+    if [ -z "$current_tag" ]; then current_tag="16"; fi
+    if [ -z "$current_db_storage" ]; then current_db_storage="docker-volumes"; fi
+    if [ -z "$current_env_type" ]; then current_env_type="localdev"; fi
     
+
     # If no hostname in config, try to detect from system
     if [ -z "$current_host" ]; then
         detected_hostname=$(hostname -f 2>/dev/null || hostname 2>/dev/null || echo "localhost")
@@ -167,8 +242,11 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     current_git_user=$(git config --global user.name 2>/dev/null || echo "")
     current_git_email=$(git config --global user.email 2>/dev/null || echo "")
     
-    echo "Environment Configuration:"
-    echo "-------------------------"
+    # Prompt for OpenProject version tag before environment selection
+    prompt_with_default "OpenProject version tag" "$current_tag" "op_tag"
+
+    section "Environment Configuration:"    
+
     # Get current environment type from config if it exists
     current_env_type=$(grep "^ENVIRONMENT_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "localdev")
     
@@ -182,16 +260,46 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     esac
     
     echo "Available environment types:"
-    echo "  1) localdev    - Local development environment"
-    echo "  2) remotedev   - Remote development server"
-    echo "  3) remotetest  - Remote testing/staging server"
-    echo "  4) production  - Production server"
+    # Print environment types, highlight the default line in green
+    if type format_default >/dev/null 2>&1; then
+        for num in 1 2 3 4; do
+            case "$num" in
+                1) label="localdev    - Local development environment";;
+                2) label="remotedev   - Remote development server";;
+                3) label="remotetest  - Remote testing/staging server";;
+                4) label="production  - Production server";;
+            esac
+            if [ "$num" = "$current_env_num" ]; then
+                printf "%b\n" "  ${GREEN}${num}) ${label}${RESET}"
+            else
+                printf "%s\n" "  ${num}) ${label}"
+            fi
+        done
+    else
+        echo "  1) localdev    - Local development environment"
+        echo "  2) remotedev   - Remote development server"
+        echo "  3) remotetest  - Remote testing/staging server"
+        echo "  4) production  - Production server"
+    fi
     echo
     
-    # Prompt for environment selection
-    read -p "Select environment type (1-4) [$current_env_num]: " env_input
-    if [ -z "$env_input" ]; then
-        env_input="$current_env_num"
+
+
+    # Prompt for environment selection (show default in green)
+    if type format_default >/dev/null 2>&1; then
+        def_display=$(format_default "$current_env_num")
+        printf "%s [%b]: " "Select environment type (1-4)" "$def_display"
+        read env_input
+        if [ -z "$env_input" ]; then
+            env_input="$current_env_num"
+        fi
+    else
+        # Fallback: use printf + read so ANSI escapes render correctly in some shells
+        printf "%s [%s]: " "Select environment type (1-4)" "$current_env_num"
+        read env_input
+        if [ -z "$env_input" ]; then
+            env_input="$current_env_num"
+        fi
     fi
     
     # Convert number to environment name
@@ -217,15 +325,37 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     echo "✓ Environment type set to: $environment_type"
     
     echo
-    echo "OpenProject Configuration:"
-    echo "-------------------------"
+    section "OpenProject Configuration:"
     prompt_with_default "Enter the hostname for OpenProject" "$current_host" "host_name"
     prompt_with_default "Enable HTTPS? (true/false)" "$current_https" "use_https"
-    prompt_with_default "OpenProject version tag" "$current_tag" "op_tag"
+
+    echo
+    section "Proxy HTTPS redirect configuration:"
+    # Default redirect behavior: true if HTTPS enabled, false otherwise
+    use_https_lc=$(echo "$use_https" | tr '[:upper:]' '[:lower:]')
+    if [ "$use_https_lc" = "true" ]; then
+        default_redirect="true"
+    else
+        default_redirect="false"
+    fi
+
+    echo
+    echo "Security note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP."
+    echo "This exposes credentials, cookies, and session tokens to on-path attackers (MITM), and prevents automatic TLS enforcement by browsers."
+    echo "Only disable redirects if you understand and accept these risks."
+
+    if validate_tf "Redirect HTTP to HTTPS?" "$default_redirect"; then
+        proxy_redirect="true"
+    else
+        proxy_redirect="false"
+    fi
+
+    # Persist the choice to the deployment config
+    save_config "PROXY_HTTP_TO_HTTPS_REDIRECT" "$proxy_redirect"
+    echo "✓ PROXY_HTTP_TO_HTTPS_REDIRECT set to: $proxy_redirect"
     
     echo
-    echo "Git Configuration:"
-    echo "-----------------"
+    section "Git Configuration:"
     
     # Get Git configuration from config file first, then fall back to global git config
     current_git_user_cfg=$(grep "^GIT_USERNAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
@@ -251,26 +381,25 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     prompt_with_default "Git email" "$current_git_email" "git_email"
     
     echo
-    echo "Domain Configuration:"
-    echo "--------------------"
+    section "Domain Configuration:"
     # Get current domain values from config if they exist
     current_domain=$(grep "^DOMAIN_NAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
     current_subdomain=$(grep "^SUBDOMAIN=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
     
-    prompt_with_default "Domain name (e.g., example.com)" "$current_domain" "domain_name"
+    prompt_with_default "Domain name (e.g., Statesmen.com)" "$current_domain" "domain_name"
     
     # Handle subdomain differently - inform user of current value, no default
     if [ -n "$current_subdomain" ]; then
-        echo "Current subdomain: $current_subdomain"
-        prompt_with_default "Subdomain (leave empty to remove current subdomain, or enter new value)" "" "subdomain"
+    # Use caution() to print a yellow caution message with a symbol
+    caution "To keep the current subdomain [$current_subdomain] you must retype it below; leaving the prompt empty will remove the subdomain."
+    prompt_with_default "Subdomain (leave empty to remove current subdomain, or enter new value)" "" "subdomain"
     else
         echo "No subdomain currently set"
-        prompt_with_default "Subdomain (e.g., openproject, leave empty for none)" "" "subdomain"
+        prompt_with_default "Subdomain (e.g., StatesmenProjects, leave empty for none)" "" "subdomain"
     fi
     
     echo
-    echo "Operating System Configuration:"
-    echo "------------------------------"
+    section "Operating System Configuration:"
     
     # Function to detect OS family
     detect_os_family() {
@@ -309,8 +438,22 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
         fi
     }
     
-    # Get current OS family from config or detect it
-    current_os_family=$(grep "^OS_FAMILY=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || detect_os_family)
+    # Prefer system detection for OS family. Only fall back to the saved
+    # `OS_FAMILY` from the deployment config when the detection cannot
+    # identify the system (returns 'unknown' or empty).
+    detected_os_family=$(detect_os_family)
+    if [ -n "$detected_os_family" ] && [ "$detected_os_family" != "unknown" ]; then
+        current_os_family="$detected_os_family"
+    else
+        # Read OS_FAMILY from config if present, strip surrounding quotes and whitespace
+        current_os_family_raw=$(grep "^OS_FAMILY=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || true)
+        if [ -n "$current_os_family_raw" ]; then
+            # remove any surrounding single or double quotes and trim whitespace
+            current_os_family=$(echo "$current_os_family_raw" | sed -e "s/^['\"]//" -e "s/['\"]$//" -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        else
+            current_os_family="$detected_os_family"
+        fi
+    fi
     
     # Convert current OS family to number for display
     case "$current_os_family" in
@@ -323,27 +466,56 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     esac
     
     echo "Available OS families:"
-    echo "  1) debian     - Debian, Ubuntu, Mint, Raspbian"
-    echo "  2) redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux"
-    echo "  3) suse       - openSUSE, SLES"
-    echo "  4) arch       - Arch Linux, Manjaro, EndeavourOS"
-    echo "  5) slackware  - Slackware"
+    # Print OS families and highlight the detected/default one in green
+    if type format_default >/dev/null 2>&1; then
+        for num in 1 2 3 4 5; do
+            case "$num" in
+                1) label="debian     - Debian, Ubuntu, Mint, Raspbian";;
+                2) label="redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux";;
+                3) label="suse       - openSUSE, SLES";;
+                4) label="arch       - Arch Linux, Manjaro, EndeavourOS";;
+                5) label="slackware  - Slackware";;
+            esac
+            if [ "$num" = "$current_os_num" ]; then
+                printf "%b\n" "  ${GREEN}${num}) ${label}${RESET}"
+            else
+                printf "%s\n" "  ${num}) ${label}"
+            fi
+        done
+    else
+        echo "  1) debian     - Debian, Ubuntu, Mint, Raspbian"
+        echo "  2) redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux"
+        echo "  3) suse       - openSUSE, SLES"
+        echo "  4) arch       - Arch Linux, Manjaro, EndeavourOS"
+        echo "  5) slackware  - Slackware"
+    fi
     echo
     
     # Show detected OS if available
     if [ "$current_os_family" != "unknown" ]; then
-        echo "Detected OS family: \"$current_os_family\""
+        echo "Detected OS family: $current_os_family"
         echo
-        echo "⚠ WARNING: Changing from the detected OS family may cause errors"
+    warn "Changing from the detected OS family may cause errors"
         echo "   in the configure and build process. The installation utilities"
         echo "   are optimized for the detected OS family."
         echo
     fi
     
-    # Prompt for OS family selection
-    read -p "Select OS family (1-5) [$current_os_num]: " os_input
-    if [ -z "$os_input" ]; then
-        os_input="$current_os_num"
+    # Prompt for OS family selection (show default in green)
+    if type format_default >/dev/null 2>&1; then
+        def_display=$(format_default "$current_os_num")
+        printf "%s [%b]: " "Select OS family (1-5)" "$def_display"
+        read os_input
+        if [ -z "$os_input" ]; then
+            os_input="$current_os_num"
+        fi
+    else
+        # Fallback: use printf + read so ANSI escapes render correctly in some shells
+        printf "%s [%s]: " "Select OS family (1-5)" "$current_os_num"
+        read os_input
+        if [ -z "$os_input" ]; then
+            os_input="$current_os_num"
+        fi
     fi
     
     # Convert number to OS family name
@@ -369,10 +541,14 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
             ;;
     esac
     
-    # Check if user selected different OS from detected and ask for confirmation
-    if [ "$current_os_family" != "unknown" ] && [ "$selected_os_family" != "$current_os_family" ]; then
+    # Check if user selected different OS from detected and ask for confirmation.
+    # Normalize to lowercase to avoid prompting when values differ only by case.
+    lc_current_os=$(echo "$current_os_family" | tr '[:upper:]' '[:lower:]')
+    lc_selected_os=$(echo "$selected_os_family" | tr '[:upper:]' '[:lower:]')
+
+    if [ "$lc_current_os" != "unknown" ] && [ "$lc_selected_os" != "$lc_current_os" ]; then
         echo
-        echo "⚠ WARNING: You selected '$selected_os_family' but detected OS is '$current_os_family'"
+    warn "You selected '$selected_os_family' but detected OS is '$current_os_family'"
         echo "   This may cause compatibility issues with:"
         echo "   • Package installation commands"
         echo "   • Service management"
@@ -435,8 +611,7 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     fi
     
     echo
-    echo "Database Storage Configuration:"
-    echo "------------------------------"
+    section "Database Storage Configuration:"
     echo "Choose how to store database data:"
     echo "  1) docker-volumes  - Use Docker managed volumes (recommended for most cases)"
     echo "  2) bind-mounts     - Use host filesystem paths (easier for backups)"
@@ -452,7 +627,9 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
         *) current_storage_num="1" ;;
     esac
     
-    read -p "Select database storage type (1-2) [$current_storage_num]: " storage_input
+    # Use printf + read to allow colored default display when available
+    printf "%s [%s]: " "Select database storage type (1-2)" "$current_storage_num"
+    read storage_input
     if [ -z "$storage_input" ]; then
         storage_input="$current_storage_num"
     fi
@@ -511,8 +688,7 @@ fi
 # CONFIGURATION COMPLETION
 # =============================================================================
 
-echo
-echo "✓ Configuration saved to: $DEPLOY_CONFIG"
+section "Configuration saved to: $DEPLOY_CONFIG"
 echo
 echo "To deploy OpenProject, run:"
 echo "  ./scripts/installation_scripts/deploy.sh"

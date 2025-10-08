@@ -15,6 +15,12 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 UTILITIES_DIR="$SCRIPT_DIR/installation_utilities"
 CONFIG_FILE="$SCRIPT_DIR/interactive_config.cfg"
 
+# Source common helpers if available
+if [ -f "$SCRIPT_DIR/common.sh" ]; then
+    # shellcheck source=/dev/null
+    source "$SCRIPT_DIR/common.sh"
+fi
+
 # Parse top-level options
 DRY_RUN=0
 while [ "$#" -gt 0 ]; do
@@ -58,7 +64,11 @@ if [ -f "$UTILITIES_DIR/setup_git_user.sh" ]; then
     "$UTILITIES_DIR/setup_git_user.sh"
     echo "✓ Git user configuration completed"
 else
-    echo "⚠ Warning: setup_git_user.sh not found, skipping"
+    if type warn >/dev/null 2>&1; then
+        warn "setup_git_user.sh not found, skipping"
+    else
+        echo "⚠ Warning: setup_git_user.sh not found, skipping"
+    fi
 fi
 echo
 
@@ -69,7 +79,11 @@ if [ -f "$UTILITIES_DIR/install_docker.sh" ]; then
     "$UTILITIES_DIR/install_docker.sh"
     echo "✓ Docker installation completed"
 else
-    echo "⚠ Warning: install_docker.sh dispatcher not found, skipping Docker installation"
+    if type warn >/dev/null 2>&1; then
+        warn "install_docker.sh dispatcher not found, skipping Docker installation"
+    else
+        echo "⚠ Warning: install_docker.sh dispatcher not found, skipping Docker installation"
+    fi
 fi
 echo
 
@@ -80,7 +94,11 @@ if [ -f "$UTILITIES_DIR/configure_docker.sh" ]; then
     "$UTILITIES_DIR/configure_docker.sh"
     echo "✓ Docker configuration completed"
 else
-    echo "⚠ Warning: configure_docker.sh dispatcher not found, skipping Docker configuration"
+    if type warn >/dev/null 2>&1; then
+        warn "configure_docker.sh dispatcher not found, skipping Docker configuration"
+    else
+        echo "⚠ Warning: configure_docker.sh dispatcher not found, skipping Docker configuration"
+    fi
 fi
 echo
 
@@ -96,7 +114,11 @@ if [ -f "$UTILITIES_DIR/build_stack.sh" ]; then
     fi
     echo "✓ Docker Build Stack  completed"
 else
-    echo "⚠ Warning: build_stack.sh dispatcher not found, skipping Docker Build Stack"
+    if type warn >/dev/null 2>&1; then
+        warn "build_stack.sh dispatcher not found, skipping Docker Build Stack"
+    else
+        echo "⚠ Warning: build_stack.sh dispatcher not found, skipping Docker Build Stack"
+    fi
 fi
 echo
 

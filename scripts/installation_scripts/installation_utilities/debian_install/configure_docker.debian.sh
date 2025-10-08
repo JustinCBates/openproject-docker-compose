@@ -52,6 +52,16 @@ update_env_file() {
         fi
         echo "✓ Updated hostname: $OPENPROJECT_HOST_NAME"
     fi
+
+    # Relative URL root for path-based deployments (e.g. /subdomain)
+    if [ -n "$OPENPROJECT_RAILS__RELATIVE__URL__ROOT" ]; then
+        if grep -q "^OPENPROJECT_RAILS__RELATIVE__URL__ROOT=" "$env_file"; then
+            sed -i "s|^OPENPROJECT_RAILS__RELATIVE__URL__ROOT=.*|OPENPROJECT_RAILS__RELATIVE__URL__ROOT=$OPENPROJECT_RAILS__RELATIVE__URL__ROOT|" "$env_file"
+        else
+            echo "OPENPROJECT_RAILS__RELATIVE__URL__ROOT=$OPENPROJECT_RAILS__RELATIVE__URL__ROOT" >> "$env_file"
+        fi
+        echo "✓ Updated relative URL root: $OPENPROJECT_RAILS__RELATIVE__URL__ROOT"
+    fi
     
     if [ -n "$OPENPROJECT_HTTPS" ]; then
         if grep -q "^OPENPROJECT_HTTPS=" "$env_file"; then
