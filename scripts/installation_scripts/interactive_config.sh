@@ -119,6 +119,56 @@ if confirm "Would you like to modify the configuration interactively?"; then
     current_git_user=$(git config --global user.name 2>/dev/null || echo "")
     current_git_email=$(git config --global user.email 2>/dev/null || echo "")
     
+    echo "Environment Configuration:"
+    echo "-------------------------"
+    # Get current environment type from config if it exists
+    current_env_type=$(grep "^ENVIRONMENT_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "localdev")
+    
+    # Convert current environment to number for display
+    case "$current_env_type" in
+        localdev) current_env_num="1" ;;
+        remotedev) current_env_num="2" ;;
+        remotetest) current_env_num="3" ;;
+        production) current_env_num="4" ;;
+        *) current_env_num="1" ;;
+    esac
+    
+    echo "Available environment types:"
+    echo "  1) localdev    - Local development environment"
+    echo "  2) remotedev   - Remote development server"
+    echo "  3) remotetest  - Remote testing/staging server"
+    echo "  4) production  - Production server"
+    echo
+    
+    # Prompt for environment selection
+    read -p "Select environment type (1-4) [$current_env_num]: " env_input
+    if [ -z "$env_input" ]; then
+        env_input="$current_env_num"
+    fi
+    
+    # Convert number to environment name
+    case "$env_input" in
+        1|localdev)
+            environment_type="localdev"
+            ;;
+        2|remotedev)
+            environment_type="remotedev"
+            ;;
+        3|remotetest)
+            environment_type="remotetest"
+            ;;
+        4|production)
+            environment_type="production"
+            ;;
+        *)
+            echo "⚠ Invalid selection '$env_input'. Using default: localdev"
+            environment_type="localdev"
+            ;;
+    esac
+    
+    echo "✓ Environment type set to: $environment_type"
+    
+    echo
     echo "OpenProject Configuration:"
     echo "-------------------------"
     prompt_with_default "Enter the hostname for OpenProject" "$current_host" "host_name"
@@ -178,56 +228,6 @@ if confirm "Would you like to modify the configuration interactively?"; then
     
     prompt_with_default "Domain name (e.g., example.com)" "$current_domain" "domain_name"
     prompt_with_default "Subdomain (e.g., openproject, leave empty for none)" "$current_subdomain" "subdomain"
-    
-    echo
-    echo "Environment Configuration:"
-    echo "-------------------------"
-    # Get current environment type from config if it exists
-    current_env_type=$(grep "^ENVIRONMENT_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 || echo "localdev")
-    
-    # Convert current environment to number for display
-    case "$current_env_type" in
-        localdev) current_env_num="1" ;;
-        remotedev) current_env_num="2" ;;
-        remotetest) current_env_num="3" ;;
-        production) current_env_num="4" ;;
-        *) current_env_num="1" ;;
-    esac
-    
-    echo "Available environment types:"
-    echo "  1) localdev    - Local development environment"
-    echo "  2) remotedev   - Remote development server"
-    echo "  3) remotetest  - Remote testing/staging server"
-    echo "  4) production  - Production server"
-    echo
-    
-    # Prompt for environment selection
-    read -p "Select environment type (1-4) [$current_env_num]: " env_input
-    if [ -z "$env_input" ]; then
-        env_input="$current_env_num"
-    fi
-    
-    # Convert number to environment name
-    case "$env_input" in
-        1|localdev)
-            environment_type="localdev"
-            ;;
-        2|remotedev)
-            environment_type="remotedev"
-            ;;
-        3|remotetest)
-            environment_type="remotetest"
-            ;;
-        4|production)
-            environment_type="production"
-            ;;
-        *)
-            echo "⚠ Invalid selection '$env_input'. Using default: localdev"
-            environment_type="localdev"
-            ;;
-    esac
-    
-    echo "✓ Environment type set to: $environment_type"
     
     echo
     echo "Operating System Configuration:"
@@ -339,18 +339,6 @@ if confirm "Would you like to modify the configuration interactively?"; then
     save_config "ENVIRONMENT_TYPE" "$environment_type"
     save_config "OS_FAMILY" "$os_family"
     
-    # Update .env file with new values
-    sed -i "s/^OPENPROJECT_HOST__NAME=.*/OPENPROJECT_HOST__NAME=$host_name/" .env
-    sed -i "s/^OPENPROJECT_HTTPS=.*/OPENPROJECT_HTTPS=$use_https/" .env
-    sed -i "s/^TAG=.*/TAG=$op_tag/" .env
-    
-    # Add or update admin password in .env file
-    if grep -q "^OPENPROJECT_ADMIN_PASSWORD=" .env 2>/dev/null; then
-        sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$default_admin_password/" .env
-    else
-        echo "OPENPROJECT_ADMIN_PASSWORD=$default_admin_password" >> .env
-    fi
-    
     # Configure git if values were provided
     if [ -n "$git_username" ]; then
         git config --global user.name "$git_username"
@@ -362,7 +350,8 @@ if confirm "Would you like to modify the configuration interactively?"; then
     fi
     
     echo
-    echo "Configuration updated!"
+    echo "Configuration saved to interactive_config.cfg!"
+    echo "Note: .env file will be updated during deployment by configure_docker scripts."
 fi
 
 # =============================================================================

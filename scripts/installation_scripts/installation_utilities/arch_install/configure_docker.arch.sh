@@ -18,8 +18,36 @@ echo "  - Arch-specific kernel parameters"
 echo ""
 echo "For now, using basic configuration..."
 
-# Basic stub - just create minimal .env additions and override file
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+# Load configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_FILE="$SCRIPT_DIR/../../interactive_config.cfg"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+fi
+
+# Update .env file with basic configuration from interactive_config.cfg
+env_file="$PROJECT_ROOT/.env"
+if [ -f "$env_file" ]; then
+    # Update basic settings if they exist in config
+    if [ -n "$OPENPROJECT_HOST_NAME" ]; then
+        sed -i "s/^OPENPROJECT_HOST__NAME=.*/OPENPROJECT_HOST__NAME=$OPENPROJECT_HOST_NAME/" "$env_file"
+    fi
+    if [ -n "$OPENPROJECT_HTTPS" ]; then
+        sed -i "s/^OPENPROJECT_HTTPS=.*/OPENPROJECT_HTTPS=$OPENPROJECT_HTTPS/" "$env_file"
+    fi
+    if [ -n "$OPENPROJECT_TAG" ]; then
+        sed -i "s/^TAG=.*/TAG=$OPENPROJECT_TAG/" "$env_file"
+    fi
+    if [ -n "$DEFAULT_ADMIN_PASSWORD" ]; then
+        if grep -q "^OPENPROJECT_ADMIN_PASSWORD=" "$env_file"; then
+            sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD/" "$env_file"
+        else
+            echo "OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD" >> "$env_file"
+        fi
+    fi
+fi
 
 # Add basic Arch variables to .env
 {

@@ -28,7 +28,7 @@ load_config() {
 update_env_file() {
     local env_file="$PROJECT_ROOT/.env"
     
-    echo "Updating .env file with Debian-specific variables..."
+    echo "Updating .env file with configuration and Debian-specific variables..."
     
     # Ensure .env file exists
     if [ ! -f "$env_file" ]; then
@@ -36,7 +36,44 @@ update_env_file() {
         exit 1
     fi
     
-    # Add or update Debian-specific environment variables
+    # Update .env file with values from interactive_config.cfg
+    if [ -n "$OPENPROJECT_HOST_NAME" ]; then
+        if grep -q "^OPENPROJECT_HOST__NAME=" "$env_file"; then
+            sed -i "s/^OPENPROJECT_HOST__NAME=.*/OPENPROJECT_HOST__NAME=$OPENPROJECT_HOST_NAME/" "$env_file"
+        else
+            echo "OPENPROJECT_HOST__NAME=$OPENPROJECT_HOST_NAME" >> "$env_file"
+        fi
+        echo "✓ Updated hostname: $OPENPROJECT_HOST_NAME"
+    fi
+    
+    if [ -n "$OPENPROJECT_HTTPS" ]; then
+        if grep -q "^OPENPROJECT_HTTPS=" "$env_file"; then
+            sed -i "s/^OPENPROJECT_HTTPS=.*/OPENPROJECT_HTTPS=$OPENPROJECT_HTTPS/" "$env_file"
+        else
+            echo "OPENPROJECT_HTTPS=$OPENPROJECT_HTTPS" >> "$env_file"
+        fi
+        echo "✓ Updated HTTPS setting: $OPENPROJECT_HTTPS"
+    fi
+    
+    if [ -n "$OPENPROJECT_TAG" ]; then
+        if grep -q "^TAG=" "$env_file"; then
+            sed -i "s/^TAG=.*/TAG=$OPENPROJECT_TAG/" "$env_file"
+        else
+            echo "TAG=$OPENPROJECT_TAG" >> "$env_file"
+        fi
+        echo "✓ Updated OpenProject tag: $OPENPROJECT_TAG"
+    fi
+    
+    if [ -n "$DEFAULT_ADMIN_PASSWORD" ]; then
+        if grep -q "^OPENPROJECT_ADMIN_PASSWORD=" "$env_file"; then
+            sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD/" "$env_file"
+        else
+            echo "OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_ADMIN_PASSWORD" >> "$env_file"
+        fi
+        echo "✓ Updated admin password"
+    fi
+    
+    # Add Debian-specific environment variables
     {
         echo ""
         echo "# Debian-specific Docker configuration"
@@ -47,7 +84,7 @@ update_env_file() {
         echo "APT_LISTCHANGES_FRONTEND=none"
     } >> "$env_file"
     
-    echo "✓ .env file updated with Debian-specific variables"
+    echo "✓ .env file updated with configuration and Debian-specific variables"
 }
 
 # Function to create docker-compose.override.yml with Debian optimizations
