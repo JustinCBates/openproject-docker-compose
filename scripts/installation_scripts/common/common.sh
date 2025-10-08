@@ -313,8 +313,13 @@ supersection() {
             fi
         done
         if [ "$maxb" -gt 0 ]; then
+            # Cap footer width to the terminal width to avoid overflow
+            local footw=$maxb
+            if [ "$footw" -gt "$term_w" ]; then
+                footw=$term_w
+            fi
             local foot
-            foot=$(printf '%*s' "$maxb" '' | tr ' ' '_')
+            foot=$(printf '%*s' "$footw" '' | tr ' ' '_')
             if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
                 printf "%b\n" "${BRONZE}${foot}${RESET}"
             else
