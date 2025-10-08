@@ -1,3 +1,6 @@
+{
+    auto_https disable_redirects
+}
 srv1035368.hstgr.cloud {
     handle_path /StatesmenProjects {
         reverse_proxy http://${APP_HOST}:8080 {

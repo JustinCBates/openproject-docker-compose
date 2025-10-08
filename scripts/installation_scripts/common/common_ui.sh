@@ -3,8 +3,8 @@
 # common_ui.sh - UI helpers that build on common.sh
 # Location: scripts/installation_scripts/common/common_ui.sh
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMON_SH="$SCRIPT_DIR/common.sh"
+COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMON_SH="$COMMON_DIR/common.sh"
 if [ -f "$COMMON_SH" ]; then
     # shellcheck source=/dev/null
     source "$COMMON_SH"
@@ -17,6 +17,102 @@ subsection() {
     underline=$(printf '%*s' "${#title}" '' | tr ' ' '-')
     echo -e "${BRONZE}${title}${RESET}"
     echo -e "${BRONZE}${underline}${RESET}"
+}
+
+# Prompt with default helper: prompt text, default, and variable name to set
+prompt_with_default() {
+    local prompt="$1"
+    local default="$2"
+    local varname="$3"
+    local input
+
+    if [ -n "$default" ]; then
+        if [ -t 1 ] && [ -n "$GREEN" ]; then
+            def_display="${GREEN}${default}${RESET}"
+            printf "%s [%b]: " "$prompt" "$def_display"
+        else
+            printf "%s [%s]: " "$prompt" "$default"
+        fi
+        read input
+        if [ -z "$input" ]; then
+            input="$default"
+        fi
+    else
+        printf "%s: " "$prompt"
+        read input
+    fi
+
+    # Export into caller by evaluating assignment
+    eval "$varname='$input'"
+}
+
+# Prompt helpers: validate yes/no and true/false inputs
+validate_yn() {
+    local prompt="$1"
+    local default="$2"
+    if [ -n "$default" ]; then
+        while true; do
+            if [ -t 1 ] && [ -n "$GREEN" ]; then
+                def_display="${GREEN}${default}${RESET}"
+                printf "%s (y/n) [%b]: " "$prompt" "$def_display"
+            else
+                printf "%s (y/n) [%s]: " "$prompt" "$default"
+            fi
+            read yn
+            if [ -z "$yn" ]; then
+                yn="$default"
+            fi
+            case $yn in
+                [Yy]* ) return 0;;
+                [Nn]* ) return 1;;
+                * ) echo "Please answer yes or no.";;
+            esac
+        done
+    else
+        while true; do
+            printf "%s (y/n): " "$prompt"
+            read yn
+            case $yn in
+                [Yy]* ) return 0;;
+                [Nn]* ) return 1;;
+                * ) echo "Please answer yes or no.";;
+            esac
+        done
+    fi
+}
+
+validate_tf() {
+    local prompt="$1"
+    local default="$2"
+    if [ -n "$default" ]; then
+        while true; do
+            if [ -t 1 ] && [ -n "$GREEN" ]; then
+                def_display="${GREEN}${default}${RESET}"
+                printf "%s (true/false) [%b]: " "$prompt" "$def_display"
+            else
+                printf "%s (true/false) [%s]: " "$prompt" "$default"
+            fi
+            read tf
+            if [ -z "$tf" ]; then
+                tf="$default"
+            fi
+            case $tf in
+                [Tt]rue|[Tt] ) return 0;;
+                [Ff]alse|[Ff] ) return 1;;
+                * ) echo "Please answer true or false.";;
+            esac
+        done
+    else
+        while true; do
+            printf "%s (true/false): " "$prompt"
+            read tf
+            case $tf in
+                [Tt]rue|[Tt] ) return 0;;
+                [Ff]alse|[Ff] ) return 1;;
+                * ) echo "Please answer true or false.";;
+            esac
+        done
+    fi
 }
 
 # Print a numbered list. Usage: numbered_list <default-number> "item 1" "item 2" ...

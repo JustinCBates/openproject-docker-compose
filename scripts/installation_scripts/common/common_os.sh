@@ -39,4 +39,4 @@ detect_os_family() {
     fi
 }
 
-export -f detect_os_family
+# No export needed; scripts should source this file to use detect_os_family
