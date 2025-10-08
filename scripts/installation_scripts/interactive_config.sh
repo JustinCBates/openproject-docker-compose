@@ -267,23 +267,16 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     
     echo "Available environment types:"
     # Use numbered_list_prompt to print list, prompt and validate selection
-    numbered_list_prompt "$current_env_num" _env_choice env_idx \
+    # Prompt for environment type; numbered_list_prompt now returns the token
+    # (e.g. 'localdev', 'remotedev') in the provided out variable.
+    numbered_list_prompt "$current_env_num" env_token env_idx \
         "localdev    - Local development environment" \
         "remotedev   - Remote development server" \
         "remotetest  - Remote testing/staging server" \
         "production  - Production server"
 
-    # Map numeric selection to environment name
-    case "$env_idx" in
-        1) environment_type="localdev" ;;
-        2) environment_type="remotedev" ;;
-        3) environment_type="remotetest" ;;
-        4) environment_type="production" ;;
-        *)
-            echo "⚠ Invalid selection '$env_idx'. Using default: localdev"
-            environment_type="localdev" ;;
-    esac
-
+    # Use the returned token directly
+    environment_type="$env_token"
     echo "✓ Environment type set to: $environment_type"
     
     echo
@@ -419,23 +412,6 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
         fi
     fi
     
-    # Convert current OS family to number for display
-    case "$current_os_family" in
-        debian) current_os_num="1" ;;
-        redhat) current_os_num="2" ;;
-        suse) current_os_num="3" ;;
-        arch) current_os_num="4" ;;
-        slackware) current_os_num="5" ;;
-        *) current_os_num="1" ;;
-    esac
-    
-    echo "Available OS families:"
-    numbered_list_prompt "$current_os_num" _os_choice os_idx \
-        "debian     - Debian, Ubuntu, Mint, Raspbian" \
-        "redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux" \
-        "suse       - openSUSE, SLES" \
-        "arch       - Arch Linux, Manjaro, EndeavourOS" \
-        "slackware  - Slackware"
 
     # Show detected OS if available
     if [ "$current_os_family" != "unknown" ]; then
@@ -447,20 +423,29 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
         echo
     fi
 
-    # Map numeric selection to OS family
-    case "$os_idx" in
-        1) selected_os_family="debian" ;;
-        2) selected_os_family="redhat" ;;
-        3) selected_os_family="suse" ;;
-        4) selected_os_family="arch" ;;
-        5) selected_os_family="slackware" ;;
-        *)
-            echo "⚠ Invalid selection '$os_idx'. Using detected/default: $current_os_family"
-            selected_os_family="$current_os_family" ;;
+    echo "Available OS families:"
+
+    # Convert current OS family to number for display
+    case "$current_os_family" in
+        debian) current_os_num="1" ;;
+        redhat) current_os_num="2" ;;
+        suse) current_os_num="3" ;;
+        arch) current_os_num="4" ;;
+        slackware) current_os_num="5" ;;
+        *) current_os_num="1" ;;
     esac
-    
+
+    # Prompt for OS family and use token directly
+    numbered_list_prompt "$current_os_num" os_token os_idx \
+        "debian     - Debian, Ubuntu, Mint, Raspbian" \
+        "redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux" \
+        "suse       - openSUSE, SLES" \
+        "arch       - Arch Linux, Manjaro, EndeavourOS" \
+        "slackware  - Slackware"
+
+    selected_os_family="$os_token"
+
     # Check if user selected different OS from detected and ask for confirmation.
-    # Normalize to lowercase to avoid prompting when values differ only by case.
     lc_current_os=$(echo "$current_os_family" | tr '[:upper:]' '[:lower:]')
     lc_selected_os=$(echo "$selected_os_family" | tr '[:upper:]' '[:lower:]')
 
@@ -540,28 +525,22 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     esac
 
     # Print database storage options and prompt with helper
-    numbered_list_prompt "$current_storage_num" _storage_choice storage_idx \
+    numbered_list_prompt "$current_storage_num" storage_token storage_idx \
         "docker-volumes  - Use Docker managed volumes (recommended for most cases)" \
         "bind-mounts     - Use host filesystem paths (easier for backups)"
 
-    case "$storage_idx" in
-        1)
-            db_storage_type="docker-volumes"
-            echo "✓ Using Docker managed volumes for database storage"
-            ;;
-        2)
-            db_storage_type="bind-mounts"
-            echo "✓ Using host filesystem bind mounts for database storage"
-
-            # Get the bind mount path if using bind mounts
-            current_db_path=$(grep "^DATABASE_HOST_PATH=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "/opt/openproject/data")
-            prompt_with_default "Host path for database data" "$current_db_path" "db_host_path"
-            ;;
-        *)
-            echo "⚠ Invalid selection '$storage_idx'. Using default: docker-volumes"
-            db_storage_type="docker-volumes"
-            ;;
-    esac
+    db_storage_type="$storage_token"
+    if [ "$db_storage_type" = "docker-volumes" ]; then
+        echo "✓ Using Docker managed volumes for database storage"
+    elif [ "$db_storage_type" = "bind-mounts" ]; then
+        echo "✓ Using host filesystem bind mounts for database storage"
+        # Get the bind mount path if using bind mounts
+        current_db_path=$(grep "^DATABASE_HOST_PATH=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "/opt/openproject/data")
+        prompt_with_default "Host path for database data" "$current_db_path" "db_host_path"
+    else
+        echo "⚠ Invalid selection '$storage_idx'. Using default: docker-volumes"
+        db_storage_type="docker-volumes"
+    fi
     
     # Save all configuration to interactive_config.cfg file
     save_config "OPENPROJECT_HOST_NAME" "$host_name"

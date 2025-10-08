@@ -86,8 +86,23 @@ numbered_list_prompt() {
     # Arrays are 0-based in bash
     local sel_item="${items[$((sel_index-1))]}"
 
+    # Extract a short token from the selected item. We expect items to be
+    # provided in the form "token  - Human readable description" or
+    # "token - description". The token is the first whitespace-delimited
+    # field up to any separator like '-' or whitespace alignment.
+    # Trim leading/trailing whitespace first.
+    local sel_token
+    sel_token=$(printf "%s" "$sel_item" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/\s*-\s*/ - /' )
+    # Now take the substring before the ' - ' separator if present, otherwise
+    # take the first word.
+    if printf "%s" "$sel_token" | grep -q " - "; then
+        sel_token=$(printf "%s" "$sel_token" | cut -d'-' -f1 | sed -e 's/[[:space:]]*$//')
+    else
+        sel_token=$(printf "%s" "$sel_token" | awk '{print $1}')
+    fi
+
     # Export into caller variables (use eval)
-    eval "$out_var=\"$sel_item\""
+    eval "$out_var=\"$sel_token\""
     if [ -n "$out_idx_var" ]; then
         eval "$out_idx_var=\"$sel_index\""
     fi
