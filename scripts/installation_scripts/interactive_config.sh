@@ -70,7 +70,7 @@ if [ ! -f "docker-compose.yml" ]; then
 fi
 
 echo
-section "Current configuration preview:"
+section "Current configuration preview:" "Saved configuration (first 200 lines). Review these values before modifying the installer settings."
 if [ -f "$DEPLOY_CONFIG" ]; then
     echo "Key settings from configuration:"
     # Print all non-empty lines from the deployment config so users can see the full saved state.
@@ -88,7 +88,7 @@ echo
 
 if validate_yn "Would you like to modify the configuration interactively?" "y"; then
     echo
-    section "Interactive Configuration:"
+    section "Interactive Configuration:" "Run through the guided prompts to update deployment settings. Leave a prompt empty to accept the shown default."
     
     # Read current values from config file if they exist. This enumerates
     # known keys found in interactive_config.cfg so the interactive prompts
@@ -170,9 +170,7 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     fi
 
     echo
-    echo "Security note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP."
-    echo "This exposes credentials, cookies, and session tokens to on-path attackers (MITM), and prevents automatic TLS enforcement by browsers."
-    echo "Only disable redirects if you understand and accept these risks."
+    section "Proxy HTTPS redirect configuration:" "Security note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP. This exposes credentials, cookies, and session tokens to on-path attackers (MITM), and prevents automatic TLS enforcement by browsers. Only disable redirects if you understand and accept these risks."
 
     if validate_tf "Redirect HTTP to HTTPS?" "$default_redirect"; then
         proxy_redirect="true"
@@ -213,11 +211,11 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     echo
     section "Endpoint Configuration:"
     # Get current domain values from config if they exist
-    subsection "Domain Configuration:"
+    subsection "Domain Configuration:" "Domain is the public host where OpenProject will be available (e.g., example.com)."
     current_domain=$(grep "^DOMAIN_NAME=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
     prompt_with_default "Domain name (e.g., Statesmen.com)" "$current_domain" "domain_name"
 
-    subsection "Subdomain Configuration:"
+    subsection "Subdomain Configuration:" "Optional subdomain used to namespace projects (leave empty for none). To keep an existing subdomain you must retype it below."
     current_subdomain=$(grep "^SUBDOMAIN=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
         
     # Handle subdomain differently - inform user of current value, no default
