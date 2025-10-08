@@ -78,6 +78,9 @@ BRONZE=$'\e[38;5;136m'
 YELLOW=$'\e[33m'
 RESET=$'\e[0m'
 GREEN=$'\e[32m'
+DIM=$'\e[2m'
+# SUBDUED is a dimmed bronze for body text under headings
+SUBDUED="${DIM}${BRONZE}"
 
 # Determine whether colors should be enabled. This allows forcing colors
 # by setting INSTALLER_FORCE_COLOR=1 in the environment (useful in some
@@ -146,11 +149,88 @@ note() {
 
 # Print a section heading (title + underline) in bronze
 section() {
-    local title="$*"
+    # Usage: section "Title" ["optional multi-line body"]
+    local title="$1"
+    local body="${2-}"
     local underline
-    underline=$(printf '%*s' "${#title}" '' | tr ' ' '=')
+    # Compute max width between title and any body lines so all decorations
+    # share the same width.
+    local IFS=$'\n'
+    local maxw=${#title}
+    if [ -n "$body" ]; then
+        for line in $body; do
+            local l=${#line}
+            if [ "$l" -gt "$maxw" ]; then
+                maxw=$l
+            fi
+        done
+    fi
+
+    # Cap the computed width to the terminal width to avoid generating
+    # extremely long decoration lines that can make the UI appear hung.
+    local term_w=80
+    if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
+        local tw
+        tw=$(tput cols 2>/dev/null || echo 0)
+        if [ "$tw" -gt 0 ]; then
+            term_w=$tw
+        fi
+    elif [ -n "${COLUMNS:-}" ] && [ "${COLUMNS:-0}" -gt 0 ]; then
+        term_w=${COLUMNS}
+    fi
+    if [ "$maxw" -gt "$term_w" ]; then
+        maxw=$term_w
+    fi
+
+    # Top '=' rule
+    local rule
+    rule=$(printf '%*s' "$maxw" '' | tr ' ' '=')
+    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+        printf "%b\n" "${BRONZE}${rule}${RESET}"
+    else
+        printf "%s\n" "$rule"
+    fi
+
+    # Title and underline (same width)
     echo -e "${BRONZE}${title}${RESET}"
-    echo -e "${BRONZE}${underline}${RESET}"
+    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+        printf "%b\n" "${BRONZE}${rule}${RESET}"
+    else
+        printf "%s\n" "$rule"
+    fi
+
+    if [ -n "$body" ]; then
+        # Subdued color: use BRONZE but dim by reducing brightness if terminal
+        # doesn't support dim, fallback to RESET. We'll box the body with a
+        # bottom underscore line matching width.
+        # Print body lines and compute max width
+        local IFS=$'\n'
+        local maxw=0
+        for line in $body; do
+            # Print the body in a less prominent color (use SUBDUED)
+            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+                printf "%b
+" "${SUBDUED}${line}${RESET}"
+            else
+                printf "%s
+" "${line}"
+            fi
+            local l=${#line}
+            if [ "$l" -gt "$maxw" ]; then
+                maxw=$l
+            fi
+        done
+        # Print bottom underscore box in BRONZE
+        if [ "$maxw" -gt 0 ]; then
+            local underscore
+            underscore=$(printf '%*s' "$maxw" '' | tr ' ' '_')
+            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+                printf "%b\n" "${BRONZE}${underscore}${RESET}"
+            else
+                printf '%s\n' "$underscore"
+            fi
+        fi
+    fi
 }
 
 # Return a colored default value when stdout is a TTY

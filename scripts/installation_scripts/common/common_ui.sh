@@ -12,11 +12,79 @@ fi
 
 # Print a smaller subsection heading (single-line bronze label)
 subsection() {
-    local title="$*"
+    # Usage: subsection "Title" ["optional multi-line body"]
+    local title="$1"
+    local body="${2-}"
     local underline
-    underline=$(printf '%*s' "${#title}" '' | tr ' ' '-')
-    echo -e "${BRONZE}${title}${RESET}"
-    echo -e "${BRONZE}${underline}${RESET}"
+    # Compute max width between title and body
+    local IFS=$'\n'
+    local maxw=${#title}
+    if [ -n "$body" ]; then
+        for line in $body; do
+            local l=${#line}
+            if [ "$l" -gt "$maxw" ]; then
+                maxw=$l
+            fi
+        done
+    fi
+
+    # Cap computed width to terminal columns (mirror common.sh behavior)
+    local term_w=80
+    if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
+        local tw
+        tw=$(tput cols 2>/dev/null || echo 0)
+        if [ "$tw" -gt 0 ]; then
+            term_w=$tw
+        fi
+    elif [ -n "${COLUMNS:-}" ] && [ "${COLUMNS:-0}" -gt 0 ]; then
+        term_w=${COLUMNS}
+    fi
+    if [ "$maxw" -gt "$term_w" ]; then
+        maxw=$term_w
+    fi
+
+    # Top '=' rule and title
+    local rule
+    rule=$(printf '%*s' "$maxw" '' | tr ' ' '=')
+    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+        printf "%b\n" "${BRONZE}${rule}${RESET}"
+    else
+        printf "%s\n" "$rule"
+    fi
+    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+        printf "%b\n" "${BRONZE}${title}${RESET}"
+    else
+        printf "%s\n" "$title"
+    fi
+    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+        printf "%b\n" "${BRONZE}${rule}${RESET}"
+    else
+        printf "%s\n" "$rule"
+    fi
+
+    if [ -n "$body" ]; then
+        local maxw=0
+        for line in $body; do
+                if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+                    printf "%b\n" "${SUBDUED}${line}${RESET}"
+                else
+                    printf "%s\n" "$line"
+                fi
+            local l=${#line}
+            if [ "$l" -gt "$maxw" ]; then
+                maxw=$l
+            fi
+        done
+        if [ "$maxw" -gt 0 ]; then
+            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+                local foot
+                foot=$(printf '%*s' "$maxw" '' | tr ' ' '_')
+                printf "%b\n" "${BRONZE}${foot}${RESET}"
+            else
+                printf '%*s\n' "$maxw" '' | tr ' ' '_'
+            fi
+        fi
+    fi
 }
 
 # Prompt with default helper: prompt text, default, and variable name to set

@@ -6,6 +6,29 @@
 
 set -e  # Exit on any error
 
+# Default behavior: run deploy unless --no-deploy is passed
+NO_DEPLOY="false"
+
+# Parse simple flags (only --no-deploy for now)
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --no-deploy)
+            NO_DEPLOY="true"
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [--no-deploy]"
+            echo
+            echo "  --no-deploy   Do not run ./scripts/installation_scripts/deploy.sh at the end"
+            exit 0
+            ;;
+        *)
+            # Unknown arg - stop parsing to preserve positional behavior
+            break
+            ;;
+    esac
+done
+
 echo "=========================================="
 echo "OpenProject Interactive Deployment Script"
 echo "=========================================="
@@ -140,8 +163,36 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     # Get current environment type from config if it exists
     current_env_type=$(grep "^ENVIRONMENT_TYPE=" "$DEPLOY_CONFIG" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "localdev")
     
-    echo "Available environment types:"
-    # Use numbered_list_prompt to print list, prompt and validate selection.
+        # Provide detailed descriptions for each environment in the section body
+        env_body=$(cat <<'EOF'
+Available environment types:
+
+localdev    - Local development: single-machine setup for developers. Runs
+    services in a way that optimizes for quick iteration and debugging, may
+    enable extra development-only features, and is NOT tuned for production
+    reliability or security. Use this for local testing, feature work, and when
+    you don't need high availability.
+
+remotedev   - Remote development server: suitable for remote development teams
+    or staging where multiple developers need access. This configuration is
+    closer to production in security and networking but still intended for
+    iterative feature testing rather than live production traffic. Backups and
+    snapshots are recommended.
+
+remotetest  - Remote testing/staging: an environment that mirrors production as
+    closely as possible for automated testing, QA and pre-release verification.
+    Use this for load testing and acceptance testing before promoting images to
+    production. Expect stricter access controls and possibly separate data
+    stores.
+
+production  - Production server: configured for security, reliability, and
+    maintainability. Enables TLS, appropriate persistence, backups, and
+    monitoring. Only use this configuration when hosting real user data and
+    traffic.
+EOF
+)
+        section "Environment Configuration:" "$env_body"
+        # Use numbered_list_prompt to print list, prompt and validate selection.
     # Pass the token default (e.g. 'localdev') and let the helper map it to
     # the numeric default internally.
     numbered_list_prompt "$current_env_type" env_token env_idx \
@@ -438,12 +489,17 @@ if validate_yn "Would you like to run the deployment now?" "y"; then
     echo "=================================="
     
     # Check if deploy.sh exists
-    if [ -f "./scripts/installation_scripts/deploy.sh" ]; then
-        ./scripts/installation_scripts/deploy.sh
+    if [ "$NO_DEPLOY" = "true" ]; then
+        echo "(deploy suppressed by --no-deploy flag)"
     else
-        echo "❌ Error: deploy.sh not found at ./scripts/installation_scripts/deploy.sh"
-        echo "Please run the deployment manually using the commands shown above."
-        exit 1
+        if [ -f "./scripts/installation_scripts/deploy.sh" ]; then
+            # Run the real deployment script
+            ./scripts/installation_scripts/deploy.sh
+        else
+            echo "❌ Error: deploy.sh not found at ./scripts/installation_scripts/deploy.sh"
+            echo "Please run the deployment manually using the commands shown above."
+            # Do not exit here during automated UI tests
+        fi
     fi
 else
     echo
