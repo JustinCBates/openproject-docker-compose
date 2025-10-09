@@ -2,11 +2,11 @@
 # Finalize and save configuration
 
 run_finalize() {
-    cfg_saved_body=$(cat <<EOF
-Configuration saved to: $DEPLOY_CONFIG
-EOF
-)
-    section "Configuration saved to: $DEPLOY_CONFIG" "$cfg_saved_body"
+    # Print a concise final summary (avoid duplicating the section header)
+    echo
+    echo "============================================================================================"
+    echo "Configuration saved to: ${DEPLOY_CONFIG:-scripts/installation_scripts/interactive_config.cfg}"
+    echo "============================================================================================"
     echo
     echo "To deploy OpenProject, run:"
     echo "  ./scripts/installation_scripts/deploy.sh"
@@ -42,16 +42,13 @@ EOF
         # indirect expansion: use variable named like the key (exports from .cfg.defaults / env)
         val="${!key-}"
         if [ -n "$val" ]; then
-            save_config "$key" "$val"
+            # Persist silently here so final output remains a single coherent block
+            save_config "$key" "$val" >/dev/null 2>&1
         fi
     done
 
-    # Ensure we display the final config file to the user if it exists
+    # Ensure we display the final config file to the user if it exists (print only once)
     if [ -f "${DEPLOY_CONFIG:-scripts/installation_scripts/interactive_config.cfg}" ]; then
-        echo
-        echo "============================================================================================"
-        echo "Configuration saved to: ${DEPLOY_CONFIG:-scripts/installation_scripts/interactive_config.cfg}"
-        echo "============================================================================================"
         sed -n '1,240p' "${DEPLOY_CONFIG:-scripts/installation_scripts/interactive_config.cfg}"
         echo
     fi

@@ -195,9 +195,6 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     run_web_proxy
     run_db
     run_finalize
-    echo
-    echo "Configuration saved to interactive_config.cfg!"
-    echo "Note: .env file will be updated during deployment by configure_docker scripts."
 fi
 
 # Ask if user wants to run deployment now (run_finalize will already have printed
@@ -222,5 +219,9 @@ if validate_yn "Would you like to run the deployment now?" "y"; then
     fi
 else
     echo
-    echo "Deployment skipped. Run './scripts/installation_scripts/deploy.sh' when ready."
+    # The final config has already been printed by run_finalize(). Show a
+    # concise instruction on how to deploy when the user declines to run the
+    # automated deploy step.
+    echo "To deploy OpenProject, run:"
+    echo "  ./scripts/installation_scripts/deploy.sh"
 fi
