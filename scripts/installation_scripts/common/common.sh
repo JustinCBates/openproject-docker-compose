@@ -277,6 +277,32 @@ generate_interactive_config_defaults() {
         git_email=$(git config --global user.email 2>/dev/null || true)
     fi
 
+    # Attempt to detect OS_FAMILY from /etc/os-release (map common IDs to known families)
+    local os_family
+    os_family="${OS_FAMILY:-}"
+    if [ -z "$os_family" ] && [ -f /etc/os-release ]; then
+        # Read ID and ID_LIKE (lowercase)
+        local id id_like
+        id=$(awk -F= '/^ID=/{print tolower($2)}' /etc/os-release 2>/dev/null | sed 's/"//g' || true)
+        id_like=$(awk -F= '/^ID_LIKE=/{print tolower($2)}' /etc/os-release 2>/dev/null | sed 's/"//g' || true)
+        # Simple mapping heuristics
+        case "$id" in
+            debian|ubuntu|pop) os_family="debian";;
+            rhel|centos|fedora) os_family="redhat";;
+            suse|opensuse) os_family="suse";;
+            arch) os_family="arch";;
+            slackware) os_family="slackware";;
+        esac
+        if [ -z "$os_family" ] && [ -n "$id_like" ]; then
+            case "$id_like" in
+                *debian*) os_family="debian";;
+                *rhel*|*fedora*) os_family="redhat";;
+                *suse*) os_family="suse";;
+                *arch*) os_family="arch";;
+            esac
+        fi
+    fi
+
     # Write defaults file (overwrite)
     cat > "$defaults_file" <<EOF
 # Generated defaults for interactive_config.sh
@@ -285,6 +311,7 @@ OPENPROJECT_HOST_NAME="$host"
 OPENPROJECT_HTTPS="$https"
 OPENPROJECT_TAG="$tag"
 NAMESPACE=""
+    OS_FAMILY="${os_family:-}"
 EOF
 
     # Append git defaults if detected (keep them on separate lines)

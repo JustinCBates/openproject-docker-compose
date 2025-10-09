@@ -40,18 +40,27 @@ echo "=========================================="
 
 # Function to load configuration
 load_config() {
+    local defaults_file="$SCRIPT_DIR/../interactive_config.cfg.defaults"
+    if [ -f "$defaults_file" ]; then
+        set -a
+        # shellcheck source=/dev/null
+        source "$defaults_file"
+        set +a
+    fi
+
     if [ -f "$CONFIG_FILE" ]; then
+        # shellcheck source=/dev/null
         source "$CONFIG_FILE"
         echo "✓ Configuration loaded from $(basename "$CONFIG_FILE")"
-        
+
         # Validate required variables
-        if [ -z "$OS_FAMILY" ]; then
+        if [ -z "${OS_FAMILY:-}" ]; then
             echo "❌ OS_FAMILY not found in configuration"
             echo "Please run interactive_config.sh first to configure your environment."
             exit 1
         fi
-        
-        echo "✓ Detected OS Family: $OS_FAMILY"
+
+        echo "✓ Detected OS Family: ${OS_FAMILY:-}"
     else
         echo "❌ Configuration file not found: $CONFIG_FILE"
         echo "Please run interactive_config.sh first to configure your environment."

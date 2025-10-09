@@ -19,6 +19,15 @@ echo "=========================================="
 echo "Proxy Configuration Utility"
 echo "=========================================="
 
+# Load defaults first to provide fallbacks
+DEFAULTS_FILE="$SCRIPT_DIR/../../interactive_config.cfg.defaults"
+if [ -f "$DEFAULTS_FILE" ]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$DEFAULTS_FILE"
+    set +a
+fi
+
 # Load config if present (not fatal)
 if [ -f "$CONFIG_FILE" ]; then
     # shellcheck disable=SC1090
@@ -26,6 +35,7 @@ if [ -f "$CONFIG_FILE" ]; then
 fi
 
 # Compute values
+# Compute values (use safe expansions)
 APP_HOST=${APP_HOST:-web}
 DOMAIN_NAME=${DOMAIN_NAME:-${OPENPROJECT_HOST_NAME:-}}
 RELATIVE_ROOT=${OPENPROJECT_RAILS__RELATIVE__URL__ROOT:-}

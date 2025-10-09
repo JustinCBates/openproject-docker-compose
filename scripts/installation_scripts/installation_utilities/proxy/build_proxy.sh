@@ -18,6 +18,15 @@ echo "=========================================="
 
 cd "$PROJECT_ROOT"
 
+# Source defaults so standalone runs pick up generated fallbacks
+DEFAULTS_FILE="$SCRIPT_DIR/../interactive_config.cfg.defaults"
+if [ -f "$DEFAULTS_FILE" ]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$DEFAULTS_FILE"
+    set +a
+fi
+
 # Use docker compose to build the proxy service, if it exists
 if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
     # Check if proxy service is defined and has a build context
