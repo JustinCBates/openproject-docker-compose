@@ -17,9 +17,18 @@ if [ -f "$SCRIPT_DIR/../common/common_ui.sh" ]; then
 fi
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/../../interactive_config.cfg"
+DEFAULTS_FILE="$SCRIPT_DIR/../../interactive_config.cfg.defaults"
+# Source defaults first so standalone runs pick up generated fallbacks
+if [ -f "$DEFAULTS_FILE" ]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$DEFAULTS_FILE"
+    set +a
+fi
 
-# Load configuration if available
+# Load configuration if available (user config overrides defaults)
 if [ -f "$CONFIG_FILE" ]; then
+    # shellcheck source=/dev/null
     source "$CONFIG_FILE"
 fi
 
