@@ -1,0 +1,13 @@
+Validation started at 2025-10-09T20:51:27+00:00
+
+--- STEP: Syntax check (timeout 60s) ---
+find: ‘/scripts/installation_scripts’: No such file or directory
+STEP Syntax check: PASS
+
+--- STEP: Regenerate defaults (timeout 20s) ---
+environment: line 3: /scripts/installation_scripts/interactive_config.sh: No such file or directory
+STEP Regenerate defaults: PASS
+
+--- STEP: Verify defaults keys (timeout 10s) ---
+Defaults file not found: /scripts/installation_scripts/interactive_config.cfg.defaults
+STEP Verify defaults keys: FAIL (exit 2)

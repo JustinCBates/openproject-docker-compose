@@ -9,9 +9,17 @@ EOF
 )
     subsection "Web Configuration" "$web_host_body"
     prompt_with_default "Enter the hostname for OpenProject" "$current_host" "host_name"
+    # Persist host name immediately so other modules/utilities can use it
+    if [ -n "${host_name:-}" ]; then
+        save_config "OPENPROJECT_HOST_NAME" "$host_name"
+    fi
     # Use validate_tf so inputs like 't'/'f' are normalized to literal 'true'/'false'
     # and exported into the caller variable 'use_https'.
     validate_tf "Enable HTTPS?" "$current_https" use_https
+    # Persist HTTPS selection immediately (save_config normalizes booleans)
+    if [ -n "${use_https:-}" ]; then
+        save_config "OPENPROJECT_HTTPS" "$use_https"
+    fi
 
     echo
 
@@ -41,7 +49,6 @@ EOF
     fi
 
     save_config "PROXY_HTTP_TO_HTTPS_REDIRECT" "$proxy_redirect"
-    echo "✓ PROXY_HTTP_TO_HTTPS_REDIRECT set to: $proxy_redirect"
  
 
         web_endpoint_body=$(cat <<'EOF'
@@ -71,7 +78,6 @@ EOF
     # by pressing Enter we avoid writing an empty DOMAIN_NAME that would shadow the fallback.
     if [ -n "${domain_name:-}" ]; then
         save_config "DOMAIN_NAME" "$domain_name"
-        echo "✓ DOMAIN_NAME set to: $domain_name"
     fi
 
     # Show a live preview block of the resulting web endpoint using the provided domain and namespace
@@ -112,6 +118,21 @@ EOF
     else
         echo "No namespace currently set"
         prompt_with_default "Namespace (e.g., StatesmenProjects, leave empty for none)" "" "namespace"
+    fi
+
+    # Persist namespace: if user provided a value, save it; if user left it empty
+    # and a previous value exists in the config file, remove that line so the
+    # generated default (if any) takes effect.
+    if [ -n "${namespace:-}" ]; then
+        save_config "NAMESPACE" "$namespace"
+    else
+        # Remove existing NAMESPACE entry from DEPLOY_CONFIG so the default applies
+        if [ -f "${DEPLOY_CONFIG:-$SCRIPT_DIR/interactive_config.cfg}" ]; then
+            if grep -q '^NAMESPACE=' "${DEPLOY_CONFIG:-$SCRIPT_DIR/interactive_config.cfg}" 2>/dev/null; then
+                # Use sed to delete the line
+                sed -i '/^NAMESPACE=/d' "${DEPLOY_CONFIG:-$SCRIPT_DIR/interactive_config.cfg}" 2>/dev/null || true
+            fi
+        fi
     fi
 
     

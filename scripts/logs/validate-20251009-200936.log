@@ -1,0 +1,5 @@
+Validation started at 2025-10-09T20:09:36+00:00
+
+--- STEP: Syntax check (timeout 60s) ---
+timeout: failed to run command ‘syntax_check’: No such file or directory
+STEP Syntax check: FAIL (exit 127)

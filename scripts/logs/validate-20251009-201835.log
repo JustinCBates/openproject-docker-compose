@@ -1,0 +1,5 @@
+Validation started at 2025-10-09T20:18:35+00:00
+
+--- STEP: Syntax check (timeout 60s) ---
+bash: line 1: syntax_check: command not found
+STEP Syntax check: FAIL (exit 127)

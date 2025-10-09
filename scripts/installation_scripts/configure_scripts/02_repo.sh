@@ -22,6 +22,10 @@ EOF
 )
     subsection "OpenProject Version Configuration" "$git_version_body"
     prompt_with_default "OpenProject version tag" "$current_tag" "op_tag"
+    # Persist OpenProject tag immediately after user selection
+    if [ -n "${op_tag:-}" ]; then
+        save_config "OPENPROJECT_TAG" "$op_tag"
+    fi
     echo " "
 
     git_cfg_body=$(cat <<EOF
@@ -51,5 +55,11 @@ EOF
     fi
     
     prompt_with_default "Git username" "$current_git_user" "git_username"
+    if [ -n "${git_username:-}" ]; then
+        save_config "GIT_USERNAME" "$git_username"
+    fi
     prompt_with_default "Git email" "$current_git_email" "git_email"
+    if [ -n "${git_email:-}" ]; then
+        save_config "GIT_EMAIL" "$git_email"
+    fi
 }

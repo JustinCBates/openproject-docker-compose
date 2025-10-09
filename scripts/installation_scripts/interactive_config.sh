@@ -103,6 +103,11 @@ save_config() {
     esac
     # Quote the value to handle spaces and special characters
     echo "$key=\"$value\"" >> "$DEPLOY_CONFIG"
+    # Print a consistent confirmation for the user
+    # Use a check to avoid printing when we intentionally skip writing empty values
+    if [ -n "${value}" ]; then
+        printf "✓ %s set to: %s\n" "$key" "$value"
+    fi
 }
 
 # Function to load configuration from interactive_config.cfg file

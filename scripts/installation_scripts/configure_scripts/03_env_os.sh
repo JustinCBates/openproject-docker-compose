@@ -43,7 +43,7 @@ EOF
         "production  - Production server"
 
     environment_type="$env_token"
-    echo "✓ Environment type set to: $environment_type"
+    save_config "ENVIRONMENT_TYPE" "$environment_type"
 
     os_sub_body=$(cat <<EOF
 Select the OS family (Debian, RedHat, SUSE, Arch, Slackware). 
@@ -112,13 +112,12 @@ EOF
         echo
         if validate_yn "Are you sure you want to use '$selected_os_family' instead of '$current_os_family'?" "n"; then
             os_family="$selected_os_family"
-            echo "✓ Using user-selected OS family: $os_family"
         else
             os_family="$current_os_family"
-            echo "✓ Using detected OS family: $os_family"
         fi
+        save_config "OS_FAMILY" "$os_family"
     else
         os_family="$selected_os_family"
-        echo "✓ OS family set to: $os_family"
+        save_config "OS_FAMILY" "$os_family"
     fi
 }
