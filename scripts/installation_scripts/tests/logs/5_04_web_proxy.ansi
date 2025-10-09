@@ -1,0 +1,26 @@
+
+----------------------------------------------------------------------------------
+Web Configuration
+----------------------------------------------------------------------------------
+[2m[38;5;136mProvide the public hostname where OpenProject will be served (e.g., example.com). [0m
+[2m[38;5;136mEnable HTTPS if you have or will configure TLS certificates.[0m
+__________________________________________________________________________________
+Enter the hostname for OpenProject [srv1035368.hstgr.cloud]: Enable HTTPS? (true/false) [false]: 
+
+--------------------------------
+Web Configuration
+--------------------------------
+[2m[38;5;136mProxy and TLS redirect settings.[0m
+________________________________
+
+
+----------------------------------------------------------------------------------------------------
+Proxy HTTPS redirect configuration
+----------------------------------------------------------------------------------------------------
+[2m[38;5;136mSecurity note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP. [0m
+[2m[38;5;136mThis exposes credentials, cookies, and session tokens to on-path attackers (MITM), [0m
+[2m[38;5;136mand prevents automatic TLS enforcement by browsers. [0m
+[2m[38;5;136mOnly disable redirects if you understand and accept these risks.[0m
+____________________________________________________________________________________________________
+Redirect HTTP to HTTPS? (true/false) [false]: /opt/openproject/scripts/installation_scripts/configure_scripts/04_web_proxy.sh: line 47: save_config: command not found
+✓ PROXY_HTTP_TO_HTTPS_REDIRECT set to: false

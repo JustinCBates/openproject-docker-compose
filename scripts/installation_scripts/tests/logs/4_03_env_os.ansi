@@ -1,0 +1,46 @@
+
+
+=========================================================================================================
+Environment Configuration:
+=========================================================================================================
+[2m[38;5;136mSelect the environment type that best matches your deployment goals. Defaults are provided when possible.[0m
+_________________________________________________________________________________________________________
+
+-------------------------------------------------------------------------------
+Environment Configuration
+-------------------------------------------------------------------------------
+[2m[38;5;136mAvailable environment types:[0m
+[2m[38;5;136mlocaldev    - Local development: single-machine setup for developers. Runs[0m
+[2m[38;5;136m    services in a way that optimizes for quick iteration and debugging, may[0m
+[2m[38;5;136m    enable extra development-only features, and is NOT tuned for production[0m
+[2m[38;5;136m    reliability or security. Use this for local testing, feature work, and when[0m
+[2m[38;5;136m    you don't need high availability.[0m
+[2m[38;5;136mremotedev   - Remote development server: suitable for remote development teams[0m
+[2m[38;5;136m    or staging where multiple developers need access. This configuration is[0m
+[2m[38;5;136m    closer to production in security and networking but still intended for[0m
+[2m[38;5;136m    iterative feature testing rather than live production traffic. Backups and[0m
+[2m[38;5;136m    snapshots are recommended.[0m
+[2m[38;5;136mremotetest  - Remote testing/staging: an environment that mirrors production as[0m
+[2m[38;5;136m    closely as possible for automated testing, QA and pre-release verification.[0m
+[2m[38;5;136m    Use this for load testing and acceptance testing before promoting images to[0m
+[2m[38;5;136m    production. Expect stricter access controls and possibly separate data[0m
+[2m[38;5;136m    stores.[0m
+[2m[38;5;136mproduction  - Production server: configured for security, reliability, and[0m
+[2m[38;5;136m    maintainability. Enables TLS, appropriate persistence, backups, and[0m
+[2m[38;5;136m    monitoring. Only use this configuration when hosting real user data and[0m
+[2m[38;5;136m    traffic.[0m
+_______________________________________________________________________________
+  1) localdev    - Local development environment
+  2) remotedev   - Remote development server
+  3) remotetest  - Remote testing/staging server
+  4) production  - Production server
+Select an option [localdev]: ✓ Environment type set to: localdev
+
+----------------------------------------------------------------------
+Operating System Configuration
+----------------------------------------------------------------------
+[2m[38;5;136mSelect the OS family (Debian, RedHat, SUSE, Arch, Slackware). [0m
+[2m[38;5;136mInstaller steps and package commands will be tailored to this choice. [0m
+[2m[38;5;136mUse the detected OS when possible.[0m
+______________________________________________________________________
+/opt/openproject/scripts/installation_scripts/configure_scripts/03_env_os.sh: line 60: SCRIPT_DIR: unbound variable

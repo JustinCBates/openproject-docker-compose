@@ -69,6 +69,29 @@ fi
 # Export these so sourced scripts can inspect capabilities
 export COLOR_ENABLED COLOR_SUPPORTED COLOR_LEVEL
 
+# Interrupt handling: provide a friendly handler for SIGINT (Ctrl-C).
+# Modules can call enable_interrupt()/disable_interrupt() if they need
+# finer control. By default, enable when running interactively.
+on_interrupt() {
+    # Move to new line and print a short message; exit with 130 (commonly used for SIGINT)
+    printf "\n" >&2
+    printf "%s\n" "Interrupted by user (SIGINT). Exiting..." >&2
+    exit 130
+}
+
+enable_interrupt() {
+    trap 'on_interrupt' INT
+}
+
+disable_interrupt() {
+    trap - INT
+}
+
+# Enable interrupt handling when run from a TTY (interactive use)
+if [ -t 0 ] || [ -t 1 ]; then
+    enable_interrupt
+fi
+
 # Print a red warning prefix followed by message
 warn() {
     local msg="$*"
@@ -102,18 +125,58 @@ format_default() {
 # multi-line bodies. They were previously defined in common.sh but belong
 # here with the other UI helpers.
 # Generic separator that renders headings and optional multi-line bodies.
-# style: one of 'section', 'supersection', 'subsection'
+# The separator is style-agnostic: callers should pass header/footer chars,
+# the number of leading newlines (pre_newlines), and any color choices.
 separator() {
-    # separator style, title, body, header_char, foot_char, header_color, title_color, body_color
-    local style="$1"
-    local title="$2"
-    local body="${3-}"
-    local header_char="${4:-}"
-    local foot_char="${5:-_}"
+    # title, body, header_char, foot_char, pre_newlines, header_color, title_color, body_color
+    local title="$1"
+    local body="${2-}"
+    local header_char="${3:-}"
+    local foot_char="${4:-_}"
+    local pre_newlines="${5:-2}"
     local header_color="${6:-}"
     local title_color="${7:-}"
     local body_color="${8:-}"
     local IFS=$'\n'
+
+    # Helper: strip ANSI escape sequences so we can compute visible width
+    strip_ansi() {
+        local s="$1"
+        # Use awk to remove common ANSI CSI sequences (e.g., \033[31m)
+        printf "%s" "$s" | awk '{ gsub(/\033\[[0-9;]*[mK]/, ""); print }'
+    }
+
+    # Return visible character length (wc -m handles multibyte reasonably)
+    visible_length() {
+        local txt
+        txt=$(strip_ansi "$1")
+        # wc -m prints leading spaces; trim them
+        printf "%s" "$txt" | wc -m | tr -d ' '
+    }
+
+    # Replace readable color tokens like {YELLOW} with actual ANSI escapes when
+    # colors are enabled. When colors are disabled the tokens are removed.
+    apply_color_tokens() {
+        local s="$1"
+        if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+            s="${s//\{RED\}/${RED}}"
+            s="${s//\{BRONZE\}/${BRONZE}}"
+            s="${s//\{YELLOW\}/${YELLOW}}"
+            s="${s//\{RESET\}/${RESET}}"
+            s="${s//\{GREEN\}/${GREEN}}"
+            s="${s//\{DIM\}/${DIM}}"
+            s="${s//\{SUBDUED\}/${SUBDUED}}"
+        else
+            s="${s//\{RED\}/}"
+            s="${s//\{BRONZE\}/}"
+            s="${s//\{YELLOW\}/}"
+            s="${s//\{RESET\}/}"
+            s="${s//\{GREEN\}/}"
+            s="${s//\{DIM\}/}"
+            s="${s//\{SUBDUED\}/}"
+        fi
+        printf "%s" "$s"
+    }
 
     # Terminal width detection
     local term_w=80
@@ -127,11 +190,18 @@ separator() {
         term_w=${COLUMNS}
     fi
 
-    # Compute content width: max of title and any body lines
-    local content_w=${#title}
+    # Compute content width: max of title and any body lines. Use visible
+    # lengths (strip ANSI escapes) so embedded color codes don't affect width.
+    local content_w
+    content_w=$(visible_length "$title")
     if [ -n "$body" ]; then
         for line in $body; do
-            local l=${#line}
+            # apply token->ANSI substitution before measuring so tokens count as
+            # zero-width escapes when converted.
+            local measured_line
+            measured_line=$(apply_color_tokens "$line")
+            local l
+            l=$(visible_length "$measured_line")
             if [ "$l" -gt "$content_w" ]; then
                 content_w=$l
             fi
@@ -142,13 +212,9 @@ separator() {
         content_w=$term_w
     fi
 
-    # Determine header char defaults per style
+    # Determine header char default if not provided
     if [ -z "$header_char" ]; then
-        case "$style" in
-            supersection) header_char='#' ;;
-            subsection) header_char='-' ;;
-            *) header_char='=' ;;
-        esac
+        header_char='='
     fi
 
     # Determine color defaults if not passed in
@@ -156,81 +222,43 @@ separator() {
         header_color="${BRONZE}"
     fi
     if [ -z "$title_color" ]; then
-        if [ "$style" = "supersection" ]; then
-            title_color="${YELLOW}"
-        else
-            title_color="${BRONZE}"
-        fi
+        title_color="${BRONZE}"
     fi
     if [ -z "$body_color" ]; then
         body_color="${SUBDUED}"
     fi
 
-    # Render header according to style (preserve blanks/padding)
-    case "$style" in
-        supersection)
-            printf "\n\n\n"
-            local header
-            header=$(printf '%*s' "$content_w" '' | tr ' ' "$header_char")
-            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${header_color}${header}${RESET}"
-                printf "%b\n" "${title_color}${title}${RESET}"
-                printf "%b\n" "${header_color}${header}${RESET}"
-            else
-                printf "%s\n" "$header"
-                printf "%s\n" "$title"
-                printf "%s\n" "$header"
-            fi
-            ;;
-        subsection)
-            printf "\n"
-            local header
-            header=$(printf '%*s' "$content_w" '' | tr ' ' "$header_char")
-            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${header_color}${header}${RESET}"
-                printf "%b\n" "${title_color}${title}${RESET}"
-                printf "%b\n" "${header_color}${header}${RESET}"
-            else
-                printf "%s\n" "$header"
-                printf "%s\n" "$title"
-                printf "%s\n" "$header"
-            fi
-            ;;
-        *)
-            printf "\n\n"
-            local header
-            header=$(printf '%*s' "$content_w" '' | tr ' ' "$header_char")
-            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${header_color}${header}${RESET}"
-            else
-                printf "%s\n" "$header"
-            fi
-            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${title_color}${title}${RESET}"
-            else
-                printf "%s\n" "$title"
-            fi
-            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                printf "%b\n" "${header_color}${header}${RESET}"
-            else
-                printf "%s\n" "$header"
-            fi
-            ;;
-    esac
+    # Render header/title/header with configurable leading newlines
+    local header
+    header=$(printf '%*s' "$content_w" '' | tr ' ' "$header_char")
+
+    # Print leading newlines
+    for ((i=0;i<pre_newlines;i++)); do
+        printf "\n"
+    done
+
+    if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
+        printf "%s\n" "$(apply_color_tokens "${header_color}${header}${RESET}")"
+        printf "%s\n" "$(apply_color_tokens "${title_color}${title}${RESET}")"
+        printf "%s\n" "$(apply_color_tokens "${header_color}${header}${RESET}")"
+    else
+        printf "%s\n" "$header"
+        printf "%s\n" "$title"
+        printf "%s\n" "$header"
+    fi
 
     # Body and footer
     if [ -n "$body" ]; then
         local maxb=0
-        for line in $body; do
-            if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
-                # Use provided body_color so callers can customize subdued style
-                printf "%s\n" "${body_color}${line}${RESET}"
-            else
-                printf "%s\n" "$line"
-            fi
-            local l=${#line}
-            if [ "$l" -gt "$maxb" ]; then
-                maxb=$l
+            for line in $body; do
+            # Apply color tokens and/or ${COLOR} expansions before printing
+            local printed
+            printed=$(apply_color_tokens "${body_color}${line}${RESET}")
+            printf "%s\n" "$printed"
+            local measured
+            measured=$(visible_length "$printed")
+            if [ "$measured" -gt "$maxb" ]; then
+                maxb=$measured
             fi
         done
 
@@ -252,15 +280,18 @@ separator() {
 # Backwards-compatible wrappers that preserve the original API and pass
 # header/footer characters for each style (footer defaults to '_').
 section() {
-    separator "section" "$1" "${2-}" '=' '_'
+    # title, body, header_char='=', foot_char='_', pre_newlines=2
+    separator "$1" "${2-}" '=' '_' 2 "${BRONZE}" "${BRONZE}" "${SUBDUED}"
 }
 
 supersection() {
-    separator "supersection" "$1" "${2-}" '#' '_'
+    # supersections use '#' header and a brighter title color
+    separator "$1" "${2-}" '#' '_' 3 "${BRONZE}" "${YELLOW}" "${SUBDUED}"
 }
 
 subsection() {
-    separator "subsection" "$1" "${2-}" '-' '_'
+    # subsection uses '-' header and single leading newline
+    separator "$1" "${2-}" '-' '_' 1 "${BRONZE}" "${BRONZE}" "${SUBDUED}"
 }
 
 # Prompt with default helper: prompt text, default, and variable name to set

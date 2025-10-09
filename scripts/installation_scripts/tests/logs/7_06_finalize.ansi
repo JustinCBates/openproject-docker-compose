@@ -1,0 +1,17 @@
+
+
+=======================================================================================================
+Configuration saved to: /opt/openproject/scripts/installation_scripts/tests/interactive_config_test.cfg
+=======================================================================================================
+[2m[38;5;136mConfiguration saved to: /opt/openproject/scripts/installation_scripts/tests/interactive_config_test.cfg[0m
+_______________________________________________________________________________________________________
+
+To deploy OpenProject, run:
+  ./scripts/installation_scripts/deploy.sh
+
+Or use the utility scripts manually:
+  1. ./scripts/installation_scripts/installation_utilities/configure_docker.sh
+  2. ./scripts/installation_scripts/installation_utilities/build_stack.sh
+
+Configuration complete!
+
