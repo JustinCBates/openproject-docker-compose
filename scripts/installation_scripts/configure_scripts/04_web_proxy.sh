@@ -9,7 +9,9 @@ EOF
 )
     subsection "Web Configuration" "$web_host_body"
     prompt_with_default "Enter the hostname for OpenProject" "$current_host" "host_name"
-    prompt_with_default "Enable HTTPS? (true/false)" "$current_https" "use_https"
+    # Use validate_tf so inputs like 't'/'f' are normalized to literal 'true'/'false'
+    # and exported into the caller variable 'use_https'.
+    validate_tf "Enable HTTPS?" "$current_https" use_https
 
     echo
 

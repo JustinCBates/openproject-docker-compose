@@ -87,6 +87,20 @@ save_config() {
     if [ -z "${value}" ]; then
         return 0
     fi
+
+    # Normalize common boolean-like values for well-known keys so that
+    # shorthand answers ('t'/'f') are persisted as literal 'true'/'false'.
+    case "$key" in
+        OPENPROJECT_HTTPS|PROXY_HTTP_TO_HTTPS_REDIRECT)
+            # normalize to lowercase and map t/T/true/True -> true, f/F/false -> false
+            _lc=$(printf "%s" "$value" | tr '[:upper:]' '[:lower:]')
+            case "$_lc" in
+                t|true) value="true" ;;
+                f|false) value="false" ;;
+                *) value="$_lc" ;;
+            esac
+            ;;
+    esac
     # Quote the value to handle spaces and special characters
     echo "$key=\"$value\"" >> "$DEPLOY_CONFIG"
 }
@@ -112,6 +126,32 @@ load_config
 if [ -f "$DEPLOY_CONFIG" ]; then
     # Remove lines like: DOMAIN_NAME=""
     sed -i '/^DOMAIN_NAME=""$/d' "$DEPLOY_CONFIG" 2>/dev/null || true
+fi
+
+# Migrate any single-letter or mixed-case boolean values to 'true'/'false'
+if [ -f "$DEPLOY_CONFIG" ]; then
+    # OPENPROJECT_HTTPS
+    if grep -q '^OPENPROJECT_HTTPS=' "$DEPLOY_CONFIG" 2>/dev/null; then
+        curv=$(get_cfg "OPENPROJECT_HTTPS" || true)
+        if [ -n "$curv" ]; then
+            lc=$(printf "%s" "$curv" | tr '[:upper:]' '[:lower:]')
+            case "$lc" in
+                t|true) sed -i 's/^OPENPROJECT_HTTPS=.*/OPENPROJECT_HTTPS="true"/' "$DEPLOY_CONFIG" 2>/dev/null || true ;;
+                f|false) sed -i 's/^OPENPROJECT_HTTPS=.*/OPENPROJECT_HTTPS="false"/' "$DEPLOY_CONFIG" 2>/dev/null || true ;;
+            esac
+        fi
+    fi
+    # PROXY_HTTP_TO_HTTPS_REDIRECT
+    if grep -q '^PROXY_HTTP_TO_HTTPS_REDIRECT=' "$DEPLOY_CONFIG" 2>/dev/null; then
+        curv=$(get_cfg "PROXY_HTTP_TO_HTTPS_REDIRECT" || true)
+        if [ -n "$curv" ]; then
+            lc=$(printf "%s" "$curv" | tr '[:upper:]' '[:lower:]')
+            case "$lc" in
+                t|true) sed -i 's/^PROXY_HTTP_TO_HTTPS_REDIRECT=.*/PROXY_HTTP_TO_HTTPS_REDIRECT="true"/' "$DEPLOY_CONFIG" 2>/dev/null || true ;;
+                f|false) sed -i 's/^PROXY_HTTP_TO_HTTPS_REDIRECT=.*/PROXY_HTTP_TO_HTTPS_REDIRECT="false"/' "$DEPLOY_CONFIG" 2>/dev/null || true ;;
+            esac
+        fi
+    fi
 fi
 
 # Check if we're in the right directory
