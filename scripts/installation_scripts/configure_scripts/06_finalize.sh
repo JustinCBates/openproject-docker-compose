@@ -2,19 +2,8 @@
 # Finalize and save configuration
 
 run_finalize() {
-    cfg_saved_body=$(cat <<EOF
-Configuration saved to: $DEPLOY_CONFIG
-EOF
-)
-    section "Configuration saved to: $DEPLOY_CONFIG" "$cfg_saved_body"
-    echo
-    echo "To deploy OpenProject, run:"
-    echo "  ./scripts/installation_scripts/deploy.sh"
-    echo
-    echo "Or use the utility scripts manually:"
-    echo "  1. ./scripts/installation_scripts/installation_utilities/configure_docker.sh"
-    echo "  2. ./scripts/installation_scripts/installation_utilities/build_stack.sh"
-    echo
-    echo "Configuration complete!"
-    echo
+    # Finalize hook: leave printing of the final configuration summary to
+    # the top-level `interactive_config.sh` to avoid duplicate output.
+    # Add any finalization actions here if required in the future.
+    return 0
 }
