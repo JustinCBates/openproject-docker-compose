@@ -27,7 +27,16 @@ echo "=========================================="
 
 # Function to load configuration
 load_config() {
+    local defaults_file="$SCRIPT_DIR/../../interactive_config.cfg.defaults"
+    if [ -f "$defaults_file" ]; then
+        set -a
+        # shellcheck source=/dev/null
+        source "$defaults_file"
+        set +a
+    fi
+
     if [ -f "$CONFIG_FILE" ]; then
+        # shellcheck source=/dev/null
         source "$CONFIG_FILE"
         echo "✓ Configuration loaded from $(basename "$CONFIG_FILE")"
     else
