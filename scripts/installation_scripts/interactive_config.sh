@@ -195,27 +195,8 @@ if validate_yn "Would you like to modify the configuration interactively?" "y"; 
     echo "Note: .env file will be updated during deployment by configure_docker scripts."
 fi
 
-# =============================================================================
-# CONFIGURATION COMPLETION
-# =============================================================================
-
-cfg_saved_body=$(cat <<EOF
-Configuration saved to: $DEPLOY_CONFIG
-EOF
-)
-section "Configuration saved to: $DEPLOY_CONFIG" "$cfg_saved_body"
-echo
-echo "To deploy OpenProject, run:"
-echo "  ./scripts/installation_scripts/deploy.sh"
-echo
-echo "Or use the utility scripts manually:"
-echo "  1. ./scripts/installation_scripts/installation_utilities/configure_docker.sh"
-echo "  2. ./scripts/installation_scripts/installation_utilities/build_stack.sh"
-echo
-echo "Configuration complete!"
-echo
-
-# Ask if user wants to run deployment now
+# Ask if user wants to run deployment now (run_finalize will already have printed
+# the final configuration summary for the user)
 if validate_yn "Would you like to run the deployment now?" "y"; then
     echo
     echo "Starting OpenProject deployment..."
