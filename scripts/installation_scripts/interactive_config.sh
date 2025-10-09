@@ -83,6 +83,10 @@ save_config() {
         grep -v "^$key=" "$DEPLOY_CONFIG" > "${DEPLOY_CONFIG}.tmp" 2>/dev/null || true
         mv "${DEPLOY_CONFIG}.tmp" "$DEPLOY_CONFIG" 2>/dev/null || true
     fi
+    # Do not write empty values; they shadow generated defaults.
+    if [ -z "${value}" ]; then
+        return 0
+    fi
     # Quote the value to handle spaces and special characters
     echo "$key=\"$value\"" >> "$DEPLOY_CONFIG"
 }
@@ -102,6 +106,13 @@ load_config() {
 
 # Load existing configuration if available
 load_config
+
+# Remove empty DOMAIN_NAME entries that may have been saved previously
+# (an explicit empty assignment would shadow the generated defaults).
+if [ -f "$DEPLOY_CONFIG" ]; then
+    # Remove lines like: DOMAIN_NAME=""
+    sed -i '/^DOMAIN_NAME=""$/d' "$DEPLOY_CONFIG" 2>/dev/null || true
+fi
 
 # Check if we're in the right directory
 if [ ! -f "docker-compose.yml" ]; then

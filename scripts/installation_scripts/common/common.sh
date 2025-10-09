@@ -311,7 +311,7 @@ OPENPROJECT_HOST_NAME="$host"
 OPENPROJECT_HTTPS="$https"
 OPENPROJECT_TAG="$tag"
 NAMESPACE=""
-    OS_FAMILY="${os_family:-}"
+OS_FAMILY="${os_family:-}"
 EOF
 
     # Append git defaults if detected (keep them on separate lines)

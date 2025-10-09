@@ -58,10 +58,15 @@ EOF
 EOF
 )
     subsection "Domain Configuration:" "$domain_body"
-    current_domain=$(get_cfg "DOMAIN_NAME")
+    # Use centralized current_domain (populated by init_install_defaults) so a blank
+    # value in the user's config file doesn't override the sensible default.
+    # init_install_defaults is called earlier by interactive_config.sh.
+    current_domain="${current_domain:-$(get_effective "DOMAIN_NAME" || true)}"
     prompt_with_default "Domain name (e.g., Statesmen.com)" "$current_domain" "domain_name"
 
-    # Persist the selected domain immediately so subsequent steps/readers can use it
+    # Persist the selected domain immediately so subsequent steps/readers can use it.
+    # Only save if the user provided a non-empty value; if they accepted the default
+    # by pressing Enter we avoid writing an empty DOMAIN_NAME that would shadow the fallback.
     if [ -n "${domain_name:-}" ]; then
         save_config "DOMAIN_NAME" "$domain_name"
         echo "✓ DOMAIN_NAME set to: $domain_name"
