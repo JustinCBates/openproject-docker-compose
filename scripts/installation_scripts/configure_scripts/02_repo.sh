@@ -2,15 +2,11 @@
 # Repository and git configuration section
 
 run_repo() {
-    # If a central initializer is available, call it to populate current_* defaults
-    if declare -f init_install_defaults >/dev/null 2>&1; then
-        init_install_defaults
-    else
-        # Provide safe defaults when variables are not exported by the caller.
-        current_tag="${current_tag:-16}"
-        current_git_user="${current_git_user:-}"
-        current_git_email="${current_git_email:-}"
-    fi
+    # Central initialization is performed by interactive_config.sh. Ensure
+    # minimal safe defaults are present in case this script is sourced stand-alone.
+    current_tag="${current_tag:-stable/16}"
+    current_git_user="${current_git_user:-}"
+    current_git_email="${current_git_email:-}"
 
     repo_body=$(cat <<EOF
 Repository and git configuration for OpenProject.
@@ -20,7 +16,8 @@ EOF
 
     git_version_body=$(cat <<EOF
 Choose the OpenProject repository tag (release or branch) to deploy. 
-If unsure, use the default stable tag.
+If unsure, use the default stable tag. Not currently used for any 
+functionality in the build process. So don't sweat it too much.
 EOF
 )
     subsection "OpenProject Version Configuration" "$git_version_body"

@@ -429,20 +429,44 @@ check_stack_health() {
     # Wait for service to be ready
     local max_attempts=60
     local attempt=1
-    
+
+    # poll interval (seconds) can be overridden by OPENPROJECT_POLL_INTERVAL
+    local POLL_INTERVAL="${OPENPROJECT_POLL_INTERVAL:-1}"
+    # Allow disabling the progress bar in environments that don't handle carriage returns
+    local USE_PB="${OPENPROJECT_USE_PROGRESS_BAR:-1}"
+
+    # Initialize a known-width progress bar using the total attempts when enabled
+    if [ "$USE_PB" != "0" ] && command -v progress_bar_init >/dev/null 2>&1; then
+        progress_bar_init "Waiting for OpenProject at ${protocol}://${host}" "$max_attempts" 40
+    else
+        printf "%s" "Waiting for OpenProject at ${protocol}://${host}"
+    fi
+
     while [ $attempt -le $max_attempts ]; do
-        if curl -s -o /dev/null -w "%{http_code}" "$protocol://$host" 2>/dev/null | grep -q "200\|302\|401"; then
-            echo "✓ OpenProject is responding at $protocol://$host"
+        if curl -s -o /dev/null -w "%{http_code}" "${protocol}://${host}" 2>/dev/null | grep -q "200\|302\|401"; then
+            if [ "$USE_PB" != "0" ] && command -v progress_bar_finish >/dev/null 2>&1; then
+                progress_bar_finish "✓ OpenProject is responding at ${protocol}://${host}"
+            else
+                printf "\n✓ OpenProject is responding at %s://%s\n" "$protocol" "$host"
+            fi
             break
         else
-            echo "Attempt $attempt/$max_attempts: Waiting for OpenProject to start..."
-            sleep 5
-            ((attempt++))
+            if [ "$USE_PB" != "0" ] && command -v progress_bar_tick >/dev/null 2>&1; then
+                progress_bar_tick
+            else
+                printf "."
+            fi
+            sleep "$POLL_INTERVAL"
+            attempt=$((attempt+1))
         fi
     done
-    
+
     if [ $attempt -gt $max_attempts ]; then
-        echo "⚠ OpenProject may not be fully ready yet"
+        if [ "$USE_PB" != "0" ] && command -v progress_bar_finish >/dev/null 2>&1; then
+            progress_bar_finish "⚠ OpenProject may not be fully ready yet"
+        else
+            printf "\n⚠ OpenProject may not be fully ready yet\n"
+        fi
         echo "Check logs: $COMPOSE_CMD logs -f"
     fi
 }

@@ -1,0 +1,24 @@
+
+
+=================================================
+Repo Settings
+=================================================
+[2m[38;5;136mRepository and git configuration for OpenProject.[0m
+_________________________________________________
+
+---------------------------------------------------------------------
+OpenProject Version Configuration
+---------------------------------------------------------------------
+[2m[38;5;136mChoose the OpenProject repository tag (release or branch) to deploy. [0m
+[2m[38;5;136mIf unsure, use the default stable tag.[0m
+_____________________________________________________________________
+OpenProject version tag [16]:  
+
+-------------------------------------------------------------------------------
+Git Configuration
+-------------------------------------------------------------------------------
+[2m[38;5;136mEnter the Git user.name and user.email used by installer scripts when creating [0m
+[2m[38;5;136mor patching local artifacts (commits, config templates). [0m
+[2m[38;5;136mThese values become global git config if provided.[0m
+_______________________________________________________________________________
+Git username [root]: Git email [root@srv1035368.hstgr.cloud]: 

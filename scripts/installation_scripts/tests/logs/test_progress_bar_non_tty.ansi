@@ -1,0 +1,10 @@
+=== progress_bar known-width test ===
+Known-width test
+..........
+Known-width complete
+
+=== progress_bar indeterminate test ===
+Indeterminate test
+........
+Indeterminate complete
+Wrote /opt/openproject/scripts/installation_scripts/tests/logs/test_progress_bar.ansi

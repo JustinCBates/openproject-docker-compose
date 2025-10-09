@@ -2,9 +2,6 @@
 # Finalize and save configuration
 
 run_finalize() {
-    if declare -f init_install_defaults >/dev/null 2>&1; then
-        init_install_defaults
-    fi
     cfg_saved_body=$(cat <<EOF
 Configuration saved to: $DEPLOY_CONFIG
 EOF

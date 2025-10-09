@@ -11,7 +11,7 @@ Files in this directory
 - `interactive_config.sh` - Interactive configuration script.
 		- Purpose: Guides a user through collecting deployment configuration values
 			(OpenProject repo tag, hostname, HTTPS enablement, proxy redirect choice,
-			domain/subdomain, environment type, OS family, DB storage and admin
+			domain/namespace, environment type, OS family, DB storage and admin
 			password, Git user/email, and other settings). It persists choices to
 			`interactive_config.cfg` in this directory for use by the deployment
 			orchestrator and utility scripts.

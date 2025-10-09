@@ -264,7 +264,7 @@ This repository includes an enhanced deployment framework with the following fea
 ### Interactive Configuration
 
 - **Environment Selection**: Choose between development, staging, or production configurations
-- **Domain Configuration**: Set up custom domains and subdomains
+- **Domain Configuration**: Set up custom domains and namespaces
 - **Git Integration**: Configure Git user settings for deployment tracking
 - **HTTPS Setup**: Automatic HTTPS configuration for production environments
 

@@ -19,6 +19,7 @@ BRONZE=$'\e[38;5;136m'
 YELLOW=$'\e[33m'
 RESET=$'\e[0m'
 GREEN=$'\e[32m'
+WHITE=$'\e[97m'
 DIM=$'\e[2m'
 # SUBDUED is a dimmed bronze for body text under headings
 SUBDUED="${DIM}${BRONZE}"
@@ -87,10 +88,39 @@ disable_interrupt() {
     trap - INT
 }
 
-# Enable interrupt handling when run from a TTY (interactive use)
-if [ -t 0 ] || [ -t 1 ]; then
+# Interactive helpers install the SIGINT handler locally using
+# push_sigint_trap/pop_sigint_trap. Do not enable a global trap on source.
+
+# Helper: push/pop SIGINT trap so interactive helpers can temporarily
+# install the friendly handler and restore the previous trap after.
+# We store traps on a stack to support nested calls.
+_SIGINT_TRAP_STACK=()
+
+push_sigint_trap() {
+    # Save current trap for INT (may be empty)
+    local prev
+    prev="$(trap -p INT 2>/dev/null || true)"
+    _SIGINT_TRAP_STACK+=("$prev")
     enable_interrupt
-fi
+}
+
+pop_sigint_trap() {
+    # Restore last saved trap or clear if none
+    local idx
+    idx=$((${#_SIGINT_TRAP_STACK[@]} - 1))
+    if [ "$idx" -ge 0 ] 2>/dev/null; then
+        local prev="${_SIGINT_TRAP_STACK[$idx]}"
+        unset '_SIGINT_TRAP_STACK[$idx]'
+        if [ -n "$prev" ]; then
+            # prev already contains a 'trap ... INT' command string; eval it
+            eval "$prev"
+        else
+            trap - INT
+        fi
+    else
+        trap - INT
+    fi
+}
 
 # Print a red warning prefix followed by message
 warn() {
@@ -161,6 +191,7 @@ separator() {
         if [ "${COLOR_ENABLED:-0}" -eq 1 ]; then
             s="${s//\{RED\}/${RED}}"
             s="${s//\{BRONZE\}/${BRONZE}}"
+                s="${s//\{WHITE\}/${WHITE}}"
             s="${s//\{YELLOW\}/${YELLOW}}"
             s="${s//\{RESET\}/${RESET}}"
             s="${s//\{GREEN\}/${GREEN}}"
@@ -169,6 +200,7 @@ separator() {
         else
             s="${s//\{RED\}/}"
             s="${s//\{BRONZE\}/}"
+                s="${s//\{WHITE\}/}"
             s="${s//\{YELLOW\}/}"
             s="${s//\{RESET\}/}"
             s="${s//\{GREEN\}/}"
@@ -294,6 +326,31 @@ subsection() {
     separator "$1" "${2-}" '-' '_' 1 "${BRONZE}" "${BRONZE}" "${SUBDUED}"
 }
 
+# Render a formal preview block for the web endpoint URL.
+# Usage: preview_web_endpoint <domain> <namespace>
+# If namespace is empty, shows the root URL. Uses color tokens and format_default
+# so domain/namespace render in green when colors are enabled.
+preview_web_endpoint() {
+    # Render a compact one-line preview: label + scheme + colored domain/namespace
+    # Usage: preview_web_endpoint <domain> <namespace> <scheme>
+    local domain="$1"
+    local namespace="$2"
+    local scheme="${3:-https}"
+    local label
+    label="$(apply_color_tokens "{BRONZE}Preview URL:{RESET}")"
+    local domain_colored
+    domain_colored="$(format_default "$domain")"
+    if [ -n "$namespace" ]; then
+        local ns_colored
+        ns_colored="$(format_default "$namespace")"
+        # Print: Preview URL: https://<domain>/<namespace>
+        printf "%b %s://%b/%b\n" "$label" "$scheme" "$domain_colored" "$ns_colored"
+    else
+        # Print: Preview URL: https://<domain>/
+        printf "%b %s://%b/\n" "$label" "$scheme" "$domain_colored"
+    fi
+}
+
 # Prompt with default helper: prompt text, default, and variable name to set
 prompt_with_default() {
     local prompt="$1"
@@ -308,7 +365,9 @@ prompt_with_default() {
         else
             printf "%s [%s]: " "$prompt" "$default"
         fi
+        push_sigint_trap
         read input
+        pop_sigint_trap
         if [ -z "$input" ]; then
             input="$default"
         fi
@@ -333,7 +392,9 @@ validate_yn() {
             else
                 printf "%s (y/n) [%s]: " "$prompt" "$default"
             fi
+            push_sigint_trap
             read yn
+            pop_sigint_trap
             if [ -z "$yn" ]; then
                 yn="$default"
             fi
@@ -346,7 +407,9 @@ validate_yn() {
     else
         while true; do
             printf "%s (y/n): " "$prompt"
+            push_sigint_trap
             read yn
+            pop_sigint_trap
             case $yn in
                 [Yy]* ) return 0;;
                 [Nn]* ) return 1;;
@@ -357,8 +420,13 @@ validate_yn() {
 }
 
 validate_tf() {
+    # validate_tf <prompt> <default> [out_var]
+    # If out_var is provided, the function will set that variable
+    # to the literal strings "true" or "false" depending on the answer.
     local prompt="$1"
     local default="$2"
+    local out_var="${3-}"
+    local tf
     if [ -n "$default" ]; then
         while true; do
             if [ -t 1 ] && [ -n "$GREEN" ]; then
@@ -367,26 +435,299 @@ validate_tf() {
             else
                 printf "%s (true/false) [%s]: " "$prompt" "$default"
             fi
+            push_sigint_trap
             read tf
+            pop_sigint_trap
             if [ -z "$tf" ]; then
                 tf="$default"
             fi
             case $tf in
-                [Tt]rue|[Tt] ) return 0;;
-                [Ff]alse|[Ff] ) return 1;;
+                [Tt]rue|[Tt] )
+                    if [ -n "$out_var" ]; then
+                        eval "$out_var='true'"
+                    fi
+                    return 0;;
+                [Ff]alse|[Ff] )
+                    if [ -n "$out_var" ]; then
+                        eval "$out_var='false'"
+                    fi
+                    return 1;;
                 * ) echo "Please answer true or false.";;
             esac
         done
     else
         while true; do
             printf "%s (true/false): " "$prompt"
+            push_sigint_trap
             read tf
+            pop_sigint_trap
             case $tf in
-                [Tt]rue|[Tt] ) return 0;;
-                [Ff]alse|[Ff] ) return 1;;
+                [Tt]rue|[Tt] )
+                    if [ -n "$out_var" ]; then
+                        eval "$out_var='true'"
+                    fi
+                    return 0;;
+                [Ff]alse|[Ff] )
+                    if [ -n "$out_var" ]; then
+                        eval "$out_var='false'"
+                    fi
+                    return 1;;
                 * ) echo "Please answer true or false.";;
             esac
         done
+    fi
+}
+
+# Wait for a single keypress (interactive only). Non-blocking in non-TTY contexts.
+anykey() {
+    # anykey [prompt_text] [default]
+    # Mirror validate_yn-style prompt formatting. Show an optional
+    # default value (highlighted when colors enabled) and wait for
+    # a single keypress from the controlling TTY. If no TTY is
+    # available, print the prompt and do not block.
+    local tty="/dev/tty"
+    local prompt_text="${1-}"
+    local default="${2-}"
+    local display_default=""
+
+    # sensible default when no prompt_text supplied
+    if [ -z "$prompt_text" ]; then
+        prompt_text="Press any key to continue"
+    fi
+
+    if [ -n "$default" ]; then
+        display_default="$default"
+    fi
+
+    # Build the prompt string similar to validate_yn
+    local prompt_line
+    if [ -n "$display_default" ] && [ "${COLOR_ENABLED:-0}" = "1" ]; then
+        # Use printf later to avoid accidental % sequences in prompt_text
+        prompt_line="%s [%b]: "
+    elif [ -n "$display_default" ]; then
+        prompt_line="%s [%s]: "
+    else
+        prompt_line="%s: "
+    fi
+
+    if [ -c "$tty" ] && [ -r "$tty" ] && [ -w "$tty" ]; then
+        # Print prompt to controlling tty without trailing newline and
+        # ensure the SIGINT handler is active while we block for input.
+        if [ -n "$display_default" ] && [ "${COLOR_ENABLED:-0}" = "1" ]; then
+            printf "$prompt_line" "$prompt_text" "${GREEN}${display_default}${RESET}" > "$tty"
+            if [ ! -t 1 ]; then
+                printf "$prompt_line" "$prompt_text" "${GREEN}${display_default}${RESET}" >&2
+            fi
+        elif [ -n "$display_default" ]; then
+            printf "$prompt_line" "$prompt_text" "$display_default" > "$tty"
+            if [ ! -t 1 ]; then
+                printf "$prompt_line" "$prompt_text" "$display_default" >&2
+            fi
+        else
+            printf "$prompt_line" "$prompt_text" > "$tty"
+            if [ ! -t 1 ]; then
+                printf "%s" "$prompt_text: " >&2
+            fi
+        fi
+        # Wait for any single keypress silently while SIGINT handler is active
+        push_sigint_trap
+        IFS= read -rsn1 _ < "$tty"
+        pop_sigint_trap
+        # Echo a newline so the terminal looks normal
+        printf "\n" > "$tty"
+        return 0
+    fi
+
+    # No TTY: print the prompt to stdout but don't block
+    if [ -n "$display_default" ] && [ "${COLOR_ENABLED:-0}" = "1" ]; then
+        printf "$prompt_line\n" "$prompt_text" "${GREEN}${display_default}${RESET}"
+    elif [ -n "$display_default" ]; then
+        printf "$prompt_line\n" "$prompt_text" "$display_default"
+    else
+        printf "%s\n" "$prompt_text"
+    fi
+    return 0
+}
+
+# Progress bar UI helpers
+# Usage:
+#   progress_bar_init "Message before bar" <total_ticks> [width]
+#     - If total_ticks is a positive integer the bar is rendered as a
+#       fixed-width bar with '[' and ']' and fills as ticks arrive.
+#     - If total_ticks is empty or 0 the bar runs in indeterminate mode
+#       (appends dots on each tick). Width may be provided; otherwise a
+#       sensible default based on terminal width is chosen.
+#
+#   progress_bar_tick
+#     - Advance the bar by one tick and redraw.
+#
+#   progress_bar_finish [message]
+#     - Complete the bar and print an optional final message on the next line.
+progress_bar_init() {
+    local msg="${1-}"
+    local total="${2-}"
+    local req_width="${3-}"
+
+    # reset internal state
+    _PB_MSG="${msg}"
+    _PB_TOTAL=0
+    _PB_WIDTH=0
+    _PB_TICKS=0
+    _PB_TTY=0
+    _PB_MODE="indeterminate"
+
+    # detect TTY
+    if [ -t 1 ]; then
+        _PB_TTY=1
+    else
+        _PB_TTY=0
+    fi
+
+    # helper to get terminal width
+    _get_term_width() {
+        local tw=80
+        if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
+            tw=$(tput cols 2>/dev/null || echo 80)
+        elif [ -n "${COLUMNS:-}" ] && [ "${COLUMNS:-0}" -gt 0 ]; then
+            tw=${COLUMNS}
+        fi
+        printf "%d" "$tw"
+    }
+
+    # compute width
+    local term_w
+    term_w=$(_get_term_width)
+
+    if printf "%s" "$total" | grep -Eq '^[0-9]+$' && [ "$total" -gt 0 ]; then
+        _PB_MODE="known"
+        _PB_TOTAL=$total
+        if printf "%s" "$req_width" | grep -Eq '^[0-9]+$' && [ "$req_width" -gt 0 ]; then
+            _PB_WIDTH=$req_width
+        else
+            # choose a width that fits the terminal: leave room for message and brackets
+            local reserve=10
+            local avail=$(( term_w - reserve ))
+            if [ "$avail" -gt 10 ]; then
+                _PB_WIDTH=$(( avail < 60 ? avail : 60 ))
+            else
+                _PB_WIDTH=40
+            fi
+        fi
+    else
+        _PB_MODE="indeterminate"
+        # for indeterminate use a modest width for alignment if requested
+        if printf "%s" "$req_width" | grep -Eq '^[0-9]+$' && [ "$req_width" -gt 0 ]; then
+            _PB_WIDTH=$req_width
+        else
+            _PB_WIDTH=0
+        fi
+    fi
+
+    # Initialize display
+    if [ "$_PB_TTY" -eq 1 ]; then
+        if [ -n "$_PB_MSG" ]; then
+            # Print the message and prepare to draw the bar on the same line
+            printf "%s " "$_PB_MSG"
+        fi
+        if [ "$_PB_MODE" = "known" ]; then
+            # draw empty brackets
+            printf "[";
+            for ((i=0;i<_PB_WIDTH;i++)); do printf " "; done
+            printf "]";
+            # move cursor back to start of bar content
+            local back=$(( _PB_WIDTH + 1 ))
+            # carriage return to beginning of line, then reprint message to position cursor
+            printf "\r"
+            if [ -n "$_PB_MSG" ]; then
+                printf "%s " "$_PB_MSG"
+            fi
+            printf "[";
+            for ((i=0;i<_PB_WIDTH;i++)); do printf " "; done
+            printf "]";
+            # position cursor at first fill location
+            printf "\r"
+            if [ -n "$_PB_MSG" ]; then
+                # move past message and space
+                printf "%s " "$_PB_MSG"
+            fi
+            printf "["
+        else
+            # indeterminate: start with message and no newline; ticks will append
+            # nothing else needed
+            true
+        fi
+        # flush
+        printf "";
+    else
+        # not a TTY: print a one-line header so logs include context
+        if [ -n "$_PB_MSG" ]; then
+            printf "%s\n" "$_PB_MSG"
+        fi
+    fi
+}
+
+progress_bar_tick() {
+    _PB_TICKS=$(( _PB_TICKS + 1 ))
+    if [ "${_PB_TTY:-0}" -ne 1 ]; then
+        # non-tty fallback: print a dot per tick
+        printf "."
+        return 0
+    fi
+
+    if [ "${_PB_MODE:-indeterminate}" = "known" ]; then
+        # compute filled count
+        local filled=0
+        if [ "${_PB_TOTAL:-0}" -gt 0 ]; then
+            filled=$(( (_PB_TICKS * _PB_WIDTH) / _PB_TOTAL ))
+            if [ "$filled" -gt "$_PB_WIDTH" ]; then
+                filled=$_PB_WIDTH
+            fi
+        fi
+        # redraw the bar: carriage return, print message, print [<filled><spaces>]
+        printf "\r"
+        if [ -n "${_PB_MSG:-}" ]; then
+            printf "%s " "${_PB_MSG}"
+        fi
+        printf "["
+        local i
+        for ((i=0;i<filled;i++)); do printf "#"; done
+        for ((i=filled;i<_PB_WIDTH;i++)); do printf " "; done
+        printf "]"
+    else
+        # indeterminate: append a dot (no bracketed bar)
+        printf "."
+    fi
+    # flush
+    printf "";
+}
+
+progress_bar_finish() {
+    local final_msg="${1-}"
+    if [ "${_PB_TTY:-0}" -ne 1 ]; then
+        # non-tty: finish line
+        printf "\n"
+        if [ -n "$final_msg" ]; then
+            printf "%s\n" "$final_msg"
+        fi
+        return 0
+    fi
+
+    if [ "${_PB_MODE:-indeterminate}" = "known" ]; then
+        # draw fully filled bar
+        printf "\r"
+        if [ -n "${_PB_MSG:-}" ]; then
+            printf "%s " "${_PB_MSG}"
+        fi
+        printf "["
+        local i
+        for ((i=0;i<_PB_WIDTH;i++)); do printf "#"; done
+        printf "]\n"
+    else
+        # indeterminate: just finish the line
+        printf "\n"
+    fi
+    if [ -n "$final_msg" ]; then
+        printf "%s\n" "$final_msg"
     fi
 }
 

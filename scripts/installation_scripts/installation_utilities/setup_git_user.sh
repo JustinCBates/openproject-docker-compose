@@ -27,10 +27,21 @@ fi
 
 # Load configuration variables
 echo "Loading configuration from $CONFIG_FILE..."
+DEFAULTS_FILE="$SCRIPT_DIR/../interactive_config.cfg.defaults"
+# If defaults file exists, source it with exports so variables become environment defaults
+if [ -f "$DEFAULTS_FILE" ]; then
+    # Export variables defined in defaults file so they are visible when sourcing the main config
+    set -a
+    # shellcheck source=/dev/null
+    source "$DEFAULTS_FILE"
+    set +a
+fi
+# Now source the user config (may override defaults)
+# shellcheck source=/dev/null
 source "$CONFIG_FILE"
 
-# Validate that git variables exist
-if [ -z "$GIT_USERNAME" ] && [ -z "$GIT_EMAIL" ]; then
+# Validate that git variables exist (use safe expansions to avoid unbound var under set -u)
+if [ -z "${GIT_USERNAME:-}" ] && [ -z "${GIT_EMAIL:-}" ]; then
     echo "No git configuration found in $CONFIG_FILE"
     echo "Skipping git user configuration."
     exit 0
@@ -39,7 +50,7 @@ fi
 echo "Configuring git user settings..."
 
 # Set git username if provided
-if [ -n "$GIT_USERNAME" ]; then
+if [ -n "${GIT_USERNAME:-}" ]; then
     echo "Setting git username to: $GIT_USERNAME"
     git config --global user.name "$GIT_USERNAME"
     echo "✓ Git username configured"
@@ -48,7 +59,7 @@ else
 fi
 
 # Set git email if provided
-if [ -n "$GIT_EMAIL" ]; then
+if [ -n "${GIT_EMAIL:-}" ]; then
     echo "Setting git email to: $GIT_EMAIL"
     git config --global user.email "$GIT_EMAIL"
     echo "✓ Git email configured"

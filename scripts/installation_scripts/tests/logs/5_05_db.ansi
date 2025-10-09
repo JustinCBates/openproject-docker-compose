@@ -1,0 +1,57 @@
+
+
+=======================================
+Web Endpoint URL Configuration
+=======================================
+[2m[38;5;136mDomain and subdomain endpoint settings.[0m
+_______________________________________
+
+----------------------------------------------------------------------------------
+Domain Configuration:
+----------------------------------------------------------------------------------
+[2m[38;5;136mDomain is the public host where OpenProject will be available (e.g., example.com).[0m
+__________________________________________________________________________________
+Domain name (e.g., Statesmen.com): 
+----------------------------------------------------------------------
+Subdomain Configuration
+----------------------------------------------------------------------
+[2m[38;5;136mOptional subdomain used to namespace projects (leave empty for none). [0m
+[2m[38;5;136mTo keep an existing subdomain you must retype it below.[0m
+______________________________________________________________________
+No subdomain currently set
+Subdomain (e.g., StatesmenProjects, leave empty for none): 
+
+
+========================================================================================
+Database Configuration:
+========================================================================================
+[2m[38;5;136mDatabase and storage configuration for PostgreSQL. Choose passwords and storage options.[0m
+________________________________________________________________________________________
+
+-----------------------------------------------------------------------------
+Database Password
+-----------------------------------------------------------------------------
+[2m[38;5;136mPostgreSQL administrator password used for DB initialization and maintenance.[0m
+[2m[38;5;136mThis password will be used for:[0m
+[2m[38;5;136m• PostgreSQL database administrator access[0m
+[2m[38;5;136m• Database initialization and maintenance[0m
+[2m[38;5;136m• NOT the OpenProject web application login[0m
+[2m[38;5;136mPassword Security Recommendations:[0m
+[2m[38;5;136m• Use at least 12 characters[0m
+[2m[38;5;136m• Include uppercase, lowercase, numbers, and symbols[0m
+[2m[38;5;136m• Avoid dictionary words or personal information[0m
+[2m[38;5;136m• Consider using a password manager[0m
+_____________________________________________________________________________
+Enter PostgreSQL database admin password: 
+⚠ No password entered. Using default 'admin123' (CHANGE THIS AFTER INSTALLATION!)
+
+
+-----------------------------------------------------------------------
+Database Storage
+-----------------------------------------------------------------------
+[2m[38;5;136mChoose how to store database data and where it will reside on the host.[0m
+_______________________________________________________________________
+  1) docker-volumes  - Use Docker managed volumes (recommended for most cases)
+  2) bind-mounts     - Use host filesystem paths (easier for backups)
+Select an option [docker-volumes]: ⚠ Invalid selection '1'. Using default: docker-volumes
+/opt/openproject/scripts/installation_scripts/configure_scripts/05_db.sh: line 117: host_name: unbound variable

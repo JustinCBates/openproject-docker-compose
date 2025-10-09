@@ -2,38 +2,6 @@
 # Database configuration section
 
 run_db() {
-    if declare -f init_install_defaults >/dev/null 2>&1; then
-        init_install_defaults
-    fi
-    web_endpoint_body=$(cat <<EOF
-Domain and subdomain endpoint settings.
-EOF
-)
-    section "Web Endpoint URL Configuration" "$web_endpoint_body"
-
-    domain_body=$(cat <<EOF
-Domain is the public host where OpenProject will be available (e.g., example.com).
-EOF
-)
-    subsection "Domain Configuration:" "$domain_body"
-    current_domain=$(get_cfg "DOMAIN_NAME")
-    prompt_with_default "Domain name (e.g., Statesmen.com)" "$current_domain" "domain_name"
-
-    subdomain_body=$(cat <<EOF
-Optional subdomain used to namespace projects (leave empty for none). 
-To keep an existing subdomain you must retype it below.
-EOF
-)
-    subsection "Subdomain Configuration" "$subdomain_body"
-    current_subdomain=$(get_cfg "SUBDOMAIN")
-
-    if [ -n "$current_subdomain" ]; then
-        caution "To keep the current subdomain [$current_subdomain] you must retype it below; leaving the prompt empty will remove the subdomain."
-        prompt_with_default "Subdomain (leave empty to remove current subdomain, or enter new value)" "" "subdomain"
-    else
-        echo "No subdomain currently set"
-        prompt_with_default "Subdomain (e.g., StatesmenProjects, leave empty for none)" "" "subdomain"
-    fi
 
     echo
     db_section_body=$(cat <<EOF
@@ -125,7 +93,7 @@ EOF
     save_config "GIT_USERNAME" "$git_username"
     save_config "GIT_EMAIL" "$git_email"
     save_config "DOMAIN_NAME" "$domain_name"
-    save_config "SUBDOMAIN" "$subdomain"
+    save_config "NAMESPACE" "$namespace"
     save_config "ENVIRONMENT_TYPE" "$environment_type"
     save_config "OS_FAMILY" "$os_family"
 

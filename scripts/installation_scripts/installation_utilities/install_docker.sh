@@ -27,10 +27,18 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 echo "Loading configuration from $CONFIG_FILE..."
+DEFAULTS_FILE="$SCRIPT_DIR/../interactive_config.cfg.defaults"
+if [ -f "$DEFAULTS_FILE" ]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$DEFAULTS_FILE"
+    set +a
+fi
+# shellcheck source=/dev/null
 source "$CONFIG_FILE"
 
 # Check if OS_FAMILY is set
-if [ -z "$OS_FAMILY" ]; then
+if [ -z "${OS_FAMILY:-}" ]; then
     echo "Error: OS_FAMILY not found in configuration file"
     echo "Please run the interactive deployment script to configure your OS family:"
     echo "  ./scripts/installation_scripts/interactive_config.sh"

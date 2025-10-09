@@ -1,0 +1,8 @@
+# Generated defaults for interactive_config.sh
+DOMAIN_NAME="srv1035368.hstgr.cloud"
+OPENPROJECT_HOST_NAME="srv1035368.hstgr.cloud"
+OPENPROJECT_HTTPS="false"
+OPENPROJECT_TAG="stable/16"
+NAMESPACE=""
+GIT_USERNAME="Justin Bates"
+GIT_EMAIL="justincbates@proton.me"

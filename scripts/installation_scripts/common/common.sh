@@ -84,29 +84,84 @@ init_install_defaults() {
     # Ensure DEPLOY_CONFIG is set by caller; default to interactive_config.cfg
     DEPLOY_CONFIG="${DEPLOY_CONFIG:-$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/../interactive_config.cfg}"
 
-    # Populate commonly-used current_* variables with values from config
-    current_host=$(get_cfg "OPENPROJECT_HOST_NAME")
-    current_https=$(get_cfg "OPENPROJECT_HTTPS")
-    current_tag=$(get_cfg "OPENPROJECT_TAG")
-    current_db_password=$(get_cfg "DEFAULT_DBADMIN_PASSWORD")
-    current_db_storage=$(get_cfg "DATABASE_STORAGE_TYPE")
-    current_git_user_cfg=$(get_cfg "GIT_USERNAME")
-    current_git_email_cfg=$(get_cfg "GIT_EMAIL")
-    current_domain=$(get_cfg "DOMAIN_NAME")
-    current_subdomain=$(get_cfg "SUBDOMAIN")
-    current_env_type=$(get_cfg "ENVIRONMENT_TYPE")
-    current_os_family_raw=$(get_cfg "OS_FAMILY")
-    current_relative_root=$(get_cfg "OPENPROJECT_RAILS__RELATIVE__URL__ROOT")
+    # Attempt to read defaults from the generated defaults file as a fallback.
+    # Defaults file is expected next to this script's parent directory.
+    local defaults_file
+    defaults_file="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/../interactive_config.cfg.defaults"
+
+    # Helper to read a key from defaults file without sourcing (safe)
+    read_default() {
+        local key="$1"
+        if [ -f "$defaults_file" ]; then
+            grep -E "^${key}=" "$defaults_file" 2>/dev/null | head -1 | cut -d'=' -f2- | sed -e 's/^"//' -e 's/"$//' || true
+        fi
+    }
+
+    # Helper: pick first non-empty value from (1) environment var, (2) config file, (3) defaults file
+    get_effective() {
+        local key="$1"
+        local val=""
+        # 1) environment variable with same name
+        if [ -n "${!key:-}" ]; then
+            printf "%s" "${!key}"
+            return 0
+        fi
+        # 2) config file
+        val=$(get_cfg "$key" 2>/dev/null || true)
+        if [ -n "$val" ]; then
+            printf "%s" "$val"
+            return 0
+        fi
+        # 3) defaults file
+        val=$(read_default "$key" 2>/dev/null || true)
+        if [ -n "$val" ]; then
+            printf "%s" "$val"
+            return 0
+        fi
+        return 1
+    }
+
+    # Populate commonly-used current_* variables using get_effective where appropriate.
+    current_host="$(get_effective "OPENPROJECT_HOST_NAME" || true)"
+    current_https="$(get_effective "OPENPROJECT_HTTPS" || true)"
+    current_tag="$(get_effective "OPENPROJECT_TAG" || true)"
+    current_db_password="$(get_effective "DEFAULT_DBADMIN_PASSWORD" || true)"
+    current_db_storage="$(get_effective "DATABASE_STORAGE_TYPE" || true)"
+    current_git_user_cfg="$(get_effective "GIT_USERNAME" || true)"
+    current_git_email_cfg="$(get_effective "GIT_EMAIL" || true)"
+    current_domain="$(get_effective "DOMAIN_NAME" || true)"
+    # Namespace / subdomain compatibility: prefer SUBDOMAIN then NAMESPACE
+    current_subdomain="$(get_effective "SUBDOMAIN" || get_effective "NAMESPACE" || true)"
+    current_env_type="$(get_effective "ENVIRONMENT_TYPE" || true)"
+    current_os_family_raw="$(get_effective "OS_FAMILY" || true)"
+    current_relative_root="$(get_effective "OPENPROJECT_RAILS__RELATIVE__URL__ROOT" || true)"
+
+    # (detect_domain_name defined at top-level)
 
     # Sensible defaults
     if [ -z "$current_https" ]; then current_https="false"; fi
-    if [ -z "$current_tag" ]; then current_tag="16"; fi
+    if [ -z "$current_tag" ]; then current_tag="stable/16"; fi
     if [ -z "$current_db_storage" ]; then current_db_storage="docker-volumes"; fi
     if [ -z "$current_env_type" ]; then current_env_type="localdev"; fi
 
     if [ -z "$current_host" ]; then
         detected_hostname=$(hostname -f 2>/dev/null || hostname 2>/dev/null || echo "localhost")
         current_host="$detected_hostname"
+    fi
+
+    # Populate current_domain using detection when config value is missing
+    # or not a sensible FQDN (no dot). This avoids accepting short/partial
+    # values like 'Statesmen' as a domain when a real hostname may be
+    # discoverable.
+    if [ -z "$current_domain" ] || ! printf "%s" "$current_domain" | grep -q '\.'; then
+        detected_domain=$(detect_domain_name || true)
+        if [ -n "$detected_domain" ]; then
+            current_domain="$detected_domain"
+        else
+            # Fallback to system hostname if detection fails
+            detected_hostname=$(hostname -f 2>/dev/null || hostname 2>/dev/null || echo "localhost")
+            current_domain="$detected_hostname"
+        fi
     fi
 
     # Git defaults: prefer config file values, then global git config, then system user
@@ -129,4 +184,119 @@ init_install_defaults() {
     fi
 
     export DEPLOY_CONFIG
+}
+
+# Top-level helper: attempt to detect a sensible default domain name when not
+# provided in the config. We prefer explicit config, then OPENPROJECT_HOST_NAME,
+# then the system FQDN (hostname -f), then a conservative local HTTP probe.
+detect_domain_name() {
+    # 1) explicit config via env
+    if [ -n "${OPENPROJECT_HOST_NAME:-}" ]; then
+        echo "${OPENPROJECT_HOST_NAME}"
+        return 0
+    fi
+
+    # 2) system FQDN
+    local hn
+    hn=$(hostname -f 2>/dev/null || true)
+    if [ -n "$hn" ] && printf "%s" "$hn" | grep -q '\.'; then
+        echo "$hn"
+        return 0
+    fi
+
+    # 3) conservative local HTTP check: try common ports for redirects or Host headers
+    for p in 80 8080 443; do
+        if command -v curl >/dev/null 2>&1; then
+            local hdrs
+            hdrs=$(curl -sS --max-time 2 -I "http://127.0.0.1:$p" 2>/dev/null || true)
+            if [ -n "$hdrs" ]; then
+                local loc
+                loc=$(printf "%s" "$hdrs" | grep -i '^Location:' | head -1 || true)
+                if [ -n "$loc" ]; then
+                    local hostpart
+                    hostpart=$(printf "%s" "$loc" | sed -n 's#.*//\([^/:]*\).*#\1#p' || true)
+                    if [ -n "$hostpart" ] && printf "%s" "$hostpart" | grep -q '\.'; then
+                        echo "$hostpart"
+                        return 0
+                    fi
+                fi
+            fi
+        fi
+    done
+
+    # No detection possible
+    return 1
+}
+
+
+# Generate a defaults file used as fallbacks by interactive_config.sh.
+# The file is written to the same directory as interactive_config.cfg and
+# named interactive_config.cfg.defaults. It contains a small set of keys
+# that the interactive script will source before loading user config.
+generate_interactive_config_defaults() {
+    # Optional first arg: base directory where interactive_config.cfg.defaults will be written
+    local base_dir="${1-}"
+    if [ -z "$base_dir" ]; then
+        base_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/.."
+    fi
+    local defaults_file
+    defaults_file="$base_dir/interactive_config.cfg.defaults"
+
+    # Determine sensible defaults without relying on config file values
+    local host
+    host="${OPENPROJECT_HOST_NAME:-}"
+    if [ -z "$host" ]; then
+        host=$(hostname -f 2>/dev/null || hostname 2>/dev/null || echo "localhost")
+    fi
+
+    local https
+    https="${OPENPROJECT_HTTPS:-}"
+    if [ -z "$https" ]; then
+        https="false"
+    fi
+
+    local tag
+    tag="${OPENPROJECT_TAG:-}"
+    if [ -z "$tag" ]; then
+        tag="stable/16"
+    fi
+
+    local domain
+    domain=$(detect_domain_name || true)
+    if [ -z "$domain" ]; then
+        domain="$host"
+    fi
+    # Attempt to detect global git user/email for inclusion in defaults
+    local git_user git_email
+    git_user="${GIT_USERNAME:-}"
+    git_email="${GIT_EMAIL:-}"
+    if [ -z "$git_user" ]; then
+        git_user=$(git config --global user.name 2>/dev/null || true)
+    fi
+    if [ -z "$git_email" ]; then
+        git_email=$(git config --global user.email 2>/dev/null || true)
+    fi
+
+    # Write defaults file (overwrite)
+    cat > "$defaults_file" <<EOF
+# Generated defaults for interactive_config.sh
+DOMAIN_NAME="$domain"
+OPENPROJECT_HOST_NAME="$host"
+OPENPROJECT_HTTPS="$https"
+OPENPROJECT_TAG="$tag"
+NAMESPACE=""
+EOF
+
+    # Append git defaults if detected (keep them on separate lines)
+    if [ -n "$git_user" ] || [ -n "$git_email" ]; then
+        {
+            if [ -n "$git_user" ]; then
+                printf 'GIT_USERNAME="%s"\n' "$git_user"
+            fi
+            if [ -n "$git_email" ]; then
+                printf 'GIT_EMAIL="%s"\n' "$git_email"
+            fi
+        } >> "$defaults_file"
+    fi
+    return 0
 }

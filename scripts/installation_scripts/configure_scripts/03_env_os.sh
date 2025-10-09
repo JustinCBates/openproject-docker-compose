@@ -2,9 +2,6 @@
 # Environment and OS configuration section
 
 run_env_os() {
-    if declare -f init_install_defaults >/dev/null 2>&1; then
-        init_install_defaults
-    fi
     env_section_body=$(cat <<EOF
 Select the environment type that best matches your deployment goals. Defaults are provided when possible.
 EOF

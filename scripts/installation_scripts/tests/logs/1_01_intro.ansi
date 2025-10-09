@@ -1,5 +1,15 @@
 
 
+
+###############################################################
+Interactive Configuration:
+###############################################################
+[2m[38;5;136mFollow a guided prompt sequence to gather deployment settings. [0m
+[2m[38;5;136mPress <Enter> to accept any default shown. [0m
+[2m[38;5;136mChanges are saved to interactive_config.cfg.[0m
+_______________________________________________________________
+
+
 ==============================================================
 Current configuration preview:
 ==============================================================
