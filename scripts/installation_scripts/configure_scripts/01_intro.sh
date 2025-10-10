@@ -38,6 +38,7 @@ print_config_summary() {
         DEFAULT_DBADMIN_PASSWORD
         DATABASE_STORAGE_TYPE
         NAMESPACE
+        NAMESPACE_ENABLED
         PROXY_BIND_ADDRESS
         PROXY_HTTP_PORT
         PROXY_HTTPS_PORT
