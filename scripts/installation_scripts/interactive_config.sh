@@ -223,6 +223,10 @@ if [ $summary_ok -eq 0 ]; then
             fi
         done
     fi
+    # Ensure we always finalize the configuration even if the user declines
+    # to modify it interactively. Use a guard so we don't finalize twice when
+    # the interactive flow itself calls run_finalize.
+    did_finalize="false"
     if validate_yn "Would you like to modify the configuration interactively?" "$interactive_default"; then
         # run full interactive flow as before
         if [ -t 1 ]; then
@@ -234,6 +238,13 @@ if [ $summary_ok -eq 0 ]; then
         run_env_os
         run_web_proxy
         run_db
+        run_finalize
+        did_finalize="true"
+    fi
+    # If the user chose not to run the interactive flow, still print the
+    # finalized configuration so the subsequent deploy prompt shows accurate
+    # instructions and the final config file is saved/displayed.
+    if [ "$did_finalize" != "true" ]; then
         run_finalize
     fi
 else
