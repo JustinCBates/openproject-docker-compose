@@ -19,6 +19,8 @@ x-op-app: &app
     RAILS_CACHE_STORE: "memcache"
     OPENPROJECT_CACHE__MEMCACHE__SERVER: "cache:11211"
     RAILS_URL_ROOT: "${RAILS_URL_ROOT:-}"
+    # Backwards compatibility: map old env name to new RAILS_URL_ROOT value
+    OPENPROJECT_RAILS__RELATIVE__URL__ROOT: "${RAILS_URL_ROOT:-}"
     DATABASE_URL: "${DATABASE_URL:-postgres://postgres:p4ssw0rd@db/openproject?pool=20&encoding=unicode&reconnect=true}"
     RAILS_MIN_THREADS: ${RAILS_MIN_THREADS:-4}
     RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-16}

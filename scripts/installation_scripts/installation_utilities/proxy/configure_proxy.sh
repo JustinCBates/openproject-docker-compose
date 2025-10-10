@@ -56,6 +56,11 @@ fi
 if [ -z "$RELATIVE_ROOT" ] && [ -f "$PROJECT_ROOT/.env" ]; then
     val=$(grep -E '^RAILS_URL_ROOT=' "$PROJECT_ROOT/.env" || true)
     if [ -n "$val" ]; then
+
+# Truncate the template file so multiple runs don't append duplicate site blocks
+if [ -f "$TEMPLATE_FILE" ]; then
+    : > "$TEMPLATE_FILE"
+fi
     RELATIVE_ROOT=${val#*=}
     RELATIVE_ROOT=${RELATIVE_ROOT%\"}
     RELATIVE_ROOT=${RELATIVE_ROOT#\"}
@@ -101,7 +106,8 @@ CADDY_GLOBAL
             TLS_BLOCK="tls internal"
             ;;
         letsencrypt_staging)
-            TLS_BLOCK="tls { ca https://acme-staging-v02.api.letsencrypt.org/directory }"
+            # multiline TLS block so the Caddyfile places the '{' on its own line
+            TLS_BLOCK=$'tls {\n    ca https://acme-staging-v02.api.letsencrypt.org/directory\n}'
             ;;
         letsencrypt_prod)
             TLS_BLOCK="" # default Caddy behavior
@@ -116,7 +122,7 @@ CADDY_GLOBAL
     # Use resolved upstream dial address (no scheme) to avoid placeholders-in-scheme errors
     UPSTREAM="${APP_HOST}:8080"
 
-    cat >> "$TEMPLATE_FILE" <<EOF
+    cat > "$TEMPLATE_FILE" <<EOF
 ${SITE_HEADER_HTTP} {
     # Redirect all HTTP to HTTPS (Caddy will handle redirect target)
     redir https://{host}{uri} 308
@@ -153,7 +159,8 @@ CADDY_GLOBAL
             TLS_BLOCK="tls internal"
             ;;
         letsencrypt_staging)
-            TLS_BLOCK="tls { ca https://acme-staging-v02.api.letsencrypt.org/directory }"
+            # multiline TLS block so the Caddyfile places the '{' on its own line
+            TLS_BLOCK=$'tls {\n    ca https://acme-staging-v02.api.letsencrypt.org/directory\n}'
             ;;
         letsencrypt_prod)
             TLS_BLOCK=""
@@ -166,7 +173,7 @@ CADDY_GLOBAL
 
     UPSTREAM="${APP_HOST}:8080"
 
-    cat >> "$TEMPLATE_FILE" <<EOF
+    cat > "$TEMPLATE_FILE" <<EOF
 ${SITE_HEADER_HTTP} {
     # Redirect all HTTP to HTTPS
     redir https://{host}{uri} 308

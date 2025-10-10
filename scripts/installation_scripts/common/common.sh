@@ -305,6 +305,14 @@ generate_interactive_config_defaults() {
     fi
 
     # Write defaults file (overwrite)
+# Write defaults file (overwrite)
+    # Compute rails relative root from NAMESPACE when present
+    local rails_root
+    rails_root=""
+    if [ -n "StatesmenProjects" ]; then
+        rails_root="/StatesmenProjects"
+    fi
+
     cat > "$defaults_file" <<EOF
 # Generated defaults for interactive_config.sh
 DOMAIN_NAME="$domain"
@@ -312,6 +320,7 @@ OPENPROJECT_HOST_NAME="$host"
 OPENPROJECT_HTTPS="${https}"
 OPENPROJECT_TAG="$tag"
 NAMESPACE="StatesmenProjects"
+RAILS_URL_ROOT="$rails_root"
 OS_FAMILY="${os_family:-}"
 # Installer-specified defaults
 DEFAULT_DBADMIN_PASSWORD="admin123"
