@@ -249,10 +249,11 @@ generate_interactive_config_defaults() {
         host=$(hostname -f 2>/dev/null || hostname 2>/dev/null || echo "localhost")
     fi
 
+    # Defaults: enable HTTPS and redirect by default in generated defaults
     local https
     https="${OPENPROJECT_HTTPS:-}"
     if [ -z "$https" ]; then
-        https="false"
+        https="true"
     fi
 
     local tag
@@ -308,10 +309,15 @@ generate_interactive_config_defaults() {
 # Generated defaults for interactive_config.sh
 DOMAIN_NAME="$domain"
 OPENPROJECT_HOST_NAME="$host"
-OPENPROJECT_HTTPS="$https"
+OPENPROJECT_HTTPS="${https}"
 OPENPROJECT_TAG="$tag"
 NAMESPACE=""
 OS_FAMILY="${os_family:-}"
+# Installer-specified defaults
+DEFAULT_DBADMIN_PASSWORD="admin123"
+ENVIRONMENT_TYPE="production"
+PROXY_HTTPS_REDIRECT="true"
+    DATABASE_STORAGE_TYPE="docker-volumes"
 EOF
 
     # Append git defaults if detected (keep them on separate lines)

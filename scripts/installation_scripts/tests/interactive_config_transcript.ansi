@@ -12,7 +12,7 @@ You can press Enter to accept default values shown in brackets.
 [2m[38;5;136mSaved configuration (first 200 lines). Review these values before modifying the installer settings.[0m
 [38;5;136m___________________________________________________________________________________________________[0m
 Key settings from configuration:
-PROXY_HTTP_TO_HTTPS_REDIRECT="false"
+PROXY_HTTPS_REDIRECT="false"
 OPENPROJECT_HOST_NAME="srv1035368.hstgr.cloud"
 OPENPROJECT_HTTPS="false"
 OPENPROJECT_TAG="16"
@@ -83,7 +83,7 @@ Enter the hostname for OpenProject [[32msrv1035368.hstgr.cloud[0m]: Enable HTT
 [38;5;136m================================================================================[0m
 [2m[38;5;136mSecurity note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP. This exposes credentials, cookies, and session tokens to on-path attackers (MITM), and prevents automatic TLS enforcement by browsers. Only disable redirects if you understand and accept these risks.[0m
 [38;5;136m___________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________[0m
-Redirect HTTP to HTTPS? (true/false) [[32mfalse[0m]: ✓ PROXY_HTTP_TO_HTTPS_REDIRECT set to: false
+Redirect HTTP to HTTPS? (true/false) [[32mfalse[0m]: ✓ PROXY_HTTPS_REDIRECT set to: false
 
 [38;5;136m==================[0m
 [38;5;136mGit Configuration:[0m

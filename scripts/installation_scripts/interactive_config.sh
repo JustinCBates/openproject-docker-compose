@@ -91,7 +91,7 @@ save_config() {
     # Normalize common boolean-like values for well-known keys so that
     # shorthand answers ('t'/'f') are persisted as literal 'true'/'false'.
     case "$key" in
-        OPENPROJECT_HTTPS|PROXY_HTTP_TO_HTTPS_REDIRECT)
+        OPENPROJECT_HTTPS|PROXY_HTTPS_REDIRECT)
             # normalize to lowercase and map t/T/true/True -> true, f/F/false -> false
             _lc=$(printf "%s" "$value" | tr '[:upper:]' '[:lower:]')
             case "$_lc" in
@@ -146,15 +146,23 @@ if [ -f "$DEPLOY_CONFIG" ]; then
             esac
         fi
     fi
-    # PROXY_HTTP_TO_HTTPS_REDIRECT
+    # Migrate old PROXY_HTTP_TO_HTTPS_REDIRECT -> PROXY_HTTPS_REDIRECT if present
     if grep -q '^PROXY_HTTP_TO_HTTPS_REDIRECT=' "$DEPLOY_CONFIG" 2>/dev/null; then
-        curv=$(get_cfg "PROXY_HTTP_TO_HTTPS_REDIRECT" || true)
-        if [ -n "$curv" ]; then
-            lc=$(printf "%s" "$curv" | tr '[:upper:]' '[:lower:]')
+        oldv=$(get_cfg "PROXY_HTTP_TO_HTTPS_REDIRECT" || true)
+        if [ -n "$oldv" ]; then
+            # Normalize and write to new key name
+            lc=$(printf "%s" "$oldv" | tr '[:upper:]' '[:lower:]')
             case "$lc" in
-                t|true) sed -i 's/^PROXY_HTTP_TO_HTTPS_REDIRECT=.*/PROXY_HTTP_TO_HTTPS_REDIRECT="true"/' "$DEPLOY_CONFIG" 2>/dev/null || true ;;
-                f|false) sed -i 's/^PROXY_HTTP_TO_HTTPS_REDIRECT=.*/PROXY_HTTP_TO_HTTPS_REDIRECT="false"/' "$DEPLOY_CONFIG" 2>/dev/null || true ;;
+                t|true) newv="true" ;;
+                f|false) newv="false" ;;
+                *) newv="$lc" ;;
             esac
+            # Remove any existing new key and append normalized value
+            grep -v '^PROXY_HTTPS_REDIRECT=' "$DEPLOY_CONFIG" > "${DEPLOY_CONFIG}.tmp" 2>/dev/null || true
+            mv "${DEPLOY_CONFIG}.tmp" "$DEPLOY_CONFIG" 2>/dev/null || true
+            echo "PROXY_HTTPS_REDIRECT=\"$newv\"" >> "$DEPLOY_CONFIG"
+            # Remove old key
+            sed -i '/^PROXY_HTTP_TO_HTTPS_REDIRECT=/d' "$DEPLOY_CONFIG" 2>/dev/null || true
         fi
     fi
 fi
@@ -179,22 +187,104 @@ done
 # preview directly to the controlling tty so the user still sees it.
 run_preview
 
-# Ask whether to modify the configuration interactively
-if validate_yn "Would you like to modify the configuration interactively?" "y"; then
-    # Clear the terminal for interactive runs (only when stdout is a TTY)
-    if [ -t 1 ]; then
-        clear
+# The `print_config_summary` and `apply_defaults_to_cfg` helpers are implemented
+# in `scripts/installation_scripts/configure_scripts/01_intro.sh` so they can be
+# reused by other configure scripts. They are sourced at startup via the
+# configure_scripts/*.sh loader above.
+
+# Before asking whether to modify, show a summary and offer to apply defaults
+print_config_summary
+summary_ok=$?
+echo
+if [ -f "${SCRIPT_DIR}/interactive_config.cfg.defaults" ]; then
+    if validate_yn "Would you like to replace current .cfg values with the defaults from .cfg.defaults?" "n"; then
+        apply_defaults_to_cfg
+        echo "Applied defaults. Current config now:";
+        print_config_summary
+        # Re-evaluate validity after applying defaults
+        print_config_summary >/dev/null 2>&1
+        summary_ok=$?
     fi
-    # Run each modular section in sequence (each module exports run_*())
-    # run_intro now includes the preview; prompt to proceed after preview
-    run_intro
-    # Prompt the user to proceed after the preview; anykey always returns 0
-    anykey "Press any key to continue..."
-    run_repo
-    run_env_os
-    run_web_proxy
-    run_db
-    run_finalize
+fi
+
+# Now ask whether to modify interactively, but present more options if config is invalid
+if [ $summary_ok -eq 0 ]; then
+    # Config appears valid
+    # Decide default for the interactive modify prompt: if the user's .cfg
+    # already contains any non-empty values, default to 'n' (don't modify);
+    # otherwise default to 'y'.
+    interactive_default="y"
+    if [ -f "${DEPLOY_CONFIG:-$SCRIPT_DIR/interactive_config.cfg}" ]; then
+        for _k in OPENPROJECT_TAG GIT_USERNAME GIT_EMAIL ENVIRONMENT_TYPE OS_FAMILY OPENPROJECT_HOST_NAME OPENPROJECT_HTTPS PROXY_HTTPS_REDIRECT DOMAIN_NAME DEFAULT_DBADMIN_PASSWORD DATABASE_STORAGE_TYPE NAMESPACE; do
+            _v=$(get_cfg "$_k" || true)
+            if [ -n "$_v" ]; then
+                interactive_default="n"
+                break
+            fi
+        done
+    fi
+    if validate_yn "Would you like to modify the configuration interactively?" "$interactive_default"; then
+        # run full interactive flow as before
+        if [ -t 1 ]; then
+            clear
+        fi
+        run_intro
+        anykey "Press any key to continue..."
+        run_repo
+        run_env_os
+        run_web_proxy
+        run_db
+        run_finalize
+    fi
+else
+    # Config missing keys — ask user whether to fix missing keys interactively or run full flow
+    echo
+    echo "Options:"
+    echo "  1) Fix missing/invalid values interactively (recommended)"
+    echo "  2) Run full interactive configuration (all prompts)"
+    echo "  3) Proceed with current config as-is (not recommended)"
+    while true; do
+        printf "Select an option [1]: "
+        read opt
+        if [ -z "$opt" ]; then opt=1; fi
+        case "$opt" in
+            1)
+                # Determine which modules to run based on missing keys
+                # Simple mapping
+                missing_keys=()
+                for k in OPENPROJECT_HOST_NAME DOMAIN_NAME OPENPROJECT_HTTPS OPENPROJECT_TAG DEFAULT_DBADMIN_PASSWORD DATABASE_STORAGE_TYPE; do
+                    v=$(get_effective "$k" || true)
+                    if [ -z "$v" ]; then missing_keys+=("$k"); fi
+                done
+                # If DB keys missing, run DB; if web keys missing, run web; repo keys missing, run repo
+                need_db=0; need_web=0; need_repo=0
+                for k in "${missing_keys[@]}"; do
+                    case "$k" in
+                        DEFAULT_DBADMIN_PASSWORD|DATABASE_STORAGE_TYPE) need_db=1 ;;
+                        OPENPROJECT_HOST_NAME|DOMAIN_NAME|OPENPROJECT_HTTPS|NAMESPACE|PROXY_HTTPS_REDIRECT) need_web=1 ;;
+                        OPENPROJECT_TAG|GIT_USERNAME|GIT_EMAIL) need_repo=1 ;;
+                    esac
+                done
+                if [ "$need_repo" -eq 1 ]; then run_repo; fi
+                if [ "$need_web" -eq 1 ]; then run_web_proxy; fi
+                if [ "$need_db" -eq 1 ]; then run_db; fi
+                run_finalize
+                break
+                ;;
+            2)
+                # Full flow
+                if [ -t 1 ]; then clear; fi
+                run_intro; anykey "Press any key to continue..."; run_repo; run_env_os; run_web_proxy; run_db; run_finalize
+                break
+                ;;
+            3)
+                # Proceed as-is
+                run_finalize
+                break
+                ;;
+            *) echo "Please enter 1, 2, or 3" ;;
+        esac
+    done
 fi
 
 # Ask if user wants to run deployment now (run_finalize will already have printed

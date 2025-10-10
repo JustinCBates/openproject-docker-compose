@@ -72,10 +72,6 @@ EOF
     if [ "$current_os_family" != "unknown" ]; then
         echo "Detected OS family: $current_os_family"
         echo
-        warn "Changing from the detected OS family may cause errors"
-        echo "   in the configure and build process. The installation utilities"
-        echo "   are optimized for the detected OS family."
-        echo
     fi
 
     echo "Available OS families:"
@@ -89,18 +85,50 @@ EOF
         *) current_os_num="1" ;;
     esac
 
-    numbered_list_prompt "$current_os_family" os_token os_idx \
-        "debian     - Debian, Ubuntu, Mint, Raspbian" \
-        "redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux" \
-        "suse       - openSUSE, SLES" \
-        "arch       - Arch Linux, Manjaro, EndeavourOS" \
-        "slackware  - Slackware"
+    # Ask whether to keep the detected/default OS family. Default to yes.
+    selected_os_family=""
+    if [ "$current_os_family" != "unknown" ]; then
+        if validate_yn "Keep detected OS family: $current_os_family?" "y"; then
+            selected_os_family="$current_os_family"
+            save_config "OS_FAMILY" "$selected_os_family"
+        else
+            # User chose to change — show a warning and require explicit confirmation
+            echo
+            warn "Changing from the detected OS family may cause errors"
+            echo "   in the configure and build process. The installation utilities"
+            echo "   are optimized for the detected OS family."
+            echo
+            if validate_yn "Are you sure you want to select a different OS family instead of '$current_os_family'?" "n"; then
+                # Show the numbered prompt, defaulting to the detected OS number
+                numbered_list_prompt "$current_os_num" os_token os_idx \
+                    "debian     - Debian, Ubuntu, Mint, Raspbian" \
+                    "redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux" \
+                    "suse       - openSUSE, SLES" \
+                    "arch       - Arch Linux, Manjaro, EndeavourOS" \
+                    "slackware  - Slackware"
+                selected_os_family="$os_token"
+                save_config "OS_FAMILY" "$selected_os_family"
+            else
+                # User declined the confirmation — keep detected
+                selected_os_family="$current_os_family"
+                save_config "OS_FAMILY" "$selected_os_family"
+            fi
+        fi
+    else
+        # No detected OS family — ask directly with default numeric option
+        numbered_list_prompt "1" os_token os_idx \
+            "debian     - Debian, Ubuntu, Mint, Raspbian" \
+            "redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux" \
+            "suse       - openSUSE, SLES" \
+            "arch       - Arch Linux, Manjaro, EndeavourOS" \
+            "slackware  - Slackware"
+        selected_os_family="$os_token"
+        save_config "OS_FAMILY" "$selected_os_family"
+    fi
 
-    selected_os_family="$os_token"
-
+    # If the user selected a different family, warn about compatibility
     lc_current_os=$(echo "$current_os_family" | tr '[:upper:]' '[:lower:]')
     lc_selected_os=$(echo "$selected_os_family" | tr '[:upper:]' '[:lower:]')
-
     if [ "$lc_current_os" != "unknown" ] && [ "$lc_selected_os" != "$lc_current_os" ]; then
         echo
         warn "You selected '$selected_os_family' but detected OS is '$current_os_family'"
@@ -110,14 +138,5 @@ EOF
         echo "   • File paths and configurations"
         echo "   • Docker setup procedures"
         echo
-        if validate_yn "Are you sure you want to use '$selected_os_family' instead of '$current_os_family'?" "n"; then
-            os_family="$selected_os_family"
-        else
-            os_family="$current_os_family"
-        fi
-        save_config "OS_FAMILY" "$os_family"
-    else
-        os_family="$selected_os_family"
-        save_config "OS_FAMILY" "$os_family"
     fi
 }

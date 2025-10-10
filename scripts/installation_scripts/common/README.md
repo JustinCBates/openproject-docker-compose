@@ -160,9 +160,9 @@ Then call the helpers directly, for example:
 ```bash
 prompt_with_default "Domain name" "$current_domain" domain_name
 if validate_tf "Redirect HTTP to HTTPS?" "true"; then
-    PROXY_HTTP_TO_HTTPS_REDIRECT=true
+  PROXY_HTTPS_REDIRECT=true
 else
-    PROXY_HTTP_TO_HTTPS_REDIRECT=false
+  PROXY_HTTPS_REDIRECT=false
 fi
 ```
 

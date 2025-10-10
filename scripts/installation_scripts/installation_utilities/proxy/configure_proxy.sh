@@ -40,7 +40,8 @@ APP_HOST=${APP_HOST:-web}
 DOMAIN_NAME=${DOMAIN_NAME:-${OPENPROJECT_HOST_NAME:-}}
 RELATIVE_ROOT=${OPENPROJECT_RAILS__RELATIVE__URL__ROOT:-}
 # Read proxy redirect preference (default: empty -> leave Caddy default behavior)
-PROXY_HTTP_TO_HTTPS_REDIRECT=${PROXY_HTTP_TO_HTTPS_REDIRECT:-}
+# Support new key PROXY_HTTPS_REDIRECT; fall back to older PROXY_HTTP_TO_HTTPS_REDIRECT if present
+PROXY_HTTPS_REDIRECT=${PROXY_HTTPS_REDIRECT:-${PROXY_HTTP_TO_HTTPS_REDIRECT:-}}
 
 # If RELATIVE_ROOT contains unresolved ${...} references, expand them
 if [[ "$RELATIVE_ROOT" == *'${'* ]]; then
@@ -76,7 +77,7 @@ fi
 
 if [ -n "$RELATIVE_ROOT" ] && [ "$RELATIVE_ROOT" != "/" ]; then
     # If the config explicitly disables HTTP->HTTPS redirects, prepend the global Caddy option
-    if [ -n "$PROXY_HTTP_TO_HTTPS_REDIRECT" ] && [ "$PROXY_HTTP_TO_HTTPS_REDIRECT" = "false" ]; then
+    if [ -n "$PROXY_HTTPS_REDIRECT" ] && [ "$PROXY_HTTPS_REDIRECT" = "false" ]; then
         cat > "$TEMPLATE_FILE" <<'CADDY_GLOBAL'
 {
     auto_https disable_redirects
@@ -100,7 +101,7 @@ ${SITE_HEADER} {
 EOF
 else
     # If the config explicitly disables HTTP->HTTPS redirects, prepend the global Caddy option
-    if [ -n "$PROXY_HTTP_TO_HTTPS_REDIRECT" ] && [ "$PROXY_HTTP_TO_HTTPS_REDIRECT" = "false" ]; then
+    if [ -n "$PROXY_HTTPS_REDIRECT" ] && [ "$PROXY_HTTPS_REDIRECT" = "false" ]; then
         cat > "$TEMPLATE_FILE" <<'CADDY_GLOBAL'
 {
     auto_https disable_redirects

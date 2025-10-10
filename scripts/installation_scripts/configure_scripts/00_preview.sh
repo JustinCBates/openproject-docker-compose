@@ -37,14 +37,7 @@ EOF
         init_install_defaults
     fi
 
-    echo "Key settings (effective values):"
-    # Print merged values, prefer current_* variables populated by init_install_defaults
-    printf "  DOMAIN_NAME=%s\n" "${current_domain:-$(get_cfg DOMAIN_NAME || true)}"
-    printf "  OPENPROJECT_HOST_NAME=%s\n" "${current_host:-$(get_cfg OPENPROJECT_HOST_NAME || true)}"
-    printf "  OPENPROJECT_HTTPS=%s\n" "${current_https:-$(get_cfg OPENPROJECT_HTTPS || true)}"
-    printf "  OPENPROJECT_TAG=%s\n" "${current_tag:-$(get_cfg OPENPROJECT_TAG || true)}"
-    printf "  NAMESPACE=%s\n" "${current_subdomain:-$(get_cfg NAMESPACE || true)}"
-    echo
+    # Note: summary printed by interactive_config.sh before offering interactive edit
     if declare -f pop_sigint_trap >/dev/null 2>&1; then
         pop_sigint_trap
     fi

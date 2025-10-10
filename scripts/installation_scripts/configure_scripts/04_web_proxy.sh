@@ -48,7 +48,7 @@ EOF
         : # proxy_redirect set to 'false' by validate_tf
     fi
 
-    save_config "PROXY_HTTP_TO_HTTPS_REDIRECT" "$proxy_redirect"
+    save_config "PROXY_HTTPS_REDIRECT" "$proxy_redirect"
  
 
         web_endpoint_body=$(cat <<'EOF'
