@@ -287,7 +287,7 @@ EOF
     current_namespace=$(get_cfg "NAMESPACE" || true)
     default_namespace_enabled=$(get_effective "NAMESPACE_ENABLED" || echo "false")
     # validate_tf will normalize to true/false into namespace_enabled variable
-    if validate_tf "Enable namespace support? (true/false)" "$default_namespace_enabled" namespace_enabled; then
+    if validate_tf "Enable namespace support?" "$default_namespace_enabled" namespace_enabled; then
         :
     else
         :
@@ -301,9 +301,9 @@ EOF
         # Otherwise fall back to the generated defaults (interactive_config.cfg.defaults).
         cfg_ns="$(get_cfg "NAMESPACE" || true)"
         if [ -n "$cfg_ns" ]; then
-            prompt_with_default "Namespace (leave empty for none)" "$cfg_ns" "namespace"
+            prompt_with_default "Namespace " "$cfg_ns" "namespace"
         else
-            prompt_with_default "Namespace (leave empty for none)" "$(get_effective "NAMESPACE" || true)" "namespace"
+            prompt_with_default "Namespace " "$(get_effective "NAMESPACE" || true)" "namespace"
         fi
         if [ -n "${namespace:-}" ]; then
             save_config "NAMESPACE" "$namespace"
