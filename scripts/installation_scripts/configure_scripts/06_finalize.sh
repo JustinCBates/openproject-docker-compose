@@ -9,6 +9,25 @@ run_finalize() {
 
     # Print a concise final summary (avoid duplicating the section header)
     echo
+    # Simple validity checks: required keys present and non-empty
+    missing=()
+    for k in OPENPROJECT_HOST_NAME DOMAIN_NAME OPENPROJECT_HTTPS OPENPROJECT_TAG; do
+        v=$(get_effective "$k" || true)
+        if [ -z "$v" ]; then missing+=("$k"); fi
+    done
+    if [ "${#missing[@]}" -eq 0 ]; then
+        if [ "${COLOR_ENABLED:-0}" = "1" ]; then
+            printf "%b\n" "${GREEN}✓ Configuration appears valid: required keys present.${RESET}"
+        else
+            printf "%s\n" "✓ Configuration appears valid: required keys present."
+        fi
+    else
+        if [ "${COLOR_ENABLED:-0}" = "1" ]; then
+            printf "%b\n" "${RED}✗ Configuration missing required keys: ${missing[*]}${RESET}"
+        else
+            printf "%s\n" "✗ Configuration missing required keys: ${missing[*]}"
+        fi
+    fi
     echo "============================================================================================"
     echo "Configuration saved to: ${DEPLOY_CONFIG:-scripts/installation_scripts/interactive_config.cfg}"
     echo "============================================================================================"
