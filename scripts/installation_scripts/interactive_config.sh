@@ -13,6 +13,8 @@ fi
 
 # Default behavior: run deploy unless --no-deploy is passed
 NO_DEPLOY="false"
+# Prompt timeouts disabled by default; use --timeouts-enabled to enable
+TIMEOUTS_ENABLED="false"
 
 # Parse simple flags (only --no-deploy for now)
 while [ "$#" -gt 0 ]; do
@@ -21,10 +23,15 @@ while [ "$#" -gt 0 ]; do
             NO_DEPLOY="true"
             shift
             ;;
+        --timeouts-enabled)
+            TIMEOUTS_ENABLED="true"
+            shift
+            ;;
         --help|-h)
-            echo "Usage: $0 [--no-deploy]"
+            echo "Usage: $0 [--no-deploy] [--timeouts-enabled]"
             echo
-            echo "  --no-deploy   Do not run ./scripts/installation_scripts/deploy.sh at the end"
+            echo "  --no-deploy         Do not run ./scripts/installation_scripts/deploy.sh at the end"
+            echo "  --timeouts-enabled  Enable prompt timeouts (default timeout: 30s). When not set, prompts will block until the user responds."
             exit 0
             ;;
         *)
@@ -143,6 +150,17 @@ load_config() {
 
 # Load existing configuration if available
 load_config
+
+# Configure prompt timeouts: by default timeouts are disabled. When the
+# user supplies --timeouts-enabled, set PROMPT_TIMEOUT to a sensible value
+# so prompt helpers use timeouts.
+if [ "${TIMEOUTS_ENABLED:-false}" = "true" ]; then
+    # default timeout in seconds; callers can override PROMPT_TIMEOUT if needed
+    PROMPT_TIMEOUT=${PROMPT_TIMEOUT:-30}
+else
+    # unset PROMPT_TIMEOUT so prompt helpers will block by default
+    unset PROMPT_TIMEOUT
+fi
 
 # Remove empty DOMAIN_NAME entries that may have been saved previously
 # (an explicit empty assignment would shadow the generated defaults).
