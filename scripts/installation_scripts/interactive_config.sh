@@ -73,6 +73,16 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_CONFIG="$SCRIPT_DIR/interactive_config.cfg"
 
+# Track whether a persistent .cfg existed when the script started. If the
+# user declines to apply defaults and declines interactive modification, we
+# should avoid creating/populating a new .cfg file. This flag is used by the
+# finalize step to decide whether to persist defaults into the file.
+DEPLOY_CONFIG_EXISTS_AT_START=$([ -f "$DEPLOY_CONFIG" ] && echo 1 || echo 0)
+
+# When the user explicitly applies defaults (via apply_defaults_to_cfg) we
+# set this to 1 so finalize knows it may persist values.
+SHOULD_PERSIST_DEFAULTS=0
+
 # Function to save configuration to interactive_config.cfg file
 save_config() {
     local key="$1"
@@ -199,7 +209,9 @@ echo
 if [ -f "${SCRIPT_DIR}/interactive_config.cfg.defaults" ]; then
     if validate_yn "Would you like to replace current .cfg values with the defaults from .cfg.defaults?" "n"; then
         apply_defaults_to_cfg
-        echo "Applied defaults. Current config now:";
+        # record that defaults were applied so finalize may persist remaining keys
+        SHOULD_PERSIST_DEFAULTS=1
+        echo "Applied defaults. Current config now";
         print_config_summary
         # Re-evaluate validity after applying defaults
         print_config_summary >/dev/null 2>&1
@@ -299,8 +311,37 @@ else
 fi
 
 # Ask if user wants to run deployment now (run_finalize will already have printed
-# the final configuration summary for the user)
-if validate_yn "Would you like to run the deployment now?" "y"; then
+# the final configuration summary for the user).
+# If required keys are missing, use a safer confirmation prompt and default to 'n'.
+# Use the same persistence policy as finalize to decide whether defaults count
+# toward satisfying required keys.
+# Determine whether persistence is allowed here
+PERSIST_ALLOWED=0
+if [ "${DEPLOY_CONFIG_EXISTS_AT_START:-0}" = "1" ] || [ "${SHOULD_PERSIST_DEFAULTS:-0}" = "1" ]; then
+    PERSIST_ALLOWED=1
+fi
+
+# Check required keys
+required_keys=(OPENPROJECT_HOST_NAME DOMAIN_NAME OPENPROJECT_HTTPS OPENPROJECT_TAG)
+missing=()
+for k in "${required_keys[@]}"; do
+    if [ "$PERSIST_ALLOWED" -eq 1 ]; then
+        v=$(get_effective "$k" || true)
+    else
+        v=$(get_cfg "$k" || true)
+    fi
+    if [ -z "$v" ]; then missing+=("$k"); fi
+done
+
+if [ "${#missing[@]}" -ne 0 ]; then
+    deploy_prompt="Are you sure you wish to run the deployment now?"
+    deploy_default="n"
+else
+    deploy_prompt="Would you like to run the deployment now?"
+    deploy_default="y"
+fi
+
+if validate_yn "$deploy_prompt" "$deploy_default"; then
     echo
     echo "Starting OpenProject deployment..."
     echo "=================================="

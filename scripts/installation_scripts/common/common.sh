@@ -317,7 +317,7 @@ OS_FAMILY="${os_family:-}"
 DEFAULT_DBADMIN_PASSWORD="admin123"
 ENVIRONMENT_TYPE="production"
 PROXY_HTTPS_REDIRECT="true"
-    DATABASE_STORAGE_TYPE="docker-volumes"
+DATABASE_STORAGE_TYPE="docker-volumes"
 EOF
 
     # Append git defaults if detected (keep them on separate lines)

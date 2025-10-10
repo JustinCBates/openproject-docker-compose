@@ -24,6 +24,14 @@ run_finalize() {
     echo
 
     # Persist any remaining keys that were not explicitly saved by their owning utility.
+    # Only persist if a .cfg existed at script start or the user explicitly
+    # applied defaults (SHOULD_PERSIST_DEFAULTS=1). This prevents creating a
+    # populated interactive_config.cfg after the user declined to apply defaults
+    # and declined to run the interactive flow.
+    if [ "${DEPLOY_CONFIG_EXISTS_AT_START:-0}" != "1" ] && [ "${SHOULD_PERSIST_DEFAULTS:-0}" != "1" ]; then
+        # Skip persisting defaults into a new config file
+        echo "(Skipping persistence of defaults into ${DEPLOY_CONFIG:-interactive_config.cfg})"
+    else
     # This uses environment/exported variables (or variables populated by init_install_defaults)
     # as the source of truth for values not present in the user's interactive_config.cfg.
     remaining_keys=(
@@ -51,6 +59,7 @@ run_finalize() {
             save_config "$key" "$val" >/dev/null 2>&1
         fi
     done
+    fi
 
     # Print a canonical, ordered view of the final configuration. Use the
     # same key ordering and validity rules as `print_config_summary`, but
@@ -101,6 +110,12 @@ run_finalize() {
     printf "%s\n" "Final configuration:"
     printf "%s\n" "---------------------------------------------"
 
+    # Decide whether finalize is allowed to consider defaults as persistent
+    PERSIST_ALLOWED=0
+    if [ "${DEPLOY_CONFIG_EXISTS_AT_START:-0}" = "1" ] || [ "${SHOULD_PERSIST_DEFAULTS:-0}" = "1" ]; then
+        PERSIST_ALLOWED=1
+    fi
+
     for k in "${keys[@]}"; do
         # Marker
         marker=" "
@@ -108,8 +123,15 @@ run_finalize() {
             if [ "$c" = "$k" ]; then marker="*"; break; fi
         done
 
-        # Determine effective value
-        v=$(get_effective "$k" || true)
+        # Determine value to display: prefer persistent .cfg values when
+        # persistence is not allowed to avoid showing generated defaults as
+        # if they were user-provided. If persistence is allowed, show the
+        # effective value (env/.cfg/.cfg.defaults) as before.
+        if [ "$PERSIST_ALLOWED" -eq 1 ]; then
+            v=$(get_effective "$k" || true)
+        else
+            v=$(get_cfg "$k" || true)
+        fi
         if [ -n "$v" ]; then raw_disp="\"$v\""; else raw_disp=""; fi
 
         # Color logic: critical keys show green marker when valid, red when missing.
@@ -129,13 +151,22 @@ run_finalize() {
             fi
         fi
 
-        # Special-case OS_FAMILY override: yellow when differs from detected default
+        # Special-case OS_FAMILY override: yellow when the configured (persistent)
+        # value differs from the detected default. Use the persistent .cfg value
+        # for comparison when persistence is allowed, otherwise compare the
+        # .cfg value (which may be empty).
         if [ "$k" = "OS_FAMILY" ]; then
             defv=""
             if [ -f "${SCRIPT_DIR}/interactive_config.cfg.defaults" ]; then
                 defv=$(grep -E "^${k}=" "${SCRIPT_DIR}/interactive_config.cfg.defaults" 2>/dev/null | head -1 | cut -d'=' -f2- | sed -e 's/^"//' -e 's/"$//' || true)
             fi
-            if [ -n "$v" ] && [ -n "$defv" ] && [ "$v" != "$defv" ]; then
+            # Get the configured (persistent) value for comparison
+            if [ "$PERSIST_ALLOWED" -eq 1 ]; then
+                cfg_compare="$v"
+            else
+                cfg_compare=$(get_cfg "$k" || true)
+            fi
+            if [ -n "$cfg_compare" ] && [ -n "$defv" ] && [ "$cfg_compare" != "$defv" ]; then
                 if [ "${COLOR_ENABLED:-0}" = "1" ]; then marker_colored="${YELLOW}*${RESET}"; value_colored="${YELLOW}${raw_disp}${RESET}"; else marker_colored="*"; fi
             fi
         fi
@@ -153,7 +184,11 @@ run_finalize() {
     missing=()
     invalid=()
     for k in OPENPROJECT_HOST_NAME DOMAIN_NAME OPENPROJECT_HTTPS OPENPROJECT_TAG; do
-        v=$(get_effective "$k" || true)
+        if [ "$PERSIST_ALLOWED" -eq 1 ]; then
+            v=$(get_effective "$k" || true)
+        else
+            v=$(get_cfg "$k" || true)
+        fi
         if [ -z "$v" ]; then missing+=("$k"); fi
     done
 
@@ -163,7 +198,11 @@ run_finalize() {
     if [ -f "${SCRIPT_DIR}/interactive_config.cfg.defaults" ]; then
         def_os=$(grep -E "^OS_FAMILY=" "${SCRIPT_DIR}/interactive_config.cfg.defaults" 2>/dev/null | head -1 | cut -d'=' -f2- | sed -e 's/^"//' -e 's/"$//' || true)
     fi
-    cfg_os=$(get_effective "OS_FAMILY" || true)
+    if [ "$PERSIST_ALLOWED" -eq 1 ]; then
+        cfg_os=$(get_effective "OS_FAMILY" || true)
+    else
+        cfg_os=$(get_cfg "OS_FAMILY" || true)
+    fi
     if [ -n "$cfg_os" ] && [ -n "$def_os" ] && [ "$cfg_os" != "$def_os" ]; then
         invalid+=("OS_FAMILY")
     fi

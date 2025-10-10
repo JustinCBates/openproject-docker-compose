@@ -117,11 +117,21 @@ print_config_summary() {
                 if [ "$k" = "NAMESPACE" ]; then
                     valid=1
                 else
-                    # Valid if there's a value in the user's config or a default exists
+                    # Valid if there's a value in the user's config
+                    # or (a default exists AND the user has a persistent .cfg file)
                     if [ -n "$cfgv" ]; then
                         valid=1
                     elif [ -n "$defv" ]; then
-                        valid=1
+                        # Determine if a persistent .cfg exists (DEPLOY_CONFIG may be set by the caller)
+                        cfg_file="${DEPLOY_CONFIG:-${SCRIPT_DIR}/interactive_config.cfg}"
+                        if [ -f "$cfg_file" ]; then
+                            # If the key is absent from the .cfg file (empty), treat as invalid
+                            # unless the user has explicitly set it. So only consider the default
+                            # as valid when a persistent .cfg file is present to accept it.
+                            valid=1
+                        else
+                            valid=0
+                        fi
                     fi
                 fi
                 if [ "$valid" -eq 1 ]; then
