@@ -297,13 +297,13 @@ EOF
     # If namespace support is enabled, ask for the namespace value. Default to
     # the value found in the user's .cfg (so we don't overwrite with blank).
     if [ "${namespace_enabled:-false}" = "true" ]; then
-        if [ -n "$current_namespace" ]; then
-            caution "To keep the current namespace [$current_namespace] you must retype it below; leaving the prompt empty will remove the namespace."
-            prompt_with_default "Namespace (leave empty to remove current namespace, or enter new value)" "" "namespace"
+        # Use the value already present in the user's config as the default when available.
+        # Otherwise fall back to the generated defaults (interactive_config.cfg.defaults).
+        cfg_ns="$(get_cfg "NAMESPACE" || true)"
+        if [ -n "$cfg_ns" ]; then
+            prompt_with_default "Namespace (leave empty for none)" "$cfg_ns" "namespace"
         else
-            echo "No namespace currently set"
-            # Use the default from get_effective (which reads .cfg then defaults)
-            prompt_with_default "Namespace (e.g., StatesmenProjects, leave empty for none)" "$(get_effective "NAMESPACE" || true)" "namespace"
+            prompt_with_default "Namespace (leave empty for none)" "$(get_effective "NAMESPACE" || true)" "namespace"
         fi
         if [ -n "${namespace:-}" ]; then
             save_config "NAMESPACE" "$namespace"
