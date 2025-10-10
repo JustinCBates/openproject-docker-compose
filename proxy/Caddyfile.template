@@ -1,12 +1,37 @@
 {
     auto_https disable_redirects
 }
-srv1035368.hstgr.cloud {
-    handle_path /StatesmenProjects {
-        reverse_proxy http://${APP_HOST}:8080 {
+
+http://$PROXY_BIND_ADDRESS:$PROXY_HTTP_PORT
+http://$DOMAIN_NAME {
+    # Redirect all HTTP to HTTPS
+    redir https://{host}{uri} 308
+}
+
+https://$PROXY_BIND_ADDRESS:$PROXY_HTTPS_PORT
+https://$DOMAIN_NAME {
+    # Use Caddy's internal CA for testing (avoids external ACME calls).
+    # In production you may want to remove this and let Caddy use Let's
+    # Encrypt, or configure a proper tls directive with your certs.
+    tls internal
+
+    # Redirect bare root to the mounted application prefix
+    @root {
+        path /
+    }
+    redir @root $RELATIVE_ROOT 302
+
+    # Preserve the prefix when proxying so the upstream receives paths
+    # like /StatesmenProjects/... which OpenProject expects when
+    # OPENPROJECT_RAILS__RELATIVE__URL__ROOT is set. Use `handle` (not
+    # `handle_path`) so the prefix stays intact for the upstream.
+    handle $RELATIVE_ROOT* {
+        reverse_proxy $APP_HOST:8080 {
+            # Forward the Host header so Rails sees the original host
+            header_up Host {host}
+            # X-Forwarded-* are forwarded by default, but kept here for clarity
             header_up X-Forwarded-Proto {http.request.scheme}
             header_up X-Forwarded-For {remote}
-            header_up Host {http.request.host}
         }
     }
 

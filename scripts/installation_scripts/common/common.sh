@@ -318,6 +318,11 @@ DEFAULT_DBADMIN_PASSWORD="admin123"
 ENVIRONMENT_TYPE="production"
 PROXY_HTTPS_REDIRECT="true"
 DATABASE_STORAGE_TYPE="docker-volumes"
+# Proxy bind and port defaults
+PROXY_BIND_ADDRESS="0.0.0.0"
+PROXY_HTTP_PORT="80"
+PROXY_HTTPS_PORT="443"
+PROXY_TLS_MODE="internal"
 EOF
 
     # Append git defaults if detected (keep them on separate lines)

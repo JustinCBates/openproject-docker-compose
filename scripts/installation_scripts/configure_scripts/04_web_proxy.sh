@@ -54,6 +54,55 @@ EOF
         save_config "OPENPROJECT_HTTPS" "$use_https"
     fi
 
+    # Prompt for proxy bind address and ports to handle firewall/router setups.
+    subsection "Proxy bind and port configuration" "If your host has a firewall or needs a specific bind interface, set the bind IP and port values here."
+    # Determine defaults from get_effective or current values
+    default_bind=$(get_effective "PROXY_BIND_ADDRESS" || echo "0.0.0.0")
+    prompt_with_default "Proxy bind IP (0.0.0.0 to listen on all interfaces)" "$default_bind" "proxy_bind"
+    if [ -n "${proxy_bind:-}" ]; then
+        save_config "PROXY_BIND_ADDRESS" "$proxy_bind"
+    fi
+
+    default_http_port=$(get_effective "PROXY_HTTP_PORT" || echo "80")
+    prompt_with_default "Proxy HTTP port" "$default_http_port" "proxy_http_port"
+    if [ -n "${proxy_http_port:-}" ]; then
+        save_config "PROXY_HTTP_PORT" "$proxy_http_port"
+    fi
+
+    default_https_port=$(get_effective "PROXY_HTTPS_PORT" || echo "443")
+    prompt_with_default "Proxy HTTPS port" "$default_https_port" "proxy_https_port"
+    if [ -n "${proxy_https_port:-}" ]; then
+        save_config "PROXY_HTTPS_PORT" "$proxy_https_port"
+    fi
+
+    # TLS mode selection
+    tls_default=$(get_effective "PROXY_TLS_MODE" || echo "internal")
+    subsection "TLS mode selection" "Choose how the proxy should obtain TLS certificates."
+    echo "Options:"
+    echo "  1) internal (Caddy internal CA - testing only, auto-accepted above)"
+    echo "  2) letsencrypt_staging (ACME staging - for testing)"
+    echo "  3) letsencrypt_prod (Let\'s Encrypt production - requires public ports 80/443)"
+    echo "  4) acme_duckdns (Use acme.sh with DuckDNS DNS-01)"
+    numbered_list_prompt "${tls_default}" tls_choice tls_choice_idx "internal" "letsencrypt_staging" "letsencrypt_prod" "acme_duckdns"
+    # Map numeric selection to canonical value
+    case "$tls_choice" in
+        internal) tls_mode="internal" ;;
+        letsencrypt_staging) tls_mode="letsencrypt_staging" ;;
+        letsencrypt_prod) tls_mode="letsencrypt_prod" ;;
+        acme_duckdns) tls_mode="acme_duckdns" ;;
+        *) tls_mode="$tls_default" ;;
+    esac
+    save_config "PROXY_TLS_MODE" "$tls_mode"
+
+    # If user selected DuckDNS/DNS-01 flow, ask for DuckDNS subdomain and token
+    if [ "$tls_mode" = "acme_duckdns" ]; then
+        subsection "DuckDNS settings" "Provide DuckDNS credentials for DNS-01 issuance via acme.sh"
+        prompt_with_default "DuckDNS subdomain (example: myname.duckdns.org)" "$(get_effective "DOMAIN_NAME" || true)" "duckdns_domain"
+        prompt_with_default "DuckDNS token (kept in config file)" "" "duckdns_token"
+        if [ -n "${duckdns_domain:-}" ]; then save_config "DOMAIN_NAME" "$duckdns_domain"; fi
+        if [ -n "${duckdns_token:-}" ]; then save_config "DUCKDNS_TOKEN" "$duckdns_token"; fi
+    fi
+
     echo
 
     use_https_lc=$(echo "$use_https" | tr '[:upper:]' '[:lower:]')

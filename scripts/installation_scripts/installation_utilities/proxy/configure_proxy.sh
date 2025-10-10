@@ -39,6 +39,10 @@ fi
 APP_HOST=${APP_HOST:-web}
 DOMAIN_NAME=${DOMAIN_NAME:-${OPENPROJECT_HOST_NAME:-}}
 RELATIVE_ROOT=${OPENPROJECT_RAILS__RELATIVE__URL__ROOT:-}
+PROXY_BIND_ADDRESS=${PROXY_BIND_ADDRESS:-0.0.0.0}
+PROXY_HTTP_PORT=${PROXY_HTTP_PORT:-80}
+PROXY_HTTPS_PORT=${PROXY_HTTPS_PORT:-443}
+PROXY_TLS_MODE=${PROXY_TLS_MODE:-internal}
 # Read proxy redirect preference (default: empty -> leave Caddy default behavior)
 # Support new key PROXY_HTTPS_REDIRECT; fall back to older PROXY_HTTP_TO_HTTPS_REDIRECT if present
 PROXY_HTTPS_REDIRECT=${PROXY_HTTPS_REDIRECT:-${PROXY_HTTP_TO_HTTPS_REDIRECT:-}}
@@ -70,9 +74,12 @@ echo "Rendering Caddyfile.template (domain=${DOMAIN_NAME:-<none>}, relative_root
 
 # Determine site header
 if [ -n "$DOMAIN_NAME" ]; then
-    SITE_HEADER="$DOMAIN_NAME"
+    # We render a pair of site addresses: explicit bind:port plus domain host match
+    SITE_HEADER_HTTP="$PROXY_BIND_ADDRESS:$PROXY_HTTP_PORT\n$DOMAIN_NAME"
+    SITE_HEADER_HTTPS="$PROXY_BIND_ADDRESS:$PROXY_HTTPS_PORT\n$DOMAIN_NAME"
 else
-    SITE_HEADER=":80"
+    SITE_HEADER_HTTP=":$PROXY_HTTP_PORT"
+    SITE_HEADER_HTTPS=":$PROXY_HTTPS_PORT"
 fi
 
 if [ -n "$RELATIVE_ROOT" ] && [ "$RELATIVE_ROOT" != "/" ]; then
@@ -84,9 +91,33 @@ if [ -n "$RELATIVE_ROOT" ] && [ "$RELATIVE_ROOT" != "/" ]; then
 }
 CADDY_GLOBAL
     fi
+    # Choose TLS behavior based on PROXY_TLS_MODE
+    case "$PROXY_TLS_MODE" in
+        internal)
+            TLS_BLOCK="tls internal"
+            ;;
+        letsencrypt_staging)
+            TLS_BLOCK="tls { ca https://acme-staging-v02.api.letsencrypt.org/directory }"
+            ;;
+        letsencrypt_prod)
+            TLS_BLOCK="" # default Caddy behavior
+            ;;
+        acme_duckdns)
+            # Instruct users to run acme.sh to install certs; template will expect certs at /etc/caddy/certs
+            TLS_BLOCK="tls /etc/caddy/certs/${DOMAIN_NAME}.fullchain.pem /etc/caddy/certs/${DOMAIN_NAME}.key"
+            ;;
+        *) TLS_BLOCK="tls internal" ;;
+    esac
 
     cat >> "$TEMPLATE_FILE" <<EOF
-${SITE_HEADER} {
+${SITE_HEADER_HTTP} {
+    # Redirect all HTTP to HTTPS (Caddy will handle redirect target)
+    redir https://{host}{uri} 308
+}
+
+${SITE_HEADER_HTTPS} {
+    ${TLS_BLOCK}
+
     handle_path ${RELATIVE_ROOT} {
         reverse_proxy http://\${APP_HOST}:8080 {
             header_up X-Forwarded-Proto {http.request.scheme}
@@ -109,8 +140,32 @@ else
 CADDY_GLOBAL
     fi
 
+    # Non-relative-root (root site) rendering: choose TLS block similarly
+    case "$PROXY_TLS_MODE" in
+        internal)
+            TLS_BLOCK="tls internal"
+            ;;
+        letsencrypt_staging)
+            TLS_BLOCK="tls { ca https://acme-staging-v02.api.letsencrypt.org/directory }"
+            ;;
+        letsencrypt_prod)
+            TLS_BLOCK=""
+            ;;
+        acme_duckdns)
+            TLS_BLOCK="tls /etc/caddy/certs/${DOMAIN_NAME}.fullchain.pem /etc/caddy/certs/${DOMAIN_NAME}.key"
+            ;;
+        *) TLS_BLOCK="tls internal" ;;
+    esac
+
     cat >> "$TEMPLATE_FILE" <<EOF
-${SITE_HEADER} {
+${SITE_HEADER_HTTP} {
+    # Redirect all HTTP to HTTPS
+    redir https://{host}{uri} 308
+}
+
+${SITE_HEADER_HTTPS} {
+    ${TLS_BLOCK}
+
     reverse_proxy * http://\${APP_HOST}:8080 {
         header_up X-Forwarded-Proto {header.X-Forwarded-Proto}
         header_up X-Forwarded-For {header.X-Forwarded-For}
