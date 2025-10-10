@@ -122,4 +122,26 @@ else
 fi
 echo
 
+# Print a concise endpoint URL for the deployed OpenProject instance.
+# Prefer DOMAIN_NAME when provided, fall back to OPENPROJECT_HOST_NAME.
+_host="${DOMAIN_NAME:-${OPENPROJECT_HOST_NAME:-}}"
+_namespace="${NAMESPACE:-}"
+# Determine scheme: treat any case-insensitive 'true' as HTTPS enabled
+_https_lc=$(printf "%s" "${OPENPROJECT_HTTPS:-}" | tr '[:upper:]' '[:lower:]')
+if [ "${_https_lc}" = "true" ]; then
+    _scheme="https"
+else
+    _scheme="http"
+fi
+
+if [ -n "${_host}" ]; then
+    if [ -n "${_namespace}" ]; then
+        echo
+        echo "OpenProject will be available at: ${_scheme}://${_host}/${_namespace}"
+    else
+        echo
+        echo "OpenProject will be available at: ${_scheme}://${_host}/"
+    fi
+fi
+
 echo "Deployment script completed successfully!"
