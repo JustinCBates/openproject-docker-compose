@@ -1,0 +1,385 @@
+Validation started at 2025-10-10T03:12:47+00:00
+
+--- STEP: Syntax check (timeout 60s) ---
+STEP Syntax check: PASS
+
+--- STEP: Regenerate defaults (timeout 20s) ---
+
+
+
+######################################################################
+OpenProject Interactive Deployment Script
+######################################################################
+[2m[38;5;136m    This script will help you deploy OpenProject using Docker Compose.[0m
+[2m[38;5;136m    You can press Enter to accept default values shown in brackets.[0m
+______________________________________________________________________
+
+
+==================================================
+Current configuration preview:
+==================================================
+[2m[38;5;136mPreview of the existing interactive_config.cfg. [0m
+[2m[38;5;136mConfirm or update values in the following prompts.[0m
+__________________________________________________
+
+Configuration comparison:
+
+Variable                     .cfg                                 .cfg.defaults                       
+----------------------------------------------------------------------------------------------------
+  OPENPROJECT_TAG           "stable/16"                         "stable/16"                        
+  GIT_USERNAME              "Justin Bates"                      "Justin Bates"                     
+  GIT_EMAIL                 "justincbates@proton.me"            "justincbates@proton.me"           
+* ENVIRONMENT_TYPE          "production"                        "production"                       
+* OS_FAMILY                 "debian"                            "debian"                           
+* OPENPROJECT_HOST_NAME     "srv1035368.hstgr.cloud"            "srv1035368.hstgr.cloud"           
+* OPENPROJECT_HTTPS         "true"                              "true"                             
+* PROXY_HTTPS_REDIRECT      "true"                              "true"                             
+* DOMAIN_NAME               "srv1035368.hstgr.cloud"            "srv1035368.hstgr.cloud"           
+* DEFAULT_DBADMIN_PASSWORD  "admin123"                          "admin123"                         
+* DATABASE_STORAGE_TYPE     "docker-volumes"                    "docker-volumes"                   
+* NAMESPACE                                                                                          
+
+Config appears valid: required keys present.
+
+Would you like to replace current .cfg values with the defaults from .cfg.defaults? (y/n) [n]: Would you like to modify the configuration interactively? (y/n) [n]: 
+============================================================================================
+Configuration saved to: /opt/openproject/scripts/installation_scripts/interactive_config.cfg
+============================================================================================
+
+To deploy OpenProject, run:
+  ./scripts/installation_scripts/deploy.sh
+
+Or use the utility scripts manually:
+  1. ./scripts/installation_scripts/installation_utilities/configure_docker.sh
+  2. ./scripts/installation_scripts/installation_utilities/build_stack.sh
+
+(Skipping persistence of defaults into /opt/openproject/scripts/installation_scripts/interactive_config.cfg; user did not accept applying defaults)
+
+Final configuration:
+---------------------------------------------
+  OPENPROJECT_TAG           "stable/16"                        
+  GIT_USERNAME              "Justin Bates"                     
+  GIT_EMAIL                 "justincbates@proton.me"           
+* ENVIRONMENT_TYPE          "production"                       
+* OS_FAMILY                 "debian"                           
+* OPENPROJECT_HOST_NAME     "srv1035368.hstgr.cloud"           
+* OPENPROJECT_HTTPS         "true"                             
+* PROXY_HTTPS_REDIRECT      "true"                             
+* DOMAIN_NAME               "srv1035368.hstgr.cloud"           
+* DEFAULT_DBADMIN_PASSWORD  "admin123"                         
+* DATABASE_STORAGE_TYPE     "docker-volumes"                   
+* NAMESPACE                                                     
+
+✓ Configuration appears valid: required keys present.
+Would you like to run the deployment now? (y/n) [y]: 
+Starting OpenProject deployment...
+==================================
+==========================================
+OpenProject Deployment Script
+==========================================
+
+Loading configuration from /opt/openproject/scripts/installation_scripts/interactive_config.cfg...
+Starting deployment process...
+
+Step 1: Configuring Git User...
+===============================
+==========================================
+Git User Configuration Utility
+==========================================
+Loading configuration from /opt/openproject/scripts/installation_scripts/installation_utilities/../interactive_config.cfg...
+Configuring git user settings...
+Setting git username to: Justin Bates
+✓ Git username configured
+Setting git email to: justincbates@proton.me
+✓ Git email configured
+
+Current git configuration:
+-------------------------
+Username: Justin Bates
+Email:    justincbates@proton.me
+
+✓ Git user configuration completed
+
+Step 2: Installing Docker...
+============================
+Executing Docker installation dispatcher...
+==========================================
+Docker Installation Dispatcher
+==========================================
+Loading configuration from /opt/openproject/scripts/installation_scripts/installation_utilities/../interactive_config.cfg...
+Detected OS family: debian
+Found Docker installation script for debian
+Executing: /opt/openproject/scripts/installation_scripts/installation_utilities/debian_install/install_docker.debian.sh
+
+==========================================
+Docker Installation - Debian Family
+==========================================
+Checking Docker installation status...
+
+Docker 28.5.0 is already installed
+✓ Docker version 28.5.0 meets minimum requirement (20.10.0)
+Docker Compose 2.40.0 is already installed
+✓ Docker Compose version 2.40.0 meets minimum requirement (2.0.0)
+
+✓ Docker and Docker Compose are already installed with current versions.
+Skipping installation and proceeding to service configuration...
+
+Step: Configuring Docker service...
+Synchronizing state of docker.service with SysV service script with /lib/systemd/systemd-sysv-install.
+Executing: /lib/systemd/systemd-sysv-install enable docker
+
+Docker configuration completed successfully!
+Current versions:
+Docker version 28.5.0, build 887030f
+Docker Compose version v2.40.0
+
+
+Docker installation dispatcher completed successfully!
+✓ Docker installation completed
+
+Step 3: Configuring Docker...
+============================
+Executing Docker configuration dispatcher...
+==========================================
+ Docker Configuration Utility
+==========================================
+Starting universal Docker configuration process...
+
+Supported OS Families:
+  ✓ debian    - Full implementation
+  ⚠ arch     - Stub implementation
+  ⚠ redhat   - Stub implementation
+  ⚠ suse     - Stub implementation
+  ⚠ slackware - Stub implementation
+
+✓ Configuration loaded from interactive_config.cfg
+✓ Detected OS Family: debian
+
+✓ OS-specific script found: configure_docker.debian.sh
+
+Delegating to OS-specific configuration: debian
+Executing: /opt/openproject/scripts/installation_scripts/installation_utilities/debian_install/configure_docker.debian.sh
+
+==========================================
+Debian-specific Docker Configuration
+==========================================
+Starting Debian-specific Docker configuration...
+
+✓ Configuration loaded from interactive_config.cfg
+
+==========================================
+Proxy Configuration Utility
+==========================================
+Rendering Caddyfile.template (domain=srv1035368.hstgr.cloud, relative_root=/StatesmenProjects)
+✓ Generated /opt/openproject/proxy/Caddyfile.template
+
+Updating .env file with configuration and Debian-specific variables...
+✓ Updated hostname: srv1035368.hstgr.cloud
+✓ Updated HTTPS setting: true
+✓ Updated OpenProject tag: stable/16 (written as 16-slim)
+✓ Updated admin password
+✓ Updated storage settings: PGDATA=pgdata, OPDATA=opdata
+✓ .env file updated with configuration and Debian-specific variables
+
+Creating docker-compose.override.yml with Debian optimizations...
+✓ docker-compose.override.yml created/updated with Debian optimizations
+
+Configuring UFW firewall for OpenProject...
+⚠ UFW not installed, skipping firewall configuration
+
+Configuring systemd optimizations for Docker...
+✓ Systemd Docker service optimized for Debian
+
+Configuring APT optimizations for Docker builds...
+✓ APT optimized for Docker builds
+
+
+Debian Docker Configuration Summary:
+===================================
+✓ .env file updated with Debian-specific variables
+✓ docker-compose.override.yml created with Debian optimizations
+✓ UFW firewall configured (if available)
+✓ Systemd Docker service optimized
+✓ APT configured for efficient Docker builds
+
+Debian-specific optimizations include:
+  - BuildKit support enabled
+  - APT cache volumes for faster builds
+  - UFW firewall rules for ports 80/443
+  - Systemd service limits and restart policies
+  - PostgreSQL and Rails environment optimizations
+
+🎉 Debian-specific Docker configuration completed successfully!
+
+✓ OS-specific Docker configuration completed successfully
+
+🎉 Docker configuration completed successfully!
+Ready to proceed with build_stack.sh
+✓ Docker configuration completed
+
+Step 4: Building the stack...
+============================
+Executing Build Stack dispatcher...
+==========================================
+Universal OpenProject Stack Builder
+==========================================
+Starting universal OpenProject stack build process...
+
+Supported OS Families:
+  ✓ debian    - Full implementation
+  ⚠ arch     - Stub implementation
+  ⚠ redhat   - Stub implementation
+  ⚠ suse     - Stub implementation
+  ⚠ slackware - Stub implementation
+
+✓ Configuration loaded from interactive_config.cfg
+✓ Detected OS Family: debian
+
+Configuration Files Status:
+  ✓ .env file exists
+  ✓ docker-compose.yml exists
+  ✓ docker-compose.override.yml exists
+
+Validating prerequisites...
+✓ All prerequisite files found
+
+✓ OS-specific script found: build_stack.debian.sh
+
+Delegating to OS-specific stack builder: debian
+Executing: /opt/openproject/scripts/installation_scripts/installation_utilities/debian_install/build_stack.debian.sh
+
+==========================================
+Debian-specific OpenProject Stack Builder
+==========================================
+Starting Debian-specific OpenProject stack build...
+
+✓ Configuration loaded from interactive_config.cfg
+
+Validating Docker Compose setup...
+✓ Using docker compose plugin: Docker Compose version v2.40.0
+✓ Docker Compose environment validated
+
+Validating configuration files...
+✓ All configuration files validated
+
+Creating necessary directories with Debian-specific permissions...
+✓ Directories created with Debian-appropriate permissions
+
+==========================================
+Proxy Build Utility
+==========================================
+Building proxy image locally...
+#1 [internal] load local bake definitions
+#1 reading from stdin 552B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 281B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/caddy:2
+#3 DONE 0.2s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 DONE 0.0s
+
+#6 [1/3] FROM docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89
+#6 resolve docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89 0.1s done
+#6 CACHED
+
+#5 [internal] load build context
+#5 transferring context: 2.56kB done
+#5 DONE 0.0s
+
+#7 [2/3] COPY ./Caddyfile.template /etc/caddy/Caddyfile.template
+#7 DONE 0.0s
+
+#8 [3/3] RUN sed 's|${APP_HOST}|'"web"'|g' /etc/caddy/Caddyfile.template > /etc/caddy/Caddyfile
+#8 DONE 0.3s
+
+#9 exporting to image
+#9 exporting layers 0.0s done
+#9 writing image sha256:736818d605e13961171843762eacfb133a5486ac250eb6731616e5cda7db1eed done
+#9 naming to docker.io/openproject/proxy done
+#9 DONE 0.0s
+
+#10 resolving provenance for metadata file
+#10 DONE 0.0s
+ openproject/proxy  Built
+✓ Proxy image built
+
+Building custom Docker images with Debian optimizations...
+Found build contexts, building images...
+#1 [internal] load local bake definitions
+#1 reading from stdin 576B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 281B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/caddy:2
+#3 DONE 0.1s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [1/3] FROM docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89
+#5 resolve docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89 0.0s done
+#5 CACHED
+
+#6 [internal] load build context
+#6 transferring context: 40B done
+#6 DONE 0.0s
+
+#7 [2/3] COPY ./Caddyfile.template /etc/caddy/Caddyfile.template
+#7 DONE 0.0s
+
+#8 [3/3] RUN sed 's|${APP_HOST}|'"web"'|g' /etc/caddy/Caddyfile.template > /etc/caddy/Caddyfile
+#8 DONE 0.4s
+
+#9 exporting to image
+#9 exporting layers 0.0s done
+#9 writing image sha256:38b2b8bc35de937df90b56c3fd4c09397e3f6c8880d7805cf8cf277617a562bc done
+#9 naming to docker.io/openproject/proxy done
+#9 DONE 0.0s
+
+#10 resolving provenance for metadata file
+#10 DONE 0.0s
+ openproject/proxy  Built
+✓ Custom images built successfully
+
+Pulling Docker images with Debian optimizations...
+Using compose pull --ignore-buildable to skip locally-buildable services
+ cron Skipped - Image is already being pulled by seeder 
+ proxy Skipped - Image can be built 
+ web Skipped - Image is already being pulled by seeder 
+ worker Skipped - Image is already being pulled by seeder 
+ cache Pulling 
+ seeder Pulling 
+ db Pulling 
+ autoheal Pulling 
+ db Pulled 
+ autoheal Pulled 
+ seeder Pulled 
+ cache Pulled 
+✓ Docker images pulled (ignored buildable services)
+
+Starting OpenProject stack with Debian optimizations...
+ Container openproject-db-1  Running
+ Container openproject-seeder-1  Recreate
+ Container openproject-cache-1  Running
+ Container openproject-seeder-1  Recreated
+ Container openproject-cron-1  Recreate
+ Container openproject-web-1  Recreate
+ Container openproject-worker-1  Recreate
+ Container openproject-web-1  Recreated
+ Container openproject-proxy-1  Recreate
+ Container openproject-proxy-1  Recreated
+
+STEP Regenerate defaults: FAIL (exit 143)

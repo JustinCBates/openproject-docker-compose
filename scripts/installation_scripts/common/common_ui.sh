@@ -70,6 +70,11 @@ fi
 # Export these so sourced scripts can inspect capabilities
 export COLOR_ENABLED COLOR_SUPPORTED COLOR_LEVEL
 
+# Prompt timeout (seconds). Can be overridden by INSTALLER_PROMPT_TIMEOUT env var.
+# When a prompt times out, the helper will accept the provided default.
+PROMPT_TIMEOUT=${INSTALLER_PROMPT_TIMEOUT:-30}
+export PROMPT_TIMEOUT
+
 # Interrupt handling: provide a friendly handler for SIGINT (Ctrl-C).
 # Modules can call enable_interrupt()/disable_interrupt() if they need
 # finer control. By default, enable when running interactively.
@@ -366,7 +371,17 @@ prompt_with_default() {
             printf "%s [%s]: " "$prompt" "$default"
         fi
         push_sigint_trap
-        read input
+        # Use timeout so installer doesn't block forever waiting for input
+        if read -t "$PROMPT_TIMEOUT" input; then
+            :
+        else
+            # timed out - act as if user pressed Enter (accept default)
+            input=""
+            if [ -t 1 ]; then
+                printf "\n" >&2
+                printf "%s\n" "(timed out after ${PROMPT_TIMEOUT}s, using default: ${default})" >&2
+            fi
+        fi
         pop_sigint_trap
         if [ -z "$input" ]; then
             input="$default"
@@ -393,7 +408,15 @@ validate_yn() {
                 printf "%s (y/n) [%s]: " "$prompt" "$default"
             fi
             push_sigint_trap
-            read yn
+            if read -t "$PROMPT_TIMEOUT" yn; then
+                :
+            else
+                yn=""
+                if [ -t 1 ]; then
+                    printf "\n" >&2
+                    printf "%s\n" "(prompt timed out after ${PROMPT_TIMEOUT}s, using default: ${default})" >&2
+                fi
+            fi
             pop_sigint_trap
             if [ -z "$yn" ]; then
                 yn="$default"
@@ -436,7 +459,15 @@ validate_tf() {
                 printf "%s (true/false) [%s]: " "$prompt" "$default"
             fi
             push_sigint_trap
-            read tf
+            if read -t "$PROMPT_TIMEOUT" tf; then
+                :
+            else
+                tf=""
+                if [ -t 1 ]; then
+                    printf "\n" >&2
+                    printf "%s\n" "(prompt timed out after ${PROMPT_TIMEOUT}s, using default: ${default})" >&2
+                fi
+            fi
             pop_sigint_trap
             if [ -z "$tf" ]; then
                 tf="$default"
@@ -531,7 +562,15 @@ anykey() {
         fi
         # Wait for any single keypress silently while SIGINT handler is active
         push_sigint_trap
-        IFS= read -rsn1 _ < "$tty"
+        # Use timeout to avoid hanging indefinitely
+        if IFS= read -rsn1 -t "$PROMPT_TIMEOUT" _ < "$tty"; then
+            :
+        else
+            # timed out
+            if [ -t 1 ]; then
+                printf "\n" >&2
+            fi
+        fi
         pop_sigint_trap
         # Echo a newline so the terminal looks normal
         printf "\n" > "$tty"

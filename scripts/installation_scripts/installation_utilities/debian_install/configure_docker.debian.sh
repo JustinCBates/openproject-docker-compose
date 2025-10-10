@@ -60,7 +60,7 @@ update_env_file() {
     # Update .env file with values from interactive_config.cfg
     if [ -n "$OPENPROJECT_HOST_NAME" ]; then
         if grep -q "^OPENPROJECT_HOST__NAME=" "$env_file"; then
-            sed -i "s/^OPENPROJECT_HOST__NAME=.*/OPENPROJECT_HOST__NAME=$OPENPROJECT_HOST_NAME/" "$env_file"
+            sed -i "s|^OPENPROJECT_HOST__NAME=.*|OPENPROJECT_HOST__NAME=$OPENPROJECT_HOST_NAME|" "$env_file"
         else
             echo "OPENPROJECT_HOST__NAME=$OPENPROJECT_HOST_NAME" >> "$env_file"
         fi
@@ -79,7 +79,7 @@ update_env_file() {
     
     if [ -n "$OPENPROJECT_HTTPS" ]; then
         if grep -q "^OPENPROJECT_HTTPS=" "$env_file"; then
-            sed -i "s/^OPENPROJECT_HTTPS=.*/OPENPROJECT_HTTPS=$OPENPROJECT_HTTPS/" "$env_file"
+            sed -i "s|^OPENPROJECT_HTTPS=.*|OPENPROJECT_HTTPS=$OPENPROJECT_HTTPS|" "$env_file"
         else
             echo "OPENPROJECT_HTTPS=$OPENPROJECT_HTTPS" >> "$env_file"
         fi
@@ -87,17 +87,27 @@ update_env_file() {
     fi
     
     if [ -n "$OPENPROJECT_TAG" ]; then
-        if grep -q "^TAG=" "$env_file"; then
-            sed -i "s/^TAG=.*/TAG=$OPENPROJECT_TAG/" "$env_file"
+        # If OPENPROJECT_TAG uses the 'channel/version' form (e.g. 'stable/16'),
+        # map to a canonical Docker tag using the version component and '-slim'
+        # (e.g. '16-slim'). Otherwise sanitize by replacing '/' with '-'.
+        if printf '%s' "$OPENPROJECT_TAG" | grep -q '/'; then
+            version_part="${OPENPROJECT_TAG##*/}"
+            sanitized_tag="${version_part}-slim"
         else
-            echo "TAG=$OPENPROJECT_TAG" >> "$env_file"
+            sanitized_tag="${OPENPROJECT_TAG//\//-}"
         fi
-        echo "✓ Updated OpenProject tag: $OPENPROJECT_TAG"
+
+        if grep -q "^TAG=" "$env_file"; then
+            sed -i "s|^TAG=.*|TAG=$sanitized_tag|" "$env_file"
+        else
+            echo "TAG=$sanitized_tag" >> "$env_file"
+        fi
+        echo "✓ Updated OpenProject tag: $OPENPROJECT_TAG (written as $sanitized_tag)"
     fi
     
     if [ -n "$DEFAULT_DBADMIN_PASSWORD" ]; then
         if grep -q "^OPENPROJECT_ADMIN_PASSWORD=" "$env_file"; then
-            sed -i "s/^OPENPROJECT_ADMIN_PASSWORD=.*/OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_DBADMIN_PASSWORD/" "$env_file"
+            sed -i "s|^OPENPROJECT_ADMIN_PASSWORD=.*|OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_DBADMIN_PASSWORD|" "$env_file"
         else
             echo "OPENPROJECT_ADMIN_PASSWORD=$DEFAULT_DBADMIN_PASSWORD" >> "$env_file"
         fi

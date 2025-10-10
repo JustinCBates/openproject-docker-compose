@@ -13,9 +13,33 @@ EOF
     if [ -n "${host_name:-}" ]; then
         save_config "OPENPROJECT_HOST_NAME" "$host_name"
     fi
+    # Determine default for HTTPS prompt:
+    # - If user already has OPENPROJECT_HTTPS in their persistent .cfg, prefer that.
+    # - Else if environment is localdev, default to false to ease local development.
+    # - Otherwise fall back to the current effective value.
+    cfg_https=$(get_cfg "OPENPROJECT_HTTPS" || true)
+    if [ -n "$cfg_https" ]; then
+        default_https="$cfg_https"
+    else
+        # Prefer the value from the persistent .cfg (if present) when
+        # deciding whether to default HTTPS to false for localdev. This avoids
+        # exported generated defaults (from .cfg.defaults) from overriding a
+        # user's explicit environment selection in the persistent config.
+        cfg_env_type=$(get_cfg "ENVIRONMENT_TYPE" || true)
+        if [ -n "$cfg_env_type" ]; then
+            env_type="$cfg_env_type"
+        else
+            env_type=$(get_effective "ENVIRONMENT_TYPE" || true)
+        fi
+        if [ "$env_type" = "localdev" ]; then
+            default_https="false"
+        else
+            default_https="$current_https"
+        fi
+    fi
     # Use validate_tf so inputs like 't'/'f' are normalized to literal 'true'/'false'
     # and exported into the caller variable 'use_https'.
-    validate_tf "Enable HTTPS?" "$current_https" use_https
+    validate_tf "Enable HTTPS?" "$default_https" use_https
     # Persist HTTPS selection immediately (save_config normalizes booleans)
     if [ -n "${use_https:-}" ]; then
         save_config "OPENPROJECT_HTTPS" "$use_https"

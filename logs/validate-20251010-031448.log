@@ -1,0 +1,1113 @@
+Validation started at 2025-10-10T03:14:48+00:00
+
+--- STEP: Syntax check (timeout 60s) ---
+STEP Syntax check: PASS
+
+--- STEP: Regenerate defaults (timeout 20s) ---
+
+
+
+######################################################################
+OpenProject Interactive Deployment Script
+######################################################################
+[2m[38;5;136m    This script will help you deploy OpenProject using Docker Compose.[0m
+[2m[38;5;136m    You can press Enter to accept default values shown in brackets.[0m
+______________________________________________________________________
+
+
+==================================================
+Current configuration preview:
+==================================================
+[2m[38;5;136mPreview of the existing interactive_config.cfg. [0m
+[2m[38;5;136mConfirm or update values in the following prompts.[0m
+__________________________________________________
+
+Configuration comparison:
+
+Variable                     .cfg                                 .cfg.defaults                       
+----------------------------------------------------------------------------------------------------
+  OPENPROJECT_TAG           "stable/16"                         "stable/16"                        
+  GIT_USERNAME              "Justin Bates"                      "Justin Bates"                     
+  GIT_EMAIL                 "justincbates@proton.me"            "justincbates@proton.me"           
+* ENVIRONMENT_TYPE          "production"                        "production"                       
+* OS_FAMILY                 "debian"                            "debian"                           
+* OPENPROJECT_HOST_NAME     "srv1035368.hstgr.cloud"            "srv1035368.hstgr.cloud"           
+* OPENPROJECT_HTTPS         "true"                              "true"                             
+* PROXY_HTTPS_REDIRECT      "true"                              "true"                             
+* DOMAIN_NAME               "srv1035368.hstgr.cloud"            "srv1035368.hstgr.cloud"           
+* DEFAULT_DBADMIN_PASSWORD  "admin123"                          "admin123"                         
+* DATABASE_STORAGE_TYPE     "docker-volumes"                    "docker-volumes"                   
+* NAMESPACE                                                                                          
+
+Config appears valid: required keys present.
+
+Would you like to replace current .cfg values with the defaults from .cfg.defaults? (y/n) [n]: Would you like to modify the configuration interactively? (y/n) [n]: 
+============================================================================================
+Configuration saved to: /opt/openproject/scripts/installation_scripts/interactive_config.cfg
+============================================================================================
+
+To deploy OpenProject, run:
+  ./scripts/installation_scripts/deploy.sh
+
+Or use the utility scripts manually:
+  1. ./scripts/installation_scripts/installation_utilities/configure_docker.sh
+  2. ./scripts/installation_scripts/installation_utilities/build_stack.sh
+
+(Skipping persistence of defaults into /opt/openproject/scripts/installation_scripts/interactive_config.cfg; user did not accept applying defaults)
+
+Final configuration:
+---------------------------------------------
+  OPENPROJECT_TAG           "stable/16"                        
+  GIT_USERNAME              "Justin Bates"                     
+  GIT_EMAIL                 "justincbates@proton.me"           
+* ENVIRONMENT_TYPE          "production"                       
+* OS_FAMILY                 "debian"                           
+* OPENPROJECT_HOST_NAME     "srv1035368.hstgr.cloud"           
+* OPENPROJECT_HTTPS         "true"                             
+* PROXY_HTTPS_REDIRECT      "true"                             
+* DOMAIN_NAME               "srv1035368.hstgr.cloud"           
+* DEFAULT_DBADMIN_PASSWORD  "admin123"                         
+* DATABASE_STORAGE_TYPE     "docker-volumes"                   
+* NAMESPACE                                                     
+
+✓ Configuration appears valid: required keys present.
+Would you like to run the deployment now? (y/n) [y]: 
+Starting OpenProject deployment...
+==================================
+==========================================
+OpenProject Deployment Script
+==========================================
+
+Loading configuration from /opt/openproject/scripts/installation_scripts/interactive_config.cfg...
+Starting deployment process...
+
+Step 1: Configuring Git User...
+===============================
+==========================================
+Git User Configuration Utility
+==========================================
+Loading configuration from /opt/openproject/scripts/installation_scripts/installation_utilities/../interactive_config.cfg...
+Configuring git user settings...
+Setting git username to: Justin Bates
+✓ Git username configured
+Setting git email to: justincbates@proton.me
+✓ Git email configured
+
+Current git configuration:
+-------------------------
+Username: Justin Bates
+Email:    justincbates@proton.me
+
+✓ Git user configuration completed
+
+Step 2: Installing Docker...
+============================
+Executing Docker installation dispatcher...
+==========================================
+Docker Installation Dispatcher
+==========================================
+Loading configuration from /opt/openproject/scripts/installation_scripts/installation_utilities/../interactive_config.cfg...
+Detected OS family: debian
+Found Docker installation script for debian
+Executing: /opt/openproject/scripts/installation_scripts/installation_utilities/debian_install/install_docker.debian.sh
+
+==========================================
+Docker Installation - Debian Family
+==========================================
+Checking Docker installation status...
+
+Docker 28.5.0 is already installed
+✓ Docker version 28.5.0 meets minimum requirement (20.10.0)
+Docker Compose 2.40.0 is already installed
+✓ Docker Compose version 2.40.0 meets minimum requirement (2.0.0)
+
+✓ Docker and Docker Compose are already installed with current versions.
+Skipping installation and proceeding to service configuration...
+
+Step: Configuring Docker service...
+Synchronizing state of docker.service with SysV service script with /lib/systemd/systemd-sysv-install.
+Executing: /lib/systemd/systemd-sysv-install enable docker
+
+Docker configuration completed successfully!
+Current versions:
+Docker version 28.5.0, build 887030f
+Docker Compose version v2.40.0
+
+
+Docker installation dispatcher completed successfully!
+✓ Docker installation completed
+
+Step 3: Configuring Docker...
+============================
+Executing Docker configuration dispatcher...
+==========================================
+ Docker Configuration Utility
+==========================================
+Starting universal Docker configuration process...
+
+Supported OS Families:
+  ✓ debian    - Full implementation
+  ⚠ arch     - Stub implementation
+  ⚠ redhat   - Stub implementation
+  ⚠ suse     - Stub implementation
+  ⚠ slackware - Stub implementation
+
+✓ Configuration loaded from interactive_config.cfg
+✓ Detected OS Family: debian
+
+✓ OS-specific script found: configure_docker.debian.sh
+
+Delegating to OS-specific configuration: debian
+Executing: /opt/openproject/scripts/installation_scripts/installation_utilities/debian_install/configure_docker.debian.sh
+
+==========================================
+Debian-specific Docker Configuration
+==========================================
+Starting Debian-specific Docker configuration...
+
+✓ Configuration loaded from interactive_config.cfg
+
+==========================================
+Proxy Configuration Utility
+==========================================
+Rendering Caddyfile.template (domain=srv1035368.hstgr.cloud, relative_root=/StatesmenProjects)
+✓ Generated /opt/openproject/proxy/Caddyfile.template
+
+Updating .env file with configuration and Debian-specific variables...
+✓ Updated hostname: srv1035368.hstgr.cloud
+✓ Updated HTTPS setting: true
+✓ Updated OpenProject tag: stable/16 (written as 16-slim)
+✓ Updated admin password
+✓ Updated storage settings: PGDATA=pgdata, OPDATA=opdata
+✓ .env file updated with configuration and Debian-specific variables
+
+Creating docker-compose.override.yml with Debian optimizations...
+✓ docker-compose.override.yml created/updated with Debian optimizations
+
+Configuring UFW firewall for OpenProject...
+⚠ UFW not installed, skipping firewall configuration
+
+Configuring systemd optimizations for Docker...
+✓ Systemd Docker service optimized for Debian
+
+Configuring APT optimizations for Docker builds...
+✓ APT optimized for Docker builds
+
+
+Debian Docker Configuration Summary:
+===================================
+✓ .env file updated with Debian-specific variables
+✓ docker-compose.override.yml created with Debian optimizations
+✓ UFW firewall configured (if available)
+✓ Systemd Docker service optimized
+✓ APT configured for efficient Docker builds
+
+Debian-specific optimizations include:
+  - BuildKit support enabled
+  - APT cache volumes for faster builds
+  - UFW firewall rules for ports 80/443
+  - Systemd service limits and restart policies
+  - PostgreSQL and Rails environment optimizations
+
+🎉 Debian-specific Docker configuration completed successfully!
+
+✓ OS-specific Docker configuration completed successfully
+
+🎉 Docker configuration completed successfully!
+Ready to proceed with build_stack.sh
+✓ Docker configuration completed
+
+Step 4: Building the stack...
+============================
+Executing Build Stack dispatcher...
+==========================================
+Universal OpenProject Stack Builder
+==========================================
+Starting universal OpenProject stack build process...
+
+Supported OS Families:
+  ✓ debian    - Full implementation
+  ⚠ arch     - Stub implementation
+  ⚠ redhat   - Stub implementation
+  ⚠ suse     - Stub implementation
+  ⚠ slackware - Stub implementation
+
+✓ Configuration loaded from interactive_config.cfg
+✓ Detected OS Family: debian
+
+Configuration Files Status:
+  ✓ .env file exists
+  ✓ docker-compose.yml exists
+  ✓ docker-compose.override.yml exists
+
+Validating prerequisites...
+✓ All prerequisite files found
+
+✓ OS-specific script found: build_stack.debian.sh
+
+Delegating to OS-specific stack builder: debian
+Executing: /opt/openproject/scripts/installation_scripts/installation_utilities/debian_install/build_stack.debian.sh
+
+==========================================
+Debian-specific OpenProject Stack Builder
+==========================================
+Starting Debian-specific OpenProject stack build...
+
+✓ Configuration loaded from interactive_config.cfg
+
+Validating Docker Compose setup...
+✓ Using docker compose plugin: Docker Compose version v2.40.0
+✓ Docker Compose environment validated
+
+Validating configuration files...
+✓ All configuration files validated
+
+Creating necessary directories with Debian-specific permissions...
+✓ Directories created with Debian-appropriate permissions
+
+==========================================
+Proxy Build Utility
+==========================================
+Building proxy image locally...
+#1 [internal] load local bake definitions
+#1 reading from stdin 552B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 281B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/caddy:2
+#3 DONE 0.2s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.87kB done
+#5 DONE 0.0s
+
+#6 [1/3] FROM docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89
+#6 resolve docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89 done
+#6 CACHED
+
+#7 [2/3] COPY ./Caddyfile.template /etc/caddy/Caddyfile.template
+#7 DONE 0.0s
+
+#8 [3/3] RUN sed 's|${APP_HOST}|'"web"'|g' /etc/caddy/Caddyfile.template > /etc/caddy/Caddyfile
+#8 DONE 0.2s
+
+#9 exporting to image
+#9 exporting layers 0.0s done
+#9 writing image sha256:00f806c59268bc4350e5793e86412c4cd16b96a9bfb514df42aeb99489a6d07a done
+#9 naming to docker.io/openproject/proxy done
+#9 DONE 0.0s
+
+#10 resolving provenance for metadata file
+#10 DONE 0.0s
+ openproject/proxy  Built
+✓ Proxy image built
+
+Building custom Docker images with Debian optimizations...
+Found build contexts, building images...
+#1 [internal] load local bake definitions
+#1 reading from stdin 576B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 281B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/caddy:2
+#3 DONE 0.1s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [1/3] FROM docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89
+#5 resolve docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89 done
+#5 CACHED
+
+#6 [internal] load build context
+#6 transferring context: 40B done
+#6 DONE 0.0s
+
+#7 [2/3] COPY ./Caddyfile.template /etc/caddy/Caddyfile.template
+#7 DONE 0.0s
+
+#8 [3/3] RUN sed 's|${APP_HOST}|'"web"'|g' /etc/caddy/Caddyfile.template > /etc/caddy/Caddyfile
+#8 DONE 0.2s
+
+#9 exporting to image
+#9 exporting layers 0.0s done
+#9 writing image sha256:54d113a4e3702e507d0d2e0bd5300001e806c3adf7cb749b5a9ef1c5a78f0fbf done
+#9 naming to docker.io/openproject/proxy done
+#9 DONE 0.0s
+
+#10 resolving provenance for metadata file
+#10 DONE 0.0s
+ openproject/proxy  Built
+✓ Custom images built successfully
+
+Pulling Docker images with Debian optimizations...
+Using compose pull --ignore-buildable to skip locally-buildable services
+ cron Skipped - Image is already being pulled by web 
+ seeder Skipped - Image is already being pulled by web 
+ proxy Skipped - Image can be built 
+ worker Skipped - Image is already being pulled by web 
+ db Pulling 
+ web Pulling 
+ cache Pulling 
+ autoheal Pulling 
+ db Pulled 
+ web Pulled 
+ autoheal Pulled 
+ cache Pulled 
+✓ Docker images pulled (ignored buildable services)
+
+Starting OpenProject stack with Debian optimizations...
+ Container openproject-db-1  Running
+ Container openproject-cache-1  Running
+ Container openproject-worker-1  Stopping
+ Container openproject-cron-1  Stopping
+ Container openproject-proxy-1  Recreate
+ Container openproject-cron-1  Stopped
+ Container openproject-cron-1  Removing
+ Container openproject-worker-1  Stopped
+ Container openproject-worker-1  Removing
+ Container openproject-proxy-1  Recreated
+ Container openproject-cron-1  Removed
+ Container openproject-worker-1  Removed
+ Container openproject-autoheal-1  Starting
+ Container openproject-seeder-1  Starting
+ Container openproject-seeder-1  Started
+ Container openproject-web-1  Starting
+ Container e640576f9253_openproject-worker-1  Starting
+ Container a1adb10fbb81_openproject-cron-1  Starting
+ Container openproject-autoheal-1  Started
+ Container a1adb10fbb81_openproject-cron-1  Started
+ Container e640576f9253_openproject-worker-1  Started
+ Container openproject-web-1  Started
+ Container openproject-proxy-1  Starting
+ Container openproject-proxy-1  Started
+✓ OpenProject stack started
+
+Checking OpenProject stack health...
+Container status:
+NAME                                IMAGE                             COMMAND                  SERVICE    CREATED              STATUS                                  PORTS
+a1adb10fbb81_openproject-cron-1     openproject/openproject:16-slim   "./docker/prod/entry…"   cron       About a minute ago   Up 10 seconds                           8080/tcp
+e640576f9253_openproject-worker-1   openproject/openproject:16-slim   "./docker/prod/entry…"   worker     About a minute ago   Up 10 seconds                           8080/tcp
+openproject-autoheal-1              willfarrell/autoheal:1.2.0        "/docker-entrypoint …"   autoheal   37 hours ago         Up 11 seconds (healthy)                 
+openproject-cache-1                 memcached                         "docker-entrypoint.s…"   cache      37 hours ago         Up 13 seconds                           11211/tcp
+openproject-db-1                    postgres:13                       "docker-entrypoint.s…"   db         32 hours ago         Up 13 seconds                           5432/tcp
+openproject-proxy-1                 openproject/proxy                 "caddy run --config …"   proxy      11 seconds ago       Restarting (1) Less than a second ago   
+openproject-seeder-1                openproject/openproject:16-slim   "./docker/prod/entry…"   seeder     About a minute ago   Up 11 seconds                           8080/tcp
+openproject-web-1                   openproject/openproject:16-slim   "./docker/prod/entry…"   web        About a minute ago   Up 10 seconds (health: starting)        8080/tcp
+⚠ Some containers have issues
+Checking logs for problematic containers...
+autoheal-1  | 2025-10-08T14:05:37.471899410Z Monitoring containers for unhealthy status in 600 second(s)
+seeder-1    | 2025-10-10T03:14:53.975092267Z Executing database migrations...
+autoheal-1  | 2025-10-08T15:55:59.751956562Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1  | 2025-10-08T19:41:57.677375581Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1  | 2025-10-08T20:04:29.911738002Z Monitoring containers for unhealthy status in 600 second(s)
+db-1        | 2025-10-10T03:11:06.469076737Z 2025-10-10 03:11:06.468 UTC [1] LOG:  database system is ready to accept connections
+autoheal-1  | 2025-10-08T20:32:24.758047286Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1  | 2025-10-08T20:54:16.468216733Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1  | 2025-10-08T20:56:37.379191701Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1  | 2025-10-09T03:23:42.742776545Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1  | 2025-10-09T03:35:43.019835028Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1  | 2025-10-10T03:14:53.969090686Z Monitoring containers for unhealthy status in 600 second(s)
+proxy-1     | 2025-10-10T03:14:58.496681404Z {"level":"warn","ts":1760066098.4966495,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:11:13.547696226Z 2025-10-10 03:11:13.539 UTC [1] LOG:  received fast shutdown request
+db-1        | 2025-10-10T03:11:13.547719081Z 2025-10-10 03:11:13.540 UTC [1] LOG:  aborting any active transactions
+db-1        | 2025-10-10T03:11:13.547723027Z 2025-10-10 03:11:13.542 UTC [1] LOG:  background worker "logical replication launcher" (PID 32) exited with exit code 1
+db-1        | 2025-10-10T03:11:13.547726562Z 2025-10-10 03:11:13.545 UTC [27] LOG:  shutting down
+db-1        | 2025-10-10T03:11:13.562795389Z 2025-10-10 03:11:13.560 UTC [1] LOG:  database system is shut down
+db-1        | 2025-10-10T03:11:25.344146439Z 
+db-1        | 2025-10-10T03:11:25.344164436Z PostgreSQL Database directory appears to contain a database; Skipping initialization
+db-1        | 2025-10-10T03:11:25.344168562Z 
+db-1        | 2025-10-10T03:11:25.373704395Z 2025-10-10 03:11:25.373 UTC [1] LOG:  starting PostgreSQL 13.22 (Debian 13.22-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+db-1        | 2025-10-10T03:11:25.373822562Z 2025-10-10 03:11:25.373 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+db-1        | 2025-10-10T03:11:25.376722725Z 2025-10-10 03:11:25.376 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+db-1        | 2025-10-10T03:11:25.382342361Z 2025-10-10 03:11:25.382 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db-1        | 2025-10-10T03:11:25.385793540Z 2025-10-10 03:11:25.385 UTC [26] LOG:  database system was shut down at 2025-10-10 03:11:13 UTC
+db-1        | 2025-10-10T03:11:25.393854921Z 2025-10-10 03:11:25.393 UTC [1] LOG:  database system is ready to accept connections
+db-1        | 2025-10-10T03:12:49.316786617Z 2025-10-10 03:12:49.306 UTC [1] LOG:  received fast shutdown request
+proxy-1     | 2025-10-10T03:14:58.496728955Z {"level":"warn","ts":1760066098.496706,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1     | 2025-10-10T03:14:58.496910718Z {"level":"info","ts":1760066098.4968781,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+db-1        | 2025-10-10T03:12:49.316803872Z 2025-10-10 03:12:49.306 UTC [1] LOG:  aborting any active transactions
+proxy-1     | 2025-10-10T03:14:58.496953713Z Error: adapting config using caddyfile: ambiguous site definition: srv1035368.hstgr.cloud
+db-1        | 2025-10-10T03:12:49.316807818Z 2025-10-10 03:12:49.306 UTC [40] FATAL:  terminating connection due to administrator command
+db-1        | 2025-10-10T03:12:49.316811434Z 2025-10-10 03:12:49.307 UTC [35] FATAL:  terminating connection due to administrator command
+proxy-1     | 2025-10-10T03:15:00.538286219Z {"level":"info","ts":1760066100.5381403,"msg":"maxprocs: Leaving GOMAXPROCS=2: CPU quota undefined"}
+proxy-1     | 2025-10-10T03:15:00.543042761Z {"level":"info","ts":1760066100.542962,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":7505178624,"previous":9223372036854775807}
+db-1        | 2025-10-10T03:12:49.316814508Z 2025-10-10 03:12:49.311 UTC [39] FATAL:  terminating connection due to administrator command
+proxy-1     | 2025-10-10T03:15:00.543091715Z {"level":"info","ts":1760066100.5430264,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+db-1        | 2025-10-10T03:12:49.316817633Z 2025-10-10 03:12:49.311 UTC [42] FATAL:  terminating connection due to administrator command
+db-1        | 2025-10-10T03:12:49.316820768Z 2025-10-10 03:12:49.313 UTC [1] LOG:  background worker "logical replication launcher" (PID 32) exited with exit code 1
+proxy-1     | 2025-10-10T03:15:00.543319238Z {"level":"warn","ts":1760066100.5432649,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1     | 2025-10-10T03:15:00.543325817Z {"level":"warn","ts":1760066100.543275,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:12:49.316823962Z 2025-10-10 03:12:49.313 UTC [37] FATAL:  terminating connection due to administrator command
+proxy-1     | 2025-10-10T03:15:00.543760449Z {"level":"warn","ts":1760066100.5436916,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:12:49.316827017Z 2025-10-10 03:12:49.315 UTC [36] FATAL:  terminating connection due to administrator command
+proxy-1     | 2025-10-10T03:15:00.543769302Z {"level":"warn","ts":1760066100.5437028,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:12:49.317028599Z 2025-10-10 03:12:49.316 UTC [38] FATAL:  terminating connection due to administrator command
+proxy-1     | 2025-10-10T03:15:00.543826949Z {"level":"warn","ts":1760066100.5437853,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:12:49.323628057Z 2025-10-10 03:12:49.323 UTC [27] LOG:  shutting down
+proxy-1     | 2025-10-10T03:15:00.543830975Z {"level":"warn","ts":1760066100.5437958,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:12:49.337447974Z 2025-10-10 03:12:49.337 UTC [1] LOG:  database system is shut down
+proxy-1     | 2025-10-10T03:15:00.543903414Z {"level":"warn","ts":1760066100.5438664,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:13:01.165519934Z 
+proxy-1     | 2025-10-10T03:15:00.543907700Z {"level":"warn","ts":1760066100.5438747,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:13:01.165537951Z PostgreSQL Database directory appears to contain a database; Skipping initialization
+proxy-1     | 2025-10-10T03:15:00.543985678Z {"level":"warn","ts":1760066100.543947,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:13:01.165542047Z 
+proxy-1     | 2025-10-10T03:15:00.543990075Z {"level":"warn","ts":1760066100.5439544,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:13:01.190556380Z 2025-10-10 03:13:01.190 UTC [1] LOG:  starting PostgreSQL 13.22 (Debian 13.22-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+proxy-1     | 2025-10-10T03:15:00.544057526Z {"level":"warn","ts":1760066100.5440233,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:13:01.195822056Z 2025-10-10 03:13:01.195 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+proxy-1     | 2025-10-10T03:15:00.544061692Z {"level":"warn","ts":1760066100.5440307,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:13:01.203399932Z 2025-10-10 03:13:01.199 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+proxy-1     | 2025-10-10T03:15:00.544134892Z {"level":"warn","ts":1760066100.5440974,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:13:01.203411319Z 2025-10-10 03:13:01.203 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+proxy-1     | 2025-10-10T03:15:00.544147711Z {"level":"warn","ts":1760066100.544105,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:13:01.209331076Z 2025-10-10 03:13:01.208 UTC [27] LOG:  database system was shut down at 2025-10-10 03:12:49 UTC
+proxy-1     | 2025-10-10T03:15:00.544208453Z {"level":"warn","ts":1760066100.544172,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:13:01.215088781Z 2025-10-10 03:13:01.213 UTC [1] LOG:  database system is ready to accept connections
+proxy-1     | 2025-10-10T03:15:00.544212198Z {"level":"warn","ts":1760066100.5441792,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:14:49.646141673Z 2025-10-10 03:14:49.645 UTC [1] LOG:  received fast shutdown request
+proxy-1     | 2025-10-10T03:15:00.544291567Z {"level":"warn","ts":1760066100.5442448,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:14:49.650150022Z 2025-10-10 03:14:49.646 UTC [1] LOG:  aborting any active transactions
+proxy-1     | 2025-10-10T03:15:00.544296194Z {"level":"warn","ts":1760066100.544252,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:14:49.650210263Z 2025-10-10 03:14:49.649 UTC [1] LOG:  background worker "logical replication launcher" (PID 33) exited with exit code 1
+proxy-1     | 2025-10-10T03:15:00.544376334Z {"level":"info","ts":1760066100.5443254,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+db-1        | 2025-10-10T03:14:49.650214359Z 2025-10-10 03:14:49.649 UTC [28] LOG:  shutting down
+proxy-1     | 2025-10-10T03:15:00.544448172Z Error: adapting config using caddyfile: ambiguous site definition: srv1035368.hstgr.cloud
+db-1        | 2025-10-10T03:14:49.659572511Z 2025-10-10 03:14:49.659 UTC [1] LOG:  database system is shut down
+proxy-1     | 2025-10-10T03:15:04.195110656Z {"level":"info","ts":1760066104.1950016,"msg":"maxprocs: Leaving GOMAXPROCS=2: CPU quota undefined"}
+db-1        | 2025-10-10T03:14:51.808022360Z 
+proxy-1     | 2025-10-10T03:15:04.196486893Z {"level":"info","ts":1760066104.1964118,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":7505178624,"previous":9223372036854775807}
+db-1        | 2025-10-10T03:14:51.808037793Z PostgreSQL Database directory appears to contain a database; Skipping initialization
+proxy-1     | 2025-10-10T03:15:04.197662487Z {"level":"info","ts":1760066104.1976032,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+db-1        | 2025-10-10T03:14:51.808041839Z 
+proxy-1     | 2025-10-10T03:15:04.197966915Z {"level":"warn","ts":1760066104.19792,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:14:51.825106311Z 2025-10-10 03:14:51.825 UTC [1] LOG:  starting PostgreSQL 13.22 (Debian 13.22-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+proxy-1     | 2025-10-10T03:15:04.197973245Z {"level":"warn","ts":1760066104.197931,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:14:51.825300403Z 2025-10-10 03:14:51.825 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+proxy-1     | 2025-10-10T03:15:04.198406445Z {"level":"warn","ts":1760066104.1983573,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:14:51.825306772Z 2025-10-10 03:14:51.825 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+proxy-1     | 2025-10-10T03:15:04.198412874Z {"level":"warn","ts":1760066104.1983678,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:14:51.826351752Z 2025-10-10 03:14:51.826 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+proxy-1     | 2025-10-10T03:15:04.199753087Z {"level":"warn","ts":1760066104.199609,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:14:51.829615133Z 2025-10-10 03:14:51.829 UTC [26] LOG:  database system was shut down at 2025-10-10 03:14:49 UTC
+proxy-1     | 2025-10-10T03:15:04.199762291Z {"level":"warn","ts":1760066104.1996202,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+db-1        | 2025-10-10T03:14:51.834973908Z 2025-10-10 03:14:51.834 UTC [1] LOG:  database system is ready to accept connections
+proxy-1     | 2025-10-10T03:15:04.199766527Z {"level":"warn","ts":1760066104.1996915,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1     | 2025-10-10T03:15:04.199777724Z {"level":"warn","ts":1760066104.1996956,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1     | 2025-10-10T03:15:04.199857924Z {"level":"warn","ts":1760066104.1998143,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+a1adb10fbb81_openproject-cron-1  | 2025-10-10T03:14:54.231907991Z [cron] IMAP email checking is disabled
+proxy-1                          | 2025-10-10T03:15:04.199862501Z {"level":"warn","ts":1760066104.1998227,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:04.199971605Z {"level":"warn","ts":1760066104.1999266,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:04.199977373Z {"level":"warn","ts":1760066104.199934,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:04.200092146Z {"level":"warn","ts":1760066104.2000465,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:04.200097464Z {"level":"warn","ts":1760066104.2000546,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:04.200175551Z {"level":"warn","ts":1760066104.2001371,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:04.200209101Z {"level":"warn","ts":1760066104.2001638,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:04.200292527Z {"level":"warn","ts":1760066104.2002535,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:04.200296714Z {"level":"warn","ts":1760066104.2002606,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:04.200425837Z {"level":"info","ts":1760066104.2003863,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+a1adb10fbb81_openproject-cron-1  | 2025-10-10T03:14:54.231931366Z [cron] Rescheduling in 600s
+proxy-1                          | 2025-10-10T03:15:04.200429663Z Error: adapting config using caddyfile: ambiguous site definition: srv1035368.hstgr.cloud
+⚠ Stack health check had warnings (may be normal for initial startup)
+
+Checking UFW firewall status...
+✓ UFW not installed (firewall management not needed)
+
+
+Debian OpenProject Deployment Summary:
+=====================================
+OpenProject URL: https://srv1035368.hstgr.cloud
+Environment: production
+OS: Debian/Ubuntu with optimizations
+Admin Login: admin / admin123 (⚠ CHANGE THIS PASSWORD!)
+
+Debian-specific features enabled:
+  ✓ BuildKit for optimized builds
+  ✓ APT cache volumes for faster rebuilds
+  ✓ UFW firewall integration
+  ✓ Systemd service optimizations
+  ✓ Debian-specific environment variables
+
+Useful commands:
+  View logs:       docker compose logs -f
+  Stop stack:      docker compose down
+  Restart:         docker compose restart
+  Update:          docker compose pull && docker compose up -d
+  Check UFW:       sudo ufw status
+  System logs:     sudo journalctl -u docker
+
+Current stack status:
+NAME                                IMAGE                             COMMAND                  SERVICE    CREATED          STATUS                                  PORTS
+a1adb10fbb81_openproject-cron-1     openproject/openproject:16-slim   "./docker/prod/entry…"   cron       2 minutes ago    Up 11 seconds                           8080/tcp
+e640576f9253_openproject-worker-1   openproject/openproject:16-slim   "./docker/prod/entry…"   worker     2 minutes ago    Up 11 seconds                           8080/tcp
+openproject-autoheal-1              willfarrell/autoheal:1.2.0        "/docker-entrypoint …"   autoheal   37 hours ago     Up 11 seconds (healthy)                 
+openproject-cache-1                 memcached                         "docker-entrypoint.s…"   cache      37 hours ago     Up 13 seconds                           11211/tcp
+openproject-db-1                    postgres:13                       "docker-entrypoint.s…"   db         32 hours ago     Up 13 seconds                           5432/tcp
+openproject-proxy-1                 openproject/proxy                 "caddy run --config …"   proxy      12 seconds ago   Restarting (1) Less than a second ago   
+openproject-seeder-1                openproject/openproject:16-slim   "./docker/prod/entry…"   seeder     2 minutes ago    Up 11 seconds                           8080/tcp
+openproject-web-1                   openproject/openproject:16-slim   "./docker/prod/entry…"   web        2 minutes ago    Up 11 seconds (health: starting)        8080/tcp
+
+System information:
+Memory usage: 3.5Gi/7.8Gi
+Disk usage: 10% used
+
+🎉 Debian-specific OpenProject stack deployment completed!
+
+✓ OS-specific stack build completed successfully
+
+🎉 OpenProject stack build completed successfully!
+Your OpenProject instance should now be running.
+✓ Docker Build Stack  completed
+
+==========================================
+Deployment process completed!
+==========================================
+
+Configuration Summary:
+=====================
+Environment Type: production
+Domain Name:      srv1035368.hstgr.cloud
+Namespace:        Not set
+OpenProject Host: srv1035368.hstgr.cloud
+HTTPS Enabled:    true
+Git User:         Justin Bates
+Git Email:        justincbates@proton.me
+
+🚨 PRODUCTION DEPLOYMENT NOTES:
+- Ensure all security settings are properly configured
+- Verify SSL certificates are valid
+- Check backup procedures are in place
+- Monitor system resources after deployment
+Deployment script completed successfully!
+STEP Regenerate defaults: PASS
+
+--- STEP: Verify defaults keys (timeout 10s) ---
+STEP Verify defaults keys: PASS
+
+--- STEP: Run preview (capture) (timeout 20s) ---
+
+
+
+######################################################################
+OpenProject Interactive Deployment Script
+######################################################################
+[2m[38;5;136m    This script will help you deploy OpenProject using Docker Compose.[0m
+[2m[38;5;136m    You can press Enter to accept default values shown in brackets.[0m
+______________________________________________________________________
+
+
+==================================================
+Current configuration preview:
+==================================================
+[2m[38;5;136mPreview of the existing interactive_config.cfg. [0m
+[2m[38;5;136mConfirm or update values in the following prompts.[0m
+__________________________________________________
+
+Configuration comparison:
+
+Variable                     .cfg                                 .cfg.defaults                       
+----------------------------------------------------------------------------------------------------
+  OPENPROJECT_TAG           "stable/16"                         "stable/16"                        
+  GIT_USERNAME              "Justin Bates"                      "Justin Bates"                     
+  GIT_EMAIL                 "justincbates@proton.me"            "justincbates@proton.me"           
+* ENVIRONMENT_TYPE          "production"                        "production"                       
+* OS_FAMILY                 "debian"                            "debian"                           
+* OPENPROJECT_HOST_NAME     "srv1035368.hstgr.cloud"            "srv1035368.hstgr.cloud"           
+* OPENPROJECT_HTTPS         "true"                              "true"                             
+* PROXY_HTTPS_REDIRECT      "true"                              "true"                             
+* DOMAIN_NAME               "srv1035368.hstgr.cloud"            "srv1035368.hstgr.cloud"           
+* DEFAULT_DBADMIN_PASSWORD  "admin123"                          "admin123"                         
+* DATABASE_STORAGE_TYPE     "docker-volumes"                    "docker-volumes"                   
+* NAMESPACE                                                                                          
+
+Config appears valid: required keys present.
+
+Would you like to replace current .cfg values with the defaults from .cfg.defaults? (y/n) [n]: Would you like to modify the configuration interactively? (y/n) [n]: 
+============================================================================================
+Configuration saved to: /opt/openproject/scripts/installation_scripts/interactive_config.cfg
+============================================================================================
+
+To deploy OpenProject, run:
+  ./scripts/installation_scripts/deploy.sh
+
+Or use the utility scripts manually:
+  1. ./scripts/installation_scripts/installation_utilities/configure_docker.sh
+  2. ./scripts/installation_scripts/installation_utilities/build_stack.sh
+
+(Skipping persistence of defaults into /opt/openproject/scripts/installation_scripts/interactive_config.cfg; user did not accept applying defaults)
+
+Final configuration:
+---------------------------------------------
+  OPENPROJECT_TAG           "stable/16"                        
+  GIT_USERNAME              "Justin Bates"                     
+  GIT_EMAIL                 "justincbates@proton.me"           
+* ENVIRONMENT_TYPE          "production"                       
+* OS_FAMILY                 "debian"                           
+* OPENPROJECT_HOST_NAME     "srv1035368.hstgr.cloud"           
+* OPENPROJECT_HTTPS         "true"                             
+* PROXY_HTTPS_REDIRECT      "true"                             
+* DOMAIN_NAME               "srv1035368.hstgr.cloud"           
+* DEFAULT_DBADMIN_PASSWORD  "admin123"                         
+* DATABASE_STORAGE_TYPE     "docker-volumes"                   
+* NAMESPACE                                                     
+
+✓ Configuration appears valid: required keys present.
+Would you like to run the deployment now? (y/n) [y]: 
+Starting OpenProject deployment...
+=================Synchronizing state of docker.service with SysV service script with /lib/systemd/systemd-sysv-install.
+Executing: /lib/systemd/systemd-sysv-install enable docker
+ openproject/proxy  Built
+ openproject/proxy  Built
+ web Skipped - Image is already being pulled by worker 
+ cron Skipped - Image is already being pulled by worker 
+ seeder Skipped - Image is already being pulled by worker 
+ proxy Skipped - Image can be built 
+ autoheal Pulling 
+ worker Pulling 
+ db Pulling 
+ cache Pulling 
+ cache Pulled 
+ db Pulled 
+ worker Pulled 
+ autoheal Pulled 
+ Container openproject-seeder-1  Running
+ Container openproject-cache-1  Running
+ Container openproject-db-1  Running
+ Container a1adb10fbb81_openproject-cron-1  Running
+ Container e640576f9253_openproject-worker-1  Running
+ Container openproject-web-1  Running
+ Container openproject-proxy-1  Recreate
+ Container openproject-proxy-1  Recreated
+ Container openproject-autoheal-1  Starting
+ Container openproject-proxy-1  Starting
+ Container openproject-autoheal-1  Started
+ Container openproject-proxy-1  Started
+STEP Run preview (capture): FAIL (exit 143)
+
+--- STEP: Smoke: setup_git_user (timeout 20s) ---
+==========================================
+Git User Configuration Utility
+==========================================
+Loading configuration from /opt/openproject/scripts/installation_scripts/installation_utilities/../interactive_config.cfg...
+Configuring git user settings...
+Setting git username to: Justin Bates
+✓ Git username configured
+Setting git email to: justincbates@proton.me
+✓ Git email configured
+
+Current git configuration:
+-------------------------
+Username: Justin Bates
+Email:    justincbates@proton.me
+
+STEP Smoke: setup_git_user: PASS
+
+--- STEP: Smoke: build_proxy (timeout 120s) ---
+==========================================
+Proxy Build Utility
+==========================================
+Building proxy image locally...
+#1 [internal] load local bake definitions
+#1 reading from stdin 552B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 281B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/caddy:2
+#3 DONE 0.1s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [1/3] FROM docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89
+#5 resolve docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 40B done
+#6 DONE 0.0s
+
+#7 [2/3] COPY ./Caddyfile.template /etc/caddy/Caddyfile.template
+#7 CACHED
+
+#8 [3/3] RUN sed 's|${APP_HOST}|'"web"'|g' /etc/caddy/Caddyfile.template > /etc/caddy/Caddyfile
+#8 CACHED
+
+#9 exporting to image
+#9 exporting layers done
+#9 writing image sha256:3992d49d1a8d16a9102c02a0160b638d10ff49896b59afefc857955dea560d20 done
+#9 naming to docker.io/openproject/proxy done
+#9 DONE 0.0s
+
+#10 resolving provenance for metadata file
+#10 DONE 0.0s
+ openproject/proxy  Built
+✓ Proxy image built
+STEP Smoke: build_proxy: PASS
+
+--- STEP: Smoke: build_stack (dry-run) (timeout 120s) ---
+==========================================
+Universal OpenProject Stack Builder
+==========================================
+Starting universal OpenProject stack build process...
+
+Supported OS Families:
+  ✓ debian    - Full implementation
+  ⚠ arch     - Stub implementation
+  ⚠ redhat   - Stub implementation
+  ⚠ suse     - Stub implementation
+  ⚠ slackware - Stub implementation
+
+✓ Configuration loaded from interactive_config.cfg
+✓ Detected OS Family: debian
+
+Configuration Files Status:
+  ✓ .env file exists
+  ✓ docker-compose.yml exists
+  ✓ docker-compose.override.yml exists
+
+Validating prerequisites...
+✓ All prerequisite files found
+
+✓ OS-specific script found: build_stack.debian.sh
+
+Delegating to OS-specific stack builder: debian
+Executing: /opt/openproject/scripts/installation_scripts/installation_utilities/debian_install/build_stack.debian.sh
+
+==========================================
+Debian-specific OpenProject Stack Builder
+==========================================
+Starting Debian-specific OpenProject stack build...
+
+✓ Configuration loaded from interactive_config.cfg
+
+Validating Docker Compose setup...
+✓ Using docker compose plugin: Docker Compose version v2.40.0
+✓ Docker Compose environment validated
+
+Validating configuration files...
+✓ All configuration files validated
+
+Creating necessary directories with Debian-specific permissions...
+✓ Directories created with Debian-appropriate permissions
+
+==========================================
+Proxy Build Utility
+==========================================
+Building proxy image locally...
+#1 [internal] load local bake definitions
+#1 reading from stdin 552B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 281B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/caddy:2
+#3 DONE 0.1s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [1/3] FROM docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89
+#5 resolve docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89 done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 40B done
+#6 DONE 0.0s
+
+#7 [2/3] COPY ./Caddyfile.template /etc/caddy/Caddyfile.template
+#7 CACHED
+
+#8 [3/3] RUN sed 's|${APP_HOST}|'"web"'|g' /etc/caddy/Caddyfile.template > /etc/caddy/Caddyfile
+#8 CACHED
+
+#9 exporting to image
+#9 exporting layers done
+#9 writing image sha256:3992d49d1a8d16a9102c02a0160b638d10ff49896b59afefc857955dea560d20 done
+#9 naming to docker.io/openproject/proxy done
+#9 DONE 0.0s
+
+#10 resolving provenance for metadata file
+#10 DONE 0.0s
+ openproject/proxy  Built
+✓ Proxy image built
+
+Building custom Docker images with Debian optimizations...
+Found build contexts, building images...
+#1 [internal] load local bake definitions
+#1 reading from stdin 576B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 281B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/caddy:2
+#3 DONE 0.1s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [1/3] FROM docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89
+#5 resolve docker.io/library/caddy:2@sha256:614bbc6da7ec42f3c76077e86f429297047680f9cb420ad0f07a8fe049193d89 done
+#5 CACHED
+
+#6 [internal] load build context
+#6 transferring context: 40B done
+#6 DONE 0.0s
+
+#7 [2/3] COPY ./Caddyfile.template /etc/caddy/Caddyfile.template
+#7 DONE 0.2s
+
+#8 [3/3] RUN sed 's|${APP_HOST}|'"web"'|g' /etc/caddy/Caddyfile.template > /etc/caddy/Caddyfile
+#8 DONE 0.3s
+
+#9 exporting to image
+#9 exporting layers 0.1s done
+#9 writing image sha256:793581ec5133f05f7646a4a0abb62a0e5fcbd04b9ebe722c554e0f9193bc07ba done
+#9 naming to docker.io/openproject/proxy done
+#9 DONE 0.1s
+
+#10 resolving provenance for metadata file
+#10 DONE 0.0s
+ openproject/proxy  Built
+✓ Custom images built successfully
+
+Pulling Docker images with Debian optimizations...
+Using compose pull --ignore-buildable to skip locally-buildable services
+ worker Skipped - Image is already being pulled by web 
+ proxy Skipped - Image can be built 
+ cron Skipped - Image is already being pulled by web 
+ seeder Skipped - Image is already being pulled by web 
+ cache Pulling 
+ autoheal Pulling 
+ db Pulling 
+ web Pulling 
+ web Pulled 
+ db Pulled 
+ autoheal Pulled 
+ cache Pulled 
+✓ Docker images pulled (ignored buildable services)
+
+Starting OpenProject stack with Debian optimizations...
+ Container openproject-autoheal-1  Running
+ Container openproject-cache-1  Running
+ Container openproject-seeder-1  Running
+ Container openproject-db-1  Running
+ Container openproject-web-1  Running
+ Container openproject-proxy-1  Recreate
+ Container e640576f9253_openproject-worker-1  Running
+ Container a1adb10fbb81_openproject-cron-1  Running
+ Container openproject-proxy-1  Recreated
+ Container openproject-proxy-1  Starting
+ Container openproject-proxy-1  Started
+✓ OpenProject stack started
+
+Checking OpenProject stack health...
+Container status:
+NAME                                IMAGE                             COMMAND                  SERVICE    CREATED          STATUS                                  PORTS
+a1adb10fbb81_openproject-cron-1     openproject/openproject:16-slim   "./docker/prod/entry…"   cron       2 minutes ago    Up 20 seconds                           8080/tcp
+e640576f9253_openproject-worker-1   openproject/openproject:16-slim   "./docker/prod/entry…"   worker     2 minutes ago    Up 20 seconds                           8080/tcp
+openproject-autoheal-1              willfarrell/autoheal:1.2.0        "/docker-entrypoint …"   autoheal   37 hours ago     Up 15 seconds (healthy)                 
+openproject-cache-1                 memcached                         "docker-entrypoint.s…"   cache      37 hours ago     Up 20 seconds                           11211/tcp
+openproject-db-1                    postgres:13                       "docker-entrypoint.s…"   db         32 hours ago     Up 20 seconds                           5432/tcp
+openproject-proxy-1                 openproject/proxy                 "caddy run --config …"   proxy      12 seconds ago   Restarting (1) Less than a second ago   
+openproject-seeder-1                openproject/openproject:16-slim   "./docker/prod/entry…"   seeder     2 minutes ago    Up 20 seconds                           8080/tcp
+openproject-web-1                   openproject/openproject:16-slim   "./docker/prod/entry…"   web        2 minutes ago    Up 20 seconds (health: starting)        8080/tcp
+⚠ Some containers have issues
+Checking logs for problematic containers...
+a1adb10fbb81_openproject-cron-1  | 2025-10-10T03:14:54.231907991Z [cron] IMAP email checking is disabled
+a1adb10fbb81_openproject-cron-1  | 2025-10-10T03:14:54.231931366Z [cron] Rescheduling in 600s
+a1adb10fbb81_openproject-cron-1  | 2025-10-10T03:15:20.157254648Z [cron] IMAP email checking is disabled
+a1adb10fbb81_openproject-cron-1  | 2025-10-10T03:15:20.157268639Z [cron] Rescheduling in 600s
+proxy-1                          | 2025-10-10T03:15:35.982035902Z {"level":"info","ts":1760066135.981927,"msg":"maxprocs: Leaving GOMAXPROCS=2: CPU quota undefined"}
+proxy-1                          | 2025-10-10T03:15:35.982267590Z {"level":"info","ts":1760066135.9822192,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":7505178624,"previous":9223372036854775807}
+proxy-1                          | 2025-10-10T03:15:35.982395301Z {"level":"info","ts":1760066135.9823565,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+proxy-1                          | 2025-10-10T03:15:35.997300224Z {"level":"warn","ts":1760066135.997202,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.997512763Z {"level":"warn","ts":1760066135.997349,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998530681Z {"level":"warn","ts":1760066135.9978619,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998547316Z {"level":"warn","ts":1760066135.9978697,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998551542Z {"level":"warn","ts":1760066135.9979353,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998554988Z {"level":"warn","ts":1760066135.9979384,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998558152Z {"level":"warn","ts":1760066135.9979923,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998561317Z {"level":"warn","ts":1760066135.997995,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998564502Z {"level":"warn","ts":1760066135.9980643,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998567777Z {"level":"warn","ts":1760066135.998067,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998570952Z {"level":"warn","ts":1760066135.9981196,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998574126Z {"level":"warn","ts":1760066135.9981225,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998577461Z {"level":"warn","ts":1760066135.9981837,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998581027Z {"level":"warn","ts":1760066135.9981863,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998584532Z {"level":"warn","ts":1760066135.9982412,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998587667Z {"level":"warn","ts":1760066135.9982436,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998590811Z {"level":"warn","ts":1760066135.9983,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998594056Z {"level":"warn","ts":1760066135.9983027,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998597211Z {"level":"warn","ts":1760066135.9983563,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998603991Z {"level":"warn","ts":1760066135.9983592,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:35.998607216Z {"level":"info","ts":1760066135.9984179,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+proxy-1                          | 2025-10-10T03:15:35.998610371Z Error: adapting config using caddyfile: ambiguous site definition: srv1035368.hstgr.cloud
+proxy-1                          | 2025-10-10T03:15:39.700728810Z {"level":"info","ts":1760066139.7005816,"msg":"maxprocs: Leaving GOMAXPROCS=2: CPU quota undefined"}
+proxy-1                          | 2025-10-10T03:15:39.701039186Z {"level":"info","ts":1760066139.700966,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":7505178624,"previous":9223372036854775807}
+proxy-1                          | 2025-10-10T03:15:39.701177724Z {"level":"info","ts":1760066139.7011287,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+proxy-1                          | 2025-10-10T03:15:39.701557083Z {"level":"warn","ts":1760066139.7014992,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.701588220Z {"level":"warn","ts":1760066139.70157,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.702143374Z {"level":"warn","ts":1760066139.7020795,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.702174220Z {"level":"warn","ts":1760066139.7021568,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.707634710Z {"level":"warn","ts":1760066139.7075524,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.707690835Z {"level":"warn","ts":1760066139.707653,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.708050324Z {"level":"warn","ts":1760066139.7080104,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.708094581Z {"level":"warn","ts":1760066139.7080746,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.708252428Z {"level":"warn","ts":1760066139.7082207,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.708637877Z {"level":"warn","ts":1760066139.7086036,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.708809404Z {"level":"warn","ts":1760066139.7087755,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.708847952Z {"level":"warn","ts":1760066139.7088287,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.708977788Z {"level":"warn","ts":1760066139.708947,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.709014743Z {"level":"warn","ts":1760066139.708996,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.709134442Z {"level":"warn","ts":1760066139.709105,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.709170136Z {"level":"warn","ts":1760066139.7091517,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.709286350Z {"level":"warn","ts":1760066139.7092571,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.709321814Z {"level":"warn","ts":1760066139.7093034,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.709438579Z {"level":"warn","ts":1760066139.7094095,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.709474203Z {"level":"warn","ts":1760066139.7094557,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+proxy-1                          | 2025-10-10T03:15:39.709602775Z {"level":"info","ts":1760066139.70957,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+proxy-1                          | 2025-10-10T03:15:39.709646701Z Error: adapting config using caddyfile: ambiguous site definition: srv1035368.hstgr.cloud
+autoheal-1                       | 2025-10-08T14:05:37.471899410Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1                       | 2025-10-08T15:55:59.751956562Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1                       | 2025-10-08T19:41:57.677375581Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1                       | 2025-10-08T20:04:29.911738002Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1                       | 2025-10-08T20:32:24.758047286Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1                       | 2025-10-08T20:54:16.468216733Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1                       | 2025-10-08T20:56:37.379191701Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1                       | 2025-10-09T03:23:42.742776545Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1                       | 2025-10-09T03:35:43.019835028Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1                       | 2025-10-10T03:14:53.969090686Z Monitoring containers for unhealthy status in 600 second(s)
+autoheal-1                       | 2025-10-10T03:15:24.647680316Z Monitoring containers for unhealthy status in 600 second(s)
+web-1                            | 2025-10-10T03:15:06.467600441Z => Booting Puma
+web-1                            | 2025-10-10T03:15:06.467643876Z => Rails 8.0.2.1 application starting in production 
+web-1                            | 2025-10-10T03:15:06.467648113Z => Run `bin/rails server --help` for more startup options
+web-1                            | 2025-10-10T03:15:08.095051844Z Exiting
+web-1                            | 2025-10-10T03:15:35.255195964Z => Booting Puma
+web-1                            | 2025-10-10T03:15:35.255240060Z => Rails 8.0.2.1 application starting in production 
+web-1                            | 2025-10-10T03:15:35.255244016Z => Run `bin/rails server --help` for more startup options
+db-1                             | 2025-10-10T03:12:49.316803872Z 2025-10-10 03:12:49.306 UTC [1] LOG:  aborting any active transactions
+db-1                             | 2025-10-10T03:12:49.316807818Z 2025-10-10 03:12:49.306 UTC [40] FATAL:  terminating connection due to administrator command
+db-1                             | 2025-10-10T03:12:49.316811434Z 2025-10-10 03:12:49.307 UTC [35] FATAL:  terminating connection due to administrator command
+db-1                             | 2025-10-10T03:12:49.316814508Z 2025-10-10 03:12:49.311 UTC [39] FATAL:  terminating connection due to administrator command
+db-1                             | 2025-10-10T03:12:49.316817633Z 2025-10-10 03:12:49.311 UTC [42] FATAL:  terminating connection due to administrator command
+db-1                             | 2025-10-10T03:12:49.316820768Z 2025-10-10 03:12:49.313 UTC [1] LOG:  background worker "logical replication launcher" (PID 32) exited with exit code 1
+db-1                             | 2025-10-10T03:12:49.316823962Z 2025-10-10 03:12:49.313 UTC [37] FATAL:  terminating connection due to administrator command
+db-1                             | 2025-10-10T03:12:49.316827017Z 2025-10-10 03:12:49.315 UTC [36] FATAL:  terminating connection due to administrator command
+db-1                             | 2025-10-10T03:12:49.317028599Z 2025-10-10 03:12:49.316 UTC [38] FATAL:  terminating connection due to administrator command
+db-1                             | 2025-10-10T03:12:49.323628057Z 2025-10-10 03:12:49.323 UTC [27] LOG:  shutting down
+db-1                             | 2025-10-10T03:12:49.337447974Z 2025-10-10 03:12:49.337 UTC [1] LOG:  database system is shut down
+db-1                             | 2025-10-10T03:13:01.165519934Z 
+db-1                             | 2025-10-10T03:13:01.165537951Z PostgreSQL Database directory appears to contain a database; Skipping initialization
+db-1                             | 2025-10-10T03:13:01.165542047Z 
+db-1                             | 2025-10-10T03:13:01.190556380Z 2025-10-10 03:13:01.190 UTC [1] LOG:  starting PostgreSQL 13.22 (Debian 13.22-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+db-1                             | 2025-10-10T03:13:01.195822056Z 2025-10-10 03:13:01.195 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+db-1                             | 2025-10-10T03:13:01.203399932Z 2025-10-10 03:13:01.199 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+db-1                             | 2025-10-10T03:13:01.203411319Z 2025-10-10 03:13:01.203 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db-1                             | 2025-10-10T03:13:01.209331076Z 2025-10-10 03:13:01.208 UTC [27] LOG:  database system was shut down at 2025-10-10 03:12:49 UTC
+db-1                             | 2025-10-10T03:13:01.215088781Z 2025-10-10 03:13:01.213 UTC [1] LOG:  database system is ready to accept connections
+db-1                             | 2025-10-10T03:14:49.646141673Z 2025-10-10 03:14:49.645 UTC [1] LOG:  received fast shutdown request
+db-1                             | 2025-10-10T03:14:49.650150022Z 2025-10-10 03:14:49.646 UTC [1] LOG:  aborting any active transactions
+db-1                             | 2025-10-10T03:14:49.650210263Z 2025-10-10 03:14:49.649 UTC [1] LOG:  background worker "logical replication launcher" (PID 33) exited with exit code 1
+db-1                             | 2025-10-10T03:14:49.650214359Z 2025-10-10 03:14:49.649 UTC [28] LOG:  shutting down
+db-1                             | 2025-10-10T03:14:49.659572511Z 2025-10-10 03:14:49.659 UTC [1] LOG:  database system is shut down
+db-1                             | 2025-10-10T03:14:51.808022360Z 
+db-1                             | 2025-10-10T03:14:51.808037793Z PostgreSQL Database directory appears to contain a database; Skipping initialization
+db-1                             | 2025-10-10T03:14:51.808041839Z 
+db-1                             | 2025-10-10T03:14:51.825106311Z 2025-10-10 03:14:51.825 UTC [1] LOG:  starting PostgreSQL 13.22 (Debian 13.22-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+db-1                             | 2025-10-10T03:14:51.825300403Z 2025-10-10 03:14:51.825 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+db-1                             | 2025-10-10T03:14:51.825306772Z 2025-10-10 03:14:51.825 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+db-1                             | 2025-10-10T03:14:51.826351752Z 2025-10-10 03:14:51.826 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db-1                             | 2025-10-10T03:14:51.829615133Z 2025-10-10 03:14:51.829 UTC [26] LOG:  database system was shut down at 2025-10-10 03:14:49 UTC
+db-1                             | 2025-10-10T03:14:51.834973908Z 2025-10-10 03:14:51.834 UTC [1] LOG:  database system is ready to accept connections
+db-1                             | 2025-10-10T03:15:08.072450786Z 2025-10-10 03:15:08.072 UTC [1] LOG:  received fast shutdown request
+db-1                             | 2025-10-10T03:15:08.073011328Z 2025-10-10 03:15:08.072 UTC [1] LOG:  aborting any active transactions
+db-1                             | 2025-10-10T03:15:08.075861407Z 2025-10-10 03:15:08.075 UTC [34] FATAL:  canceling authentication due to timeout
+db-1                             | 2025-10-10T03:15:08.076499045Z 2025-10-10 03:15:08.076 UTC [1] LOG:  background worker "logical replication launcher" (PID 32) exited with exit code 1
+db-1                             | 2025-10-10T03:15:08.077683304Z 2025-10-10 03:15:08.077 UTC [35] FATAL:  canceling authentication due to timeout
+db-1                             | 2025-10-10T03:15:08.079043325Z 2025-10-10 03:15:08.078 UTC [27] LOG:  shutting down
+db-1                             | 2025-10-10T03:15:08.094820325Z 2025-10-10 03:15:08.093 UTC [1] LOG:  database system is shut down
+db-1                             | 2025-10-10T03:15:20.266816517Z 
+db-1                             | 2025-10-10T03:15:20.266837278Z PostgreSQL Database directory appears to contain a database; Skipping initialization
+db-1                             | 2025-10-10T03:15:20.266841305Z 
+db-1                             | 2025-10-10T03:15:20.316014284Z 2025-10-10 03:15:20.310 UTC [1] LOG:  starting PostgreSQL 13.22 (Debian 13.22-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+db-1                             | 2025-10-10T03:15:20.316040373Z 2025-10-10 03:15:20.310 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+db-1                             | 2025-10-10T03:15:20.316044569Z 2025-10-10 03:15:20.310 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+db-1                             | 2025-10-10T03:15:20.328540132Z 2025-10-10 03:15:20.324 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db-1                             | 2025-10-10T03:15:20.342288457Z 2025-10-10 03:15:20.328 UTC [27] LOG:  database system was shut down at 2025-10-10 03:15:08 UTC
+db-1                             | 2025-10-10T03:15:20.342300535Z 2025-10-10 03:15:20.331 UTC [1] LOG:  database system is ready to accept connections
+seeder-1                         | 2025-10-10T03:14:53.975092267Z Executing database migrations...
+seeder-1                         | 2025-10-10T03:15:20.383510477Z Executing database migrations...
+⚠ Stack health check had warnings (may be normal for initial startup)
+
+Checking UFW firewall status...
+✓ UFW not installed (firewall management not needed)
+
+
+Debian OpenProject Deployment Summary:
+=====================================
+OpenProject URL: https://srv1035368.hstgr.cloud
+Environment: production
+OS: Debian/Ubuntu with optimizations
+Admin Login: admin / admin123 (⚠ CHANGE THIS PASSWORD!)
+
+Debian-specific features enabled:
+  ✓ BuildKit for optimized builds
+  ✓ APT cache volumes for faster rebuilds
+  ✓ UFW firewall integration
+  ✓ Systemd service optimizations
+  ✓ Debian-specific environment variables
+
+Useful commands:
+  View logs:       docker compose logs -f
+  Stop stack:      docker compose down
+  Restart:         docker compose restart
+  Update:          docker compose pull && docker compose up -d
+  Check UFW:       sudo ufw status
+  System logs:     sudo journalctl -u docker
+
+Current stack status:
+NAME                                IMAGE                             COMMAND                  SERVICE    CREATED          STATUS                                  PORTS
+a1adb10fbb81_openproject-cron-1     openproject/openproject:16-slim   "./docker/prod/entry…"   cron       2 minutes ago    Up 20 seconds                           8080/tcp
+e640576f9253_openproject-worker-1   openproject/openproject:16-slim   "./docker/prod/entry…"   worker     2 minutes ago    Up 20 seconds                           8080/tcp
+openproject-autoheal-1              willfarrell/autoheal:1.2.0        "/docker-entrypoint …"   autoheal   37 hours ago     Up 16 seconds (healthy)                 
+openproject-cache-1                 memcached                         "docker-entrypoint.s…"   cache      37 hours ago     Up 20 seconds                           11211/tcp
+openproject-db-1                    postgres:13                       "docker-entrypoint.s…"   db         32 hours ago     Up 20 seconds                           5432/tcp
+openproject-proxy-1                 openproject/proxy                 "caddy run --config …"   proxy      12 seconds ago   Restarting (1) Less than a second ago   
+openproject-seeder-1                openproject/openproject:16-slim   "./docker/prod/entry…"   seeder     2 minutes ago    Up 20 seconds                           8080/tcp
+openproject-web-1                   openproject/openproject:16-slim   "./docker/prod/entry…"   web        2 minutes ago    Up 20 seconds (health: starting)        8080/tcp
+
+System information:
+Memory usage: 3.9Gi/7.8Gi
+Disk usage: 10% used
+
+🎉 Debian-specific OpenProject stack deployment completed!
+
+✓ OS-specific stack build completed successfully
+
+🎉 OpenProject stack build completed successfully!
+Your OpenProject instance should now be running.
+STEP Smoke: build_stack (dry-run): PASS
+
+Validation completed: SUCCESS
