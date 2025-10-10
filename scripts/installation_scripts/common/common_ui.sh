@@ -576,13 +576,24 @@ anykey() {
         fi
         # Wait for any single keypress silently while SIGINT handler is active
         push_sigint_trap
-        # Use timeout to avoid hanging indefinitely
-        if IFS= read -rsn1 -t "$PROMPT_TIMEOUT" _ < "$tty"; then
-            :
+        # Use timeout only when PROMPT_TIMEOUT is a positive integer; otherwise
+        # block until a keypress is received. This avoids unbound-variable errors
+        # when shells run with 'set -u'.
+        if [ -n "${PROMPT_TIMEOUT:-}" ] && printf "%s" "$PROMPT_TIMEOUT" | grep -Eq '^[0-9]+$' && [ "$PROMPT_TIMEOUT" -gt 0 ]; then
+            if IFS= read -rsn1 -t "$PROMPT_TIMEOUT" _ < "$tty"; then
+                :
+            else
+                # timed out
+                if [ -t 1 ]; then
+                    printf "\n" >&2
+                fi
+            fi
         else
-            # timed out
-            if [ -t 1 ]; then
-                printf "\n" >&2
+            # blocking read for single keypress
+            if IFS= read -rsn1 _ < "$tty"; then
+                :
+            else
+                :
             fi
         fi
         pop_sigint_trap
