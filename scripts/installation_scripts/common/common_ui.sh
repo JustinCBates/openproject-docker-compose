@@ -371,16 +371,22 @@ prompt_with_default() {
             printf "%s [%s]: " "$prompt" "$default"
         fi
         push_sigint_trap
-        # Use timeout so installer doesn't block forever waiting for input
-        if read -t "$PROMPT_TIMEOUT" input; then
-            :
-        else
-            # timed out - act as if user pressed Enter (accept default)
-            input=""
-            if [ -t 1 ]; then
-                printf "\n" >&2
-                printf "%s\n" "(timed out after ${PROMPT_TIMEOUT}s, using default: ${default})" >&2
+        # Use timeout only when PROMPT_TIMEOUT is a positive integer; otherwise
+        # block so the user must explicitly press Enter. This prevents prompts
+        # from auto-accepting defaults when running interactively.
+        if [ -n "${PROMPT_TIMEOUT:-}" ] && printf "%s" "$PROMPT_TIMEOUT" | grep -Eq '^[0-9]+$' && [ "$PROMPT_TIMEOUT" -gt 0 ]; then
+            if read -t "$PROMPT_TIMEOUT" input; then
+                :
+            else
+                # timed out - act as if user pressed Enter (accept default)
+                input=""
+                if [ -t 1 ]; then
+                    printf "\n" >&2
+                    printf "%s\n" "(timed out after ${PROMPT_TIMEOUT}s, using default: ${default})" >&2
+                fi
             fi
+        else
+            read input
         fi
         pop_sigint_trap
         if [ -z "$input" ]; then
@@ -408,14 +414,18 @@ validate_yn() {
                 printf "%s (y/n) [%s]: " "$prompt" "$default"
             fi
             push_sigint_trap
-            if read -t "$PROMPT_TIMEOUT" yn; then
-                :
-            else
-                yn=""
-                if [ -t 1 ]; then
-                    printf "\n" >&2
-                    printf "%s\n" "(prompt timed out after ${PROMPT_TIMEOUT}s, using default: ${default})" >&2
+            if [ -n "${PROMPT_TIMEOUT:-}" ] && printf "%s" "$PROMPT_TIMEOUT" | grep -Eq '^[0-9]+$' && [ "$PROMPT_TIMEOUT" -gt 0 ]; then
+                if read -t "$PROMPT_TIMEOUT" yn; then
+                    :
+                else
+                    yn=""
+                    if [ -t 1 ]; then
+                        printf "\n" >&2
+                        printf "%s\n" "(prompt timed out after ${PROMPT_TIMEOUT}s, using default: ${default})" >&2
+                    fi
                 fi
+            else
+                read yn
             fi
             pop_sigint_trap
             if [ -z "$yn" ]; then
@@ -459,14 +469,18 @@ validate_tf() {
                 printf "%s (true/false) [%s]: " "$prompt" "$default"
             fi
             push_sigint_trap
-            if read -t "$PROMPT_TIMEOUT" tf; then
-                :
-            else
-                tf=""
-                if [ -t 1 ]; then
-                    printf "\n" >&2
-                    printf "%s\n" "(prompt timed out after ${PROMPT_TIMEOUT}s, using default: ${default})" >&2
+            if [ -n "${PROMPT_TIMEOUT:-}" ] && printf "%s" "$PROMPT_TIMEOUT" | grep -Eq '^[0-9]+$' && [ "$PROMPT_TIMEOUT" -gt 0 ]; then
+                if read -t "$PROMPT_TIMEOUT" tf; then
+                    :
+                else
+                    tf=""
+                    if [ -t 1 ]; then
+                        printf "\n" >&2
+                        printf "%s\n" "(prompt timed out after ${PROMPT_TIMEOUT}s, using default: ${default})" >&2
+                    fi
                 fi
+            else
+                read tf
             fi
             pop_sigint_trap
             if [ -z "$tf" ]; then
