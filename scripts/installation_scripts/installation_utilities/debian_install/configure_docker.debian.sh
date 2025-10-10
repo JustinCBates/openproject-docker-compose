@@ -364,6 +364,31 @@ main() {
     load_config
     echo
 
+    # Ensure OPENPROJECT_RAILS__RELATIVE__URL__ROOT is present in the interactive config
+    # If the interactive config didn't already set a relative root, construct it
+    # from the collected NAMESPACE (if any) so downstream scripts (proxy builder)
+    # can render templates consistently.
+    if [ -z "${OPENPROJECT_RAILS__RELATIVE__URL__ROOT:-}" ]; then
+        if [ -n "${NAMESPACE:-}" ] && [ "${NAMESPACE}" != "" ]; then
+            _relroot="/${NAMESPACE%/}"
+        else
+            _relroot=""
+        fi
+
+        if [ -n "${_relroot}" ]; then
+            # Write into interactive_config.cfg idempotently
+            if grep -q '^OPENPROJECT_RAILS__RELATIVE__URL__ROOT=' "$CONFIG_FILE" 2>/dev/null; then
+                # replace existing line
+                sed -i "s|^OPENPROJECT_RAILS__RELATIVE__URL__ROOT=.*|OPENPROJECT_RAILS__RELATIVE__URL__ROOT=\"${_relroot}\"|" "$CONFIG_FILE" 2>/dev/null || true
+            else
+                echo "OPENPROJECT_RAILS__RELATIVE__URL__ROOT=\"${_relroot}\"" >> "$CONFIG_FILE"
+            fi
+            echo "✓ Set OPENPROJECT_RAILS__RELATIVE__URL__ROOT to '${_relroot}' in $(basename "$CONFIG_FILE")"
+            # Export into the current shell for immediate use
+            export OPENPROJECT_RAILS__RELATIVE__URL__ROOT="${_relroot}"
+        fi
+    fi
+
     # Configure proxy (render Caddyfile/template) if proxy utility exists
     if [ -f "$SCRIPT_DIR/../proxy/configure_proxy.sh" ]; then
         "$SCRIPT_DIR/../proxy/configure_proxy.sh"
