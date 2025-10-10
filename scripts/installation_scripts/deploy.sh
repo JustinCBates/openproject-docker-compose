@@ -122,28 +122,4 @@ else
 fi
 echo
 
-echo "=========================================="
-echo "Deployment process completed!"
-echo "=========================================="
-
-echo
-echo "Configuration Summary:"
-echo "====================="
-echo "Environment Type: ${ENVIRONMENT_TYPE:-Not set}"
-echo "Domain Name:      ${DOMAIN_NAME:-Not set}"
-echo "Namespace:        ${NAMESPACE:-Not set}"
-echo "OpenProject Host: ${OPENPROJECT_HOST_NAME:-Not set}"
-echo "HTTPS Enabled:    ${OPENPROJECT_HTTPS:-Not set}"
-echo "Git User:         ${GIT_USERNAME:-Not set}"
-echo "Git Email:        ${GIT_EMAIL:-Not set}"
-echo
-
-if [ "$ENVIRONMENT_TYPE" = "production" ]; then
-    echo "🚨 PRODUCTION DEPLOYMENT NOTES:"
-    echo "- Ensure all security settings are properly configured"
-    echo "- Verify SSL certificates are valid"
-    echo "- Check backup procedures are in place"
-    echo "- Monitor system resources after deployment"
-fi
-
 echo "Deployment script completed successfully!"
