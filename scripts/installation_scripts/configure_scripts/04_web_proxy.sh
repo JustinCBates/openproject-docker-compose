@@ -30,6 +30,19 @@ EOF
         default_redirect="false"
     fi
 
+    # Rule: for localdev/remotedev, if the user has NOT explicitly set
+    # PROXY_HTTPS_REDIRECT in their .cfg, default the redirect to false so
+    # local/staging dev instances don't force HTTPS by default.
+    cfg_redirect=$(get_cfg "PROXY_HTTPS_REDIRECT" || true)
+    if [ -z "$cfg_redirect" ]; then
+        env_type=$(get_effective "ENVIRONMENT_TYPE" || true)
+        case "$env_type" in
+            localdev|remotedev)
+                default_redirect="false"
+                ;;
+        esac
+    fi
+
     echo
     proxy_body=$(cat <<EOF
 Security note: If you disable HTTP->HTTPS redirects, users can access the site over plaintext HTTP. 

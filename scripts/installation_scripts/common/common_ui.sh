@@ -796,6 +796,30 @@ numbered_list_prompt() {
         fi
     fi
 
+    # If the first remaining arg doesn't look like an item (no ' - '), treat
+    # it as an optional header to print above the list. This keeps the
+    # function backward-compatible: callers that don't pass a header still work.
+    local header=""
+    if [ "${#items[@]}" -gt 0 ]; then
+        # Check first item candidate
+        if ! printf "%s" "${items[0]}" | grep -q " - "; then
+            header="${items[0]}"
+            # Remove header from items
+            items=("${items[@]:1}")
+        fi
+    fi
+
+    # Print optional header with a leading blank line and an underline
+    if [ -n "$header" ]; then
+        # Leading blank line for visual separation
+        printf "\n%s\n" "$header"
+        # Compute visible length (strip any ANSI) and print an underline of underscores
+        header_len=$(printf "%s" "$header" | awk '{ gsub(/\033\[[0-9;]*[mK]/, ""); print length }')
+        if [ -z "$header_len" ] || [ "$header_len" -lt 1 ]; then header_len=12; fi
+        # Print underline
+        printf "%s\n" "$(printf '%*s' "$header_len" '' | tr ' ' '_')"
+    fi
+
     # Print the list (highlight default)
     numbered_list "$default_index" "${items[@]}"
 

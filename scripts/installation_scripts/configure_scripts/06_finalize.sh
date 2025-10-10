@@ -9,25 +9,6 @@ run_finalize() {
 
     # Print a concise final summary (avoid duplicating the section header)
     echo
-    # Simple validity checks: required keys present and non-empty
-    missing=()
-    for k in OPENPROJECT_HOST_NAME DOMAIN_NAME OPENPROJECT_HTTPS OPENPROJECT_TAG; do
-        v=$(get_effective "$k" || true)
-        if [ -z "$v" ]; then missing+=("$k"); fi
-    done
-    if [ "${#missing[@]}" -eq 0 ]; then
-        if [ "${COLOR_ENABLED:-0}" = "1" ]; then
-            printf "%b\n" "${GREEN}✓ Configuration appears valid: required keys present.${RESET}"
-        else
-            printf "%s\n" "✓ Configuration appears valid: required keys present."
-        fi
-    else
-        if [ "${COLOR_ENABLED:-0}" = "1" ]; then
-            printf "%b\n" "${RED}✗ Configuration missing required keys: ${missing[*]}${RESET}"
-        else
-            printf "%s\n" "✗ Configuration missing required keys: ${missing[*]}"
-        fi
-    fi
     echo "============================================================================================"
     echo "Configuration saved to: ${DEPLOY_CONFIG:-scripts/installation_scripts/interactive_config.cfg}"
     echo "============================================================================================"
@@ -165,4 +146,61 @@ run_finalize() {
     done
 
     echo
+
+    # After saving any missing values and printing the final config, validate
+    # required keys and print clear confirmations and warnings so they are not
+    # missed among earlier output.
+    missing=()
+    invalid=()
+    for k in OPENPROJECT_HOST_NAME DOMAIN_NAME OPENPROJECT_HTTPS OPENPROJECT_TAG; do
+        v=$(get_effective "$k" || true)
+        if [ -z "$v" ]; then missing+=("$k"); fi
+    done
+
+    # Check OS_FAMILY mismatch against detected default; if it differs, mark
+    # it as invalid (per the new stricter policy).
+    def_os=""
+    if [ -f "${SCRIPT_DIR}/interactive_config.cfg.defaults" ]; then
+        def_os=$(grep -E "^OS_FAMILY=" "${SCRIPT_DIR}/interactive_config.cfg.defaults" 2>/dev/null | head -1 | cut -d'=' -f2- | sed -e 's/^"//' -e 's/"$//' || true)
+    fi
+    cfg_os=$(get_effective "OS_FAMILY" || true)
+    if [ -n "$cfg_os" ] && [ -n "$def_os" ] && [ "$cfg_os" != "$def_os" ]; then
+        invalid+=("OS_FAMILY")
+    fi
+
+    # Print missing keys (error) first
+    if [ "${#missing[@]}" -ne 0 ]; then
+        if [ "${COLOR_ENABLED:-0}" = "1" ]; then
+            printf "%b\n" "${RED}✗ Configuration missing required keys: ${missing[*]}${RESET}"
+        else
+            printf "%s\n" "✗ Configuration missing required keys: ${missing[*]}"
+        fi
+    fi
+
+    # Print invalid keys (warnings), including a helpful detail for OS_FAMILY
+    if [ "${#invalid[@]}" -ne 0 ]; then
+        # Build detail text
+        details=()
+        for ik in "${invalid[@]}"; do
+            if [ "$ik" = "OS_FAMILY" ]; then
+                details+=("OS_FAMILY (configured=${cfg_os}, detected=${def_os})")
+            else
+                details+=("$ik")
+            fi
+        done
+        if [ "${COLOR_ENABLED:-0}" = "1" ]; then
+            printf "%b\n" "${YELLOW}⚠ Configuration has invalid values: ${details[*]}${RESET}"
+        else
+            printf "%s\n" "⚠ Configuration has invalid values: ${details[*]}"
+        fi
+    fi
+
+    # If neither missing nor invalid, print a success confirmation
+    if [ "${#missing[@]}" -eq 0 ] && [ "${#invalid[@]}" -eq 0 ]; then
+        if [ "${COLOR_ENABLED:-0}" = "1" ]; then
+            printf "%b\n" "${GREEN}✓ Configuration appears valid: required keys present.${RESET}"
+        else
+            printf "%s\n" "✓ Configuration appears valid: required keys present."
+        fi
+    fi
 }

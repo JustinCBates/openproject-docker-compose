@@ -74,7 +74,8 @@ EOF
         echo
     fi
 
-    echo "Available OS families:"
+    # We'll show the available OS families header only when the numbered list
+    # is actually displayed. The header is passed into numbered_list_prompt.
 
     case "$current_os_family" in
         debian) current_os_num="1" ;;
@@ -99,8 +100,10 @@ EOF
             echo "   are optimized for the detected OS family."
             echo
             if validate_yn "Are you sure you want to select a different OS family instead of '$current_os_family'?" "n"; then
-                # Show the numbered prompt, defaulting to the detected OS number
+                # Show the numbered prompt, with an explanatory header and
+                # defaulting to the detected OS number
                 numbered_list_prompt "$current_os_num" os_token os_idx \
+                    "Available OS families:" \
                     "debian     - Debian, Ubuntu, Mint, Raspbian" \
                     "redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux" \
                     "suse       - openSUSE, SLES" \
@@ -115,8 +118,9 @@ EOF
             fi
         fi
     else
-        # No detected OS family — ask directly with default numeric option
+        # No detected OS family — ask directly with default numeric option and header
         numbered_list_prompt "1" os_token os_idx \
+            "Available OS families:" \
             "debian     - Debian, Ubuntu, Mint, Raspbian" \
             "redhat     - RHEL, CentOS, Fedora, Rocky, AlmaLinux" \
             "suse       - openSUSE, SLES" \
