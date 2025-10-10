@@ -39,7 +39,16 @@ EOF
     fi
     # Use validate_tf so inputs like 't'/'f' are normalized to literal 'true'/'false'
     # and exported into the caller variable 'use_https'.
-    validate_tf "Enable HTTPS?" "$default_https" use_https
+    # NOTE: validate_tf returns non-zero when the user answers 'false'.
+    # Because the orchestrator (`interactive_config.sh`) sets `set -e`, a
+    # bare call here would cause the whole script to exit when the user
+    # selects the default 'false'. Wrap the call in an if/then to consume
+    # the exit status, matching the pattern used later for proxy_redirect.
+    if validate_tf "Enable HTTPS?" "$default_https" use_https; then
+        : # use_https set to 'true'
+    else
+        : # use_https set to 'false'
+    fi
     # Persist HTTPS selection immediately (save_config normalizes booleans)
     if [ -n "${use_https:-}" ]; then
         save_config "OPENPROJECT_HTTPS" "$use_https"
