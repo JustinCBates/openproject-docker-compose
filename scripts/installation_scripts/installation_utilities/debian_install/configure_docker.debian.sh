@@ -68,13 +68,13 @@ update_env_file() {
     fi
 
     # Relative URL root for path-based deployments (e.g. /subdomain)
-    if [ -n "$OPENPROJECT_RAILS__RELATIVE__URL__ROOT" ]; then
-        if grep -q "^OPENPROJECT_RAILS__RELATIVE__URL__ROOT=" "$env_file"; then
-            sed -i "s|^OPENPROJECT_RAILS__RELATIVE__URL__ROOT=.*|OPENPROJECT_RAILS__RELATIVE__URL__ROOT=$OPENPROJECT_RAILS__RELATIVE__URL__ROOT|" "$env_file"
+    if [ -n "$RAILS_URL_ROOT" ]; then
+        if grep -q "^RAILS_URL_ROOT=" "$env_file"; then
+            sed -i "s|^RAILS_URL_ROOT=.*|RAILS_URL_ROOT=$RAILS_URL_ROOT|" "$env_file"
         else
-            echo "OPENPROJECT_RAILS__RELATIVE__URL__ROOT=$OPENPROJECT_RAILS__RELATIVE__URL__ROOT" >> "$env_file"
+            echo "RAILS_URL_ROOT=$RAILS_URL_ROOT" >> "$env_file"
         fi
-        echo "✓ Updated relative URL root: $OPENPROJECT_RAILS__RELATIVE__URL__ROOT"
+        echo "✓ Updated relative URL root: $RAILS_URL_ROOT"
     fi
     
     if [ -n "$OPENPROJECT_HTTPS" ]; then
@@ -364,11 +364,11 @@ main() {
     load_config
     echo
 
-    # Ensure OPENPROJECT_RAILS__RELATIVE__URL__ROOT is present in the interactive config
+    # Ensure RAILS_URL_ROOT is present in the interactive config
     # If the interactive config didn't already set a relative root, construct it
     # from the collected NAMESPACE (if any) so downstream scripts (proxy builder)
     # can render templates consistently.
-    if [ -z "${OPENPROJECT_RAILS__RELATIVE__URL__ROOT:-}" ]; then
+    if [ -z "${RAILS_URL_ROOT:-}" ]; then
         if [ -n "${NAMESPACE:-}" ] && [ "${NAMESPACE}" != "" ]; then
             _relroot="/${NAMESPACE%/}"
         else
@@ -377,15 +377,15 @@ main() {
 
         if [ -n "${_relroot}" ]; then
             # Write into interactive_config.cfg idempotently
-            if grep -q '^OPENPROJECT_RAILS__RELATIVE__URL__ROOT=' "$CONFIG_FILE" 2>/dev/null; then
-                # replace existing line
-                sed -i "s|^OPENPROJECT_RAILS__RELATIVE__URL__ROOT=.*|OPENPROJECT_RAILS__RELATIVE__URL__ROOT=\"${_relroot}\"|" "$CONFIG_FILE" 2>/dev/null || true
-            else
-                echo "OPENPROJECT_RAILS__RELATIVE__URL__ROOT=\"${_relroot}\"" >> "$CONFIG_FILE"
-            fi
-            echo "✓ Set OPENPROJECT_RAILS__RELATIVE__URL__ROOT to '${_relroot}' in $(basename "$CONFIG_FILE")"
-            # Export into the current shell for immediate use
-            export OPENPROJECT_RAILS__RELATIVE__URL__ROOT="${_relroot}"
+            if grep -q '^RAILS_URL_ROOT=' "$CONFIG_FILE" 2>/dev/null; then
+                    # replace existing line
+                    sed -i "s|^RAILS_URL_ROOT=.*|RAILS_URL_ROOT=\"${_relroot}\"|" "$CONFIG_FILE" 2>/dev/null || true
+                else
+                    echo "RAILS_URL_ROOT=\"${_relroot}\"" >> "$CONFIG_FILE"
+                fi
+                echo "✓ Set RAILS_URL_ROOT to '${_relroot}' in $(basename "$CONFIG_FILE")"
+                # Export into the current shell for immediate use
+                export RAILS_URL_ROOT="${_relroot}"
         fi
     fi
 

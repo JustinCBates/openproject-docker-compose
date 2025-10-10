@@ -3,7 +3,7 @@ ${DOMAIN_NAME:-:80} {
     ${HANDLE_PATH_BLOCK}
 
     # Default reverse proxy (used when no HANDLE_PATH is configured)
-    reverse_proxy * http://${APP_HOST}:8080 {
+    reverse_proxy * ${APP_HOST}:8080 {
         # Forward explicit X-Forwarded-* headers so upstream apps can know the original request
         header_up X-Forwarded-Proto {header.X-Forwarded-Proto}
         header_up X-Forwarded-For {header.X-Forwarded-For}

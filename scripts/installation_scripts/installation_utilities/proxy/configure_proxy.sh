@@ -38,7 +38,7 @@ fi
 # Compute values (use safe expansions)
 APP_HOST=${APP_HOST:-web}
 DOMAIN_NAME=${DOMAIN_NAME:-${OPENPROJECT_HOST_NAME:-}}
-RELATIVE_ROOT=${OPENPROJECT_RAILS__RELATIVE__URL__ROOT:-}
+RELATIVE_ROOT=${RAILS_URL_ROOT:-}
 PROXY_BIND_ADDRESS=${PROXY_BIND_ADDRESS:-0.0.0.0}
 PROXY_HTTP_PORT=${PROXY_HTTP_PORT:-80}
 PROXY_HTTPS_PORT=${PROXY_HTTPS_PORT:-443}
@@ -54,7 +54,7 @@ fi
 
 # Fallback to reading project .env if still empty
 if [ -z "$RELATIVE_ROOT" ] && [ -f "$PROJECT_ROOT/.env" ]; then
-    val=$(grep -E '^OPENPROJECT_RAILS__RELATIVE__URL__ROOT=' "$PROJECT_ROOT/.env" || true)
+    val=$(grep -E '^RAILS_URL_ROOT=' "$PROJECT_ROOT/.env" || true)
     if [ -n "$val" ]; then
     RELATIVE_ROOT=${val#*=}
     RELATIVE_ROOT=${RELATIVE_ROOT%\"}
@@ -74,9 +74,13 @@ echo "Rendering Caddyfile.template (domain=${DOMAIN_NAME:-<none>}, relative_root
 
 # Determine site header
 if [ -n "$DOMAIN_NAME" ]; then
-    # We render a pair of site addresses: explicit bind:port plus domain host match
-    SITE_HEADER_HTTP="$PROXY_BIND_ADDRESS:$PROXY_HTTP_PORT\n$DOMAIN_NAME"
-    SITE_HEADER_HTTPS="$PROXY_BIND_ADDRESS:$PROXY_HTTPS_PORT\n$DOMAIN_NAME"
+    # Compose address lists: explicit bind:port plus domain host match on the same site header line
+    # Use generic bind addresses (:80/:443) plus hostname to avoid duplicate/ambiguous
+    # site definitions when Caddy performs automatic TLS resolution.
+    # Place the hostname only on the HTTPS site block to avoid ambiguous
+    # site definitions when Caddy performs automatic TLS resolution.
+    SITE_HEADER_HTTP=":$PROXY_HTTP_PORT"
+    SITE_HEADER_HTTPS=":$PROXY_HTTPS_PORT $DOMAIN_NAME"
 else
     SITE_HEADER_HTTP=":$PROXY_HTTP_PORT"
     SITE_HEADER_HTTPS=":$PROXY_HTTPS_PORT"
@@ -109,6 +113,9 @@ CADDY_GLOBAL
         *) TLS_BLOCK="tls internal" ;;
     esac
 
+    # Use resolved upstream dial address (no scheme) to avoid placeholders-in-scheme errors
+    UPSTREAM="${APP_HOST}:8080"
+
     cat >> "$TEMPLATE_FILE" <<EOF
 ${SITE_HEADER_HTTP} {
     # Redirect all HTTP to HTTPS (Caddy will handle redirect target)
@@ -119,7 +126,7 @@ ${SITE_HEADER_HTTPS} {
     ${TLS_BLOCK}
 
     handle_path ${RELATIVE_ROOT} {
-        reverse_proxy http://\${APP_HOST}:8080 {
+        reverse_proxy ${UPSTREAM} {
             header_up X-Forwarded-Proto {http.request.scheme}
             header_up X-Forwarded-For {remote}
             header_up Host {http.request.host}
@@ -157,6 +164,8 @@ CADDY_GLOBAL
         *) TLS_BLOCK="tls internal" ;;
     esac
 
+    UPSTREAM="${APP_HOST}:8080"
+
     cat >> "$TEMPLATE_FILE" <<EOF
 ${SITE_HEADER_HTTP} {
     # Redirect all HTTP to HTTPS
@@ -166,7 +175,7 @@ ${SITE_HEADER_HTTP} {
 ${SITE_HEADER_HTTPS} {
     ${TLS_BLOCK}
 
-    reverse_proxy * http://\${APP_HOST}:8080 {
+    reverse_proxy * ${UPSTREAM} {
         header_up X-Forwarded-Proto {header.X-Forwarded-Proto}
         header_up X-Forwarded-For {header.X-Forwarded-For}
         header_up Host {host}

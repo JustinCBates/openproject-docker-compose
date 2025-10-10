@@ -110,6 +110,14 @@ save_config() {
                 *) value="$_lc" ;;
             esac
             ;;
+        NAMESPACE_ENABLED)
+            _lc=$(printf "%s" "$value" | tr '[:upper:]' '[:lower:]')
+            case "$_lc" in
+                t|true|1|yes|y) value="true" ;;
+                f|false|0|no|n) value="false" ;;
+                *) value="$_lc" ;;
+            esac
+            ;;
     esac
     # Quote the value to handle spaces and special characters
     echo "$key=\"$value\"" >> "$DEPLOY_CONFIG"

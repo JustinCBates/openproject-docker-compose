@@ -848,6 +848,20 @@ numbered_list_prompt() {
         fi
     fi
 
+    # If we computed a default_index from tokens above and a header was
+    # present, the index we computed includes the header element. Adjust
+    # the numeric default index down by one so it matches the items after
+    # header removal. Only adjust when default_token was provided (i.e. the
+    # default was resolved by token lookup), not when the caller supplied a
+    # numeric default explicitly.
+    if [ -n "$header" ] && [ -n "$default_token" ] && printf "%s" "$default_index" | grep -Eq '^[0-9]+$'; then
+        # guard against negative or zero indexes
+        if [ "$default_index" -gt 0 ] 2>/dev/null; then
+            default_index=$((default_index - 1))
+            if [ "$default_index" -lt 1 ] 2>/dev/null; then default_index=1; fi
+        fi
+    fi
+
     # Print optional header with a leading blank line and an underline
     if [ -n "$header" ]; then
         # Leading blank line for visual separation
@@ -866,6 +880,16 @@ numbered_list_prompt() {
     local display_default="$default_index"
     if [ -n "$default_token" ]; then
         display_default="$default_token"
+    fi
+
+    # If we were given a numeric default index and no token, display the
+    # corresponding item token (so the prompt shows the human token instead
+    # of a number). Items array has been adjusted for an optional header above.
+    if [ -z "$default_token" ] && printf "%s" "$default_index" | grep -Eq '^[0-9]+$'; then
+        # Ensure the index is within bounds
+        if [ "$default_index" -ge 1 ] 2>/dev/null && [ "$default_index" -le "${#items[@]}" ] 2>/dev/null; then
+            display_default="${items[$((default_index-1))]}"
+        fi
     fi
 
     # Prompt loop

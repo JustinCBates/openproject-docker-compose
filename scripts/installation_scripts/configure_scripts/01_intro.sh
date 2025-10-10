@@ -38,6 +38,12 @@ print_config_summary() {
         DEFAULT_DBADMIN_PASSWORD
         DATABASE_STORAGE_TYPE
         NAMESPACE
+        PROXY_BIND_ADDRESS
+        PROXY_HTTP_PORT
+        PROXY_HTTPS_PORT
+        PROXY_TLS_MODE
+        RAILS_URL_ROOT
+        DUCKDNS_TOKEN
     )
 
     # Mark critical keys (prepend '*' to the Variable column)

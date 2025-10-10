@@ -134,7 +134,7 @@ init_install_defaults() {
     current_subdomain="$(get_effective "SUBDOMAIN" || get_effective "NAMESPACE" || true)"
     current_env_type="$(get_effective "ENVIRONMENT_TYPE" || true)"
     current_os_family_raw="$(get_effective "OS_FAMILY" || true)"
-    current_relative_root="$(get_effective "OPENPROJECT_RAILS__RELATIVE__URL__ROOT" || true)"
+    current_relative_root="$(get_effective "RAILS_URL_ROOT" || true)"
 
     # (detect_domain_name defined at top-level)
 
@@ -311,7 +311,7 @@ DOMAIN_NAME="$domain"
 OPENPROJECT_HOST_NAME="$host"
 OPENPROJECT_HTTPS="${https}"
 OPENPROJECT_TAG="$tag"
-NAMESPACE=""
+NAMESPACE="StatesmenProjects"
 OS_FAMILY="${os_family:-}"
 # Installer-specified defaults
 DEFAULT_DBADMIN_PASSWORD="admin123"
@@ -323,6 +323,7 @@ PROXY_BIND_ADDRESS="0.0.0.0"
 PROXY_HTTP_PORT="80"
 PROXY_HTTPS_PORT="443"
 PROXY_TLS_MODE="internal"
+NAMESPACE_ENABLED="false"
 EOF
 
     # Append git defaults if detected (keep them on separate lines)
