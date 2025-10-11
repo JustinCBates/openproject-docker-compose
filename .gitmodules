@@ -1,0 +1,3 @@
+[submodule "proxy/integration_test/prober"]
+	path = proxy/integration_test/prober
+	url = https://github.com/JustinCBates/docker_prober_utility.git
