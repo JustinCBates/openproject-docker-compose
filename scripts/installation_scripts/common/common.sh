@@ -130,8 +130,8 @@ init_install_defaults() {
     current_git_user_cfg="$(get_effective "GIT_USERNAME" || true)"
     current_git_email_cfg="$(get_effective "GIT_EMAIL" || true)"
     current_domain="$(get_effective "DOMAIN_NAME" || true)"
-    # Namespace / subdomain compatibility: prefer SUBDOMAIN then URI_NAMESPACE then legacy NAMESPACE
-    current_subdomain="$(get_effective "SUBDOMAIN" || get_effective "URI_NAMESPACE" || get_effective "NAMESPACE" || true)"
+    # Namespace / subdomain compatibility: prefer SUBDOMAIN then URI_NAMESPACE
+    current_subdomain="$(get_effective "SUBDOMAIN" || get_effective "URI_NAMESPACE" || true)"
     current_env_type="$(get_effective "ENVIRONMENT_TYPE" || true)"
     current_os_family_raw="$(get_effective "OS_FAMILY" || true)"
     current_relative_root="$(get_effective "RAILS_RELATIVE_URL_ROOT" || true)"
@@ -316,9 +316,6 @@ OPENPROJECT_HOST_NAME="$host"
 OPENPROJECT_HTTPS="${https}"
 OPENPROJECT_TAG="$tag"
 URI_NAMESPACE="StatesmenProjects"
-# NOTE: The defaults generator no longer emits a combined DOMAIN_NAME/namespace
-# value. The renderer will derive the runtime path-only value
-# (`RAILS_RELATIVE_URL_ROOT`) from `DOMAIN_NAME` and `URI_NAMESPACE`.
 OS_FAMILY="${os_family:-}"
 # Installer-specified defaults
 DEFAULT_DBADMIN_PASSWORD="admin123"
@@ -329,8 +326,8 @@ DATABASE_STORAGE_TYPE="docker-volumes"
 PROXY_BIND_ADDRESS="0.0.0.0"
 PROXY_HTTP_PORT="80"
 PROXY_HTTPS_PORT="443"
-PROXY_TLS_MODE="internal"
-NAMESPACE_ENABLED="false"
+    PROXY_TLS_MODE="internal"
+    URI_NAMESPACE_ENABLED="false"
 EOF
 
     # Append git defaults if detected (keep them on separate lines)

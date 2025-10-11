@@ -93,8 +93,8 @@ PROXY_HTTP_PORT=${PROXY_HTTP_PORT:-80}
 PROXY_HTTPS_PORT=${PROXY_HTTPS_PORT:-443}
 PROXY_TLS_MODE=${PROXY_TLS_MODE:-internal}
 # Read proxy redirect preference (default: empty -> leave Caddy default behavior)
-# Support new key PROXY_HTTPS_REDIRECT; fall back to older PROXY_HTTP_TO_HTTPS_REDIRECT if present
-PROXY_HTTPS_REDIRECT=${PROXY_HTTPS_REDIRECT:-${PROXY_HTTP_TO_HTTPS_REDIRECT:-}}
+# Use only canonical PROXY_HTTPS_REDIRECT
+PROXY_HTTPS_REDIRECT=${PROXY_HTTPS_REDIRECT:-}
 
 # If RELATIVE_ROOT contains unresolved ${...} references, expand them
 if [[ "$RELATIVE_ROOT" == *'${'* ]]; then

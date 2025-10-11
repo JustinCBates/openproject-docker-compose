@@ -37,8 +37,8 @@ print_config_summary() {
         DOMAIN_NAME
         DEFAULT_DBADMIN_PASSWORD
         DATABASE_STORAGE_TYPE
-        NAMESPACE
-        NAMESPACE_ENABLED
+        URI_NAMESPACE
+        URI_NAMESPACE_ENABLED
         PROXY_BIND_ADDRESS
         PROXY_HTTP_PORT
         PROXY_HTTPS_PORT
@@ -49,7 +49,7 @@ print_config_summary() {
 
     # Mark critical keys (prepend '*' to the Variable column)
     # OpenProject tag and Git settings are explicitly NOT critical per request
-    critical=(ENVIRONMENT_TYPE OS_FAMILY OPENPROJECT_HOST_NAME OPENPROJECT_HTTPS PROXY_HTTPS_REDIRECT DOMAIN_NAME DEFAULT_DBADMIN_PASSWORD DATABASE_STORAGE_TYPE NAMESPACE)
+    critical=(ENVIRONMENT_TYPE OS_FAMILY OPENPROJECT_HOST_NAME OPENPROJECT_HTTPS PROXY_HTTPS_REDIRECT DOMAIN_NAME DEFAULT_DBADMIN_PASSWORD DATABASE_STORAGE_TYPE URI_NAMESPACE)
 
     defaults_file="${SCRIPT_DIR}/interactive_config.cfg.defaults"
 

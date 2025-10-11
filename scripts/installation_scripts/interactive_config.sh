@@ -117,7 +117,7 @@ save_config() {
                 *) value="$_lc" ;;
             esac
             ;;
-        NAMESPACE_ENABLED|URI_NAMESPACE_ENABLED)
+        URI_NAMESPACE_ENABLED)
             _lc=$(printf "%s" "$value" | tr '[:upper:]' '[:lower:]')
             case "$_lc" in
                 t|true|1|yes|y) value="true" ;;
@@ -169,7 +169,7 @@ if [ -f "$DEPLOY_CONFIG" ]; then
     sed -i '/^DOMAIN_NAME=""$/d' "$DEPLOY_CONFIG" 2>/dev/null || true
 fi
 
-# Migrate any single-letter or mixed-case boolean values to 'true'/'false'
+    # Migrate any single-letter or mixed-case boolean values to 'true'/'false'
 if [ -f "$DEPLOY_CONFIG" ]; then
     # OPENPROJECT_HTTPS
     if grep -q '^OPENPROJECT_HTTPS=' "$DEPLOY_CONFIG" 2>/dev/null; then
@@ -182,25 +182,8 @@ if [ -f "$DEPLOY_CONFIG" ]; then
             esac
         fi
     fi
-    # Migrate old PROXY_HTTP_TO_HTTPS_REDIRECT -> PROXY_HTTPS_REDIRECT if present
-    if grep -q '^PROXY_HTTP_TO_HTTPS_REDIRECT=' "$DEPLOY_CONFIG" 2>/dev/null; then
-        oldv=$(get_cfg "PROXY_HTTP_TO_HTTPS_REDIRECT" || true)
-        if [ -n "$oldv" ]; then
-            # Normalize and write to new key name
-            lc=$(printf "%s" "$oldv" | tr '[:upper:]' '[:lower:]')
-            case "$lc" in
-                t|true) newv="true" ;;
-                f|false) newv="false" ;;
-                *) newv="$lc" ;;
-            esac
-            # Remove any existing new key and append normalized value
-            grep -v '^PROXY_HTTPS_REDIRECT=' "$DEPLOY_CONFIG" > "${DEPLOY_CONFIG}.tmp" 2>/dev/null || true
-            mv "${DEPLOY_CONFIG}.tmp" "$DEPLOY_CONFIG" 2>/dev/null || true
-            echo "PROXY_HTTPS_REDIRECT=\"$newv\"" >> "$DEPLOY_CONFIG"
-            # Remove old key
-            sed -i '/^PROXY_HTTP_TO_HTTPS_REDIRECT=/d' "$DEPLOY_CONFIG" 2>/dev/null || true
-        fi
-    fi
+    # No legacy migration: only canonical URI_NAMESPACE and URI_NAMESPACE_ENABLED are supported
+    # No legacy migrations here: the installer expects canonical keys only
 fi
 
 # Check if we're in the right directory

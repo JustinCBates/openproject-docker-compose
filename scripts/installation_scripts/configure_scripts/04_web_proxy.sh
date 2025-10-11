@@ -257,10 +257,6 @@ EOF
     # domain_name is set by prompt_with_default; fall back to current_domain
     preview_domain="${domain_name:-$current_domain}"
     preview_namespace="${current_namespace:-$(get_cfg "URI_NAMESPACE" || true)}"
-    # Backwards compatibility: fall back to legacy NAMESPACE if present
-    if [ -z "$preview_namespace" ]; then
-        preview_namespace="$(get_cfg "NAMESPACE" || true)"
-    fi
     # Determine scheme for preview based on HTTPS choice
     scheme="https"
     use_https_lc=$(echo "$use_https" | tr '[:upper:]' '[:lower:]')
@@ -288,12 +284,9 @@ EOF
 )
     subsection "Namespace Configuration" "$namespace_body"
     # New flow: ask whether to enable namespace; prefer value from .cfg and fall back to defaults
-    # Read the URI_NAMESPACE from config (prefer new name, then legacy)
+    # Read the canonical namespace key from config
     current_namespace=$(get_cfg "URI_NAMESPACE" || true)
-    if [ -z "$current_namespace" ]; then
-        current_namespace=$(get_cfg "NAMESPACE" || true)
-    fi
-    default_namespace_enabled=$(get_effective "URI_NAMESPACE_ENABLED" || get_effective "NAMESPACE_ENABLED" || echo "false")
+    default_namespace_enabled=$(get_effective "URI_NAMESPACE_ENABLED" || echo "false")
     # validate_tf will normalize to true/false into namespace_enabled variable
     if validate_tf "Enable namespace support?" "$default_namespace_enabled" namespace_enabled; then
         :
@@ -308,30 +301,25 @@ EOF
     if [ "${namespace_enabled:-false}" = "true" ]; then
         # Use the value already present in the user's config as the default when available.
         # Otherwise fall back to the generated defaults (interactive_config.cfg.defaults).
-        # Prefer the new key name but fall back to the legacy one
-        cfg_ns="$(get_cfg "URI_NAMESPACE" || true)"
-        if [ -z "$cfg_ns" ]; then
-            cfg_ns="$(get_cfg "NAMESPACE" || true)"
-        fi
+    # Prefer the canonical URI_NAMESPACE
+    cfg_ns="$(get_cfg "URI_NAMESPACE" || true)"
         if [ -n "$cfg_ns" ]; then
             prompt_with_default "Namespace " "$cfg_ns" "namespace"
         else
-            prompt_with_default "Namespace " "$(get_effective "NAMESPACE" || true)" "namespace"
+            prompt_with_default "Namespace " "$(get_effective "URI_NAMESPACE" || true)" "namespace"
         fi
             if [ -n "${namespace:-}" ]; then
                 save_config "URI_NAMESPACE" "$namespace"
             else
-                # If user left it empty, remove any existing URI_NAMESPACE or legacy NAMESPACE entry so defaults apply
+                # If user left it empty, remove any existing URI_NAMESPACE entry so defaults apply
                 if [ -f "${DEPLOY_CONFIG:-$SCRIPT_DIR/interactive_config.cfg}" ]; then
                     sed -i '/^URI_NAMESPACE=/d' "${DEPLOY_CONFIG:-$SCRIPT_DIR/interactive_config.cfg}" 2>/dev/null || true
-                    sed -i '/^NAMESPACE=/d' "${DEPLOY_CONFIG:-$SCRIPT_DIR/interactive_config.cfg}" 2>/dev/null || true
                 fi
             fi
     else
-        # Namespace disabled: ensure NAMESPACE is removed from persistent config
+        # Namespace disabled: ensure URI_NAMESPACE is removed from persistent config
         if [ -f "${DEPLOY_CONFIG:-$SCRIPT_DIR/interactive_config.cfg}" ]; then
             sed -i '/^URI_NAMESPACE=/d' "${DEPLOY_CONFIG:-$SCRIPT_DIR/interactive_config.cfg}" 2>/dev/null || true
-            sed -i '/^NAMESPACE=/d' "${DEPLOY_CONFIG:-$SCRIPT_DIR/interactive_config.cfg}" 2>/dev/null || true
         fi
     fi
 
@@ -339,10 +327,8 @@ EOF
 
     # Reprint the preview after the namespace prompt so users see the final URL
     final_domain="${domain_name:-$current_domain}"
-    final_namespace="${namespace:-$(get_cfg "URI_NAMESPACE")}" 
-    if [ -z "$final_namespace" ]; then
-        final_namespace="$(get_cfg "NAMESPACE" || true)"
-    fi
+        final_namespace="${namespace:-$(get_cfg "URI_NAMESPACE")}" 
+    # No legacy fallback to NAMESPACE — use canonical URI_NAMESPACE only
     # Determine scheme again for the final preview
     final_scheme="https"
     if [ "${use_https_lc:-}" != "true" ]; then

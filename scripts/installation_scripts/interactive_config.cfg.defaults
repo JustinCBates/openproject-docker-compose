@@ -4,9 +4,6 @@ OPENPROJECT_HOST_NAME="srv1035368.hstgr.cloud"
 OPENPROJECT_HTTPS="true"
 OPENPROJECT_TAG="stable/16"
 URI_NAMESPACE="StatesmenProjects"
-# NOTE: The defaults generator does not emit a combined DOMAIN/namespace value.
-# The renderer derives the runtime path-only value (`RAILS_RELATIVE_URL_ROOT`)
-# from `DOMAIN_NAME` and `URI_NAMESPACE` and will populate the generated `.env`.
 OS_FAMILY="debian"
 # Installer-specified defaults
 DEFAULT_DBADMIN_PASSWORD="admin123"
@@ -17,7 +14,7 @@ DATABASE_STORAGE_TYPE="docker-volumes"
 PROXY_BIND_ADDRESS="0.0.0.0"
 PROXY_HTTP_PORT="80"
 PROXY_HTTPS_PORT="443"
-PROXY_TLS_MODE="internal"
-NAMESPACE_ENABLED="false"
+    PROXY_TLS_MODE="internal"
+    URI_NAMESPACE_ENABLED="false"
 GIT_USERNAME="Justin Bates"
 GIT_EMAIL="justincbates@proton.me"
