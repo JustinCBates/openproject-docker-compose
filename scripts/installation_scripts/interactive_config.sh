@@ -338,14 +338,14 @@ EOF
 if validate_yn "Would you like to run an integration proxy test to validate these settings now?" "n"; then
     echo
     echo "Running integration proxy test (prober)..."
-    PROBER="$SCRIPT_DIR/../../proxy/test/prober.sh"
+    PROBER="$SCRIPT_DIR/../../proxy/integration_test/prober.sh"
     if [ -x "$PROBER" ]; then
         # Prober will manage prompts and call the run_integration_test helper.
         "$PROBER" || {
             echo "Integration prober failed or was left running. You may re-run interactive configuration to adjust settings." >&2
         }
     else
-        echo "⚠ Integration prober not found at: $PROBER" >&2
+    echo "⚠ Integration prober not found at: $PROBER" >&2
     fi
 fi
 
