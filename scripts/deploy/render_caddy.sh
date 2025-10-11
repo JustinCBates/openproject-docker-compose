@@ -58,11 +58,28 @@ cleanup() { rm -f "$OUT_TMP" "$ERR_TMP" || true; }
 trap cleanup EXIT
 
 if [ "$VERBOSE" -eq 1 ]; then echo "Rendering $TEMPLATE -> $OUT_TMP"; fi
-# Render using gomplate with [[ ]] delimiters to avoid conflicts with Caddy braces
-if ! gomplate --left-delim='[[' --right-delim=']]' -f "$TEMPLATE" -o "$OUT_TMP" 2>"$ERR_TMP"; then
-  echo "ERROR: gomplate rendering failed; see $ERR_TMP" >&2
-  sed -n '1,200p' "$ERR_TMP" >&2 || true
-  exit 3
+# Detect which delimiters the template uses. If it contains '{{' assume default Go template
+delim_option=""
+if grep -q '{{' "$TEMPLATE" >/dev/null 2>&1; then
+  delim_option="default"
+elif grep -q '\[\[' "$TEMPLATE" >/dev/null 2>&1; then
+  delim_option="brackets"
+fi
+
+if [ "$delim_option" = "brackets" ]; then
+  # Use [[ ]] delimiters
+  if ! gomplate --left-delim='[[' --right-delim=']]' -f "$TEMPLATE" -o "$OUT_TMP" 2>"$ERR_TMP"; then
+    echo "ERROR: gomplate rendering failed; see $ERR_TMP" >&2
+    sed -n '1,200p' "$ERR_TMP" >&2 || true
+    exit 3
+  fi
+else
+  # Default delimiters ({{ }})
+  if ! gomplate -f "$TEMPLATE" -o "$OUT_TMP" 2>"$ERR_TMP"; then
+    echo "ERROR: gomplate rendering failed; see $ERR_TMP" >&2
+    sed -n '1,200p' "$ERR_TMP" >&2 || true
+    exit 3
+  fi
 fi
 
 # Prefer validating inside the proxy container; if not available, try local caddy adapt

@@ -37,7 +37,7 @@
 
 :{{ $https }}{{ if ne $host "" }} {{ $host }}{{ end }} {
 
-    {{ /* TLS block selection */ }}
+    {{/* TLS block selection */}}
     {{ if eq $tls "internal" }}
     tls internal
     {{ else if eq $tls "letsencrypt_staging" }}
@@ -47,7 +47,7 @@
     {{ else if eq $tls "acme_duckdns" }}
     tls /etc/caddy/certs/{{ $host }}.fullchain.pem /etc/caddy/certs/{{ $host }}.key
     {{ else }}
-    {{ /* letsencrypt_prod or unknown: default Caddy behavior (no explicit tls block) */ }}
+    {{/* letsencrypt_prod or unknown: default Caddy behavior (no explicit tls block) */}}
     {{ end }}
 
     {{/* If relroot is not root, proxy only matching paths and preserve the path */}}
@@ -55,16 +55,10 @@
     @openproject path {{ $rel }}*
     handle @openproject {
         reverse_proxy {{ $upstream }}:8080 {
-            header_up X-Forwarded-Proto {http.request.scheme}
-            header_up X-Forwarded-For {remote}
-            header_up Host {http.request.host}
         }
     }
     {{ else }}
     reverse_proxy * {{ $upstream }}:8080 {
-        header_up X-Forwarded-Proto {http.request.scheme}
-        header_up X-Forwarded-For {remote}
-        header_up Host {http.request.host}
     }
     {{ end }}
 
