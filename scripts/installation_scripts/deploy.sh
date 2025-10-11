@@ -128,6 +128,25 @@ else
 fi
 echo
 
+echo "Step 5: Rendering and validating proxy configuration (Caddyfile)"
+echo "=============================================================="
+# Render the Caddyfile unless we're doing a dry-run
+if [ "$DRY_RUN" -eq 0 ]; then
+    if [ -x "$(pwd)/scripts/deploy/render_caddy.sh" ]; then
+        echo "Rendering Caddyfile from template..."
+        ./scripts/deploy/render_caddy.sh || {
+            echo "Error: rendering or validation of Caddyfile failed" >&2
+            exit 1
+        }
+        echo "✓ Caddyfile rendered and loaded"
+    else
+        echo "⚠ Warning: render_caddy.sh not found or not executable; skipping Caddy rendering"
+    fi
+else
+    echo "Dry-run mode: skipping Caddyfile rendering"
+fi
+echo
+
 # Print a concise endpoint URL for the deployed OpenProject instance.
 # Prefer DOMAIN_NAME when provided, fall back to OPENPROJECT_HOST_NAME.
 _host="${DOMAIN_NAME:-${OPENPROJECT_HOST_NAME:-}}"

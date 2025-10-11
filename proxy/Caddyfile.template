@@ -1,14 +1,23 @@
+{{/*
+  Caddyfile template rendered by gomplate. Runtime values are read from environment
+  variables; render with the renderer script in scripts/deploy/render_caddy.sh
+*/}}
+
 :80 {
     # Redirect all HTTP to HTTPS (Caddy will handle redirect target)
     redir https://{host}{uri} 308
 }
 
-:443 srv1035368.hstgr.cloud {
-    tls {
-    ca https://acme-staging-v02.api.letsencrypt.org/directory
-}
+{{ $host := getenv "OPENPROJECT_HOST_NAME" | default "localhost" }}
+{{ $rel := getenv "RAILS_RELATIVE_URL_ROOT" | default "/StatesmenProjects" }}
 
-    handle_path /StatesmenProjects {
+:443 {{ $host }} {
+    tls {
+        ca https://acme-staging-v02.api.letsencrypt.org/directory
+    }
+
+    @openproject path {{ $rel }}*
+    handle @openproject {
         reverse_proxy web:8080 {
             header_up X-Forwarded-Proto {http.request.scheme}
             header_up X-Forwarded-For {remote}
