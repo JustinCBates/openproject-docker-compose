@@ -19,6 +19,9 @@ chown "$(id -u):$(id -g)" "$TMP_ROOT" 2>/dev/null || true
 # Project root (repo) so we can locate installer helpers
 PROJECT_ROOT="$(cd "$PROXY_DIR/.." && pwd)"
 
+# By default, run the integration probe without TLS so host-side probes can use HTTP
+INTEGRATION_NO_TLS="${INTEGRATION_NO_TLS:-1}"
+
 # Compose command to use (discovered at runtime)
 COMPOSE_CMD=""
 
@@ -264,39 +267,54 @@ create_temp_project() {
         # issues inside the temporary image. If INTEGRATION_NO_TLS=0 we still
         # provide a minimal TLS listener, but skip ACME for speed.
         if [ "${INTEGRATION_NO_TLS:-0}" = "1" ]; then
+            # When bundling the hello backend into the same container, target localhost
             cat > "$tmpdir/Caddyfile" <<'EOF'
 :80 {
-    reverse_proxy hello:8080
+    reverse_proxy 127.0.0.1:8080
 }
 EOF
         else
             # Simple HTTPS listener on 443 that uses internal TLS to avoid ACME in tests
+            # When bundling the hello backend into the same container, target localhost
             cat > "$tmpdir/Caddyfile" <<'EOF'
 :443 {
     tls internal
-    reverse_proxy hello:8080
+    reverse_proxy 127.0.0.1:8080
 }
 EOF
         fi
 
-        # create a lightweight proxy Dockerfile that uses caddy:2 and the copied template
-        # We avoid runtime substitution by copying the template to Caddy's config path.
+        # create a lightweight proxy Dockerfile that uses caddy:2, bundles the hello app,
+        # and runs both processes inside a single container. This keeps the prober to one
+        # container while still testing the proxy behaviour against a minimal backend.
     cat > "$tmpdir/Dockerfile" <<'EOF'
 FROM caddy:2
-# Install curl for runtime diagnostics in the integration-test proxy container.
-# caddy:2 is based on alpine, so use apk. Keep the image small by cleaning apk cache.
-RUN apk add --no-cache curl
-COPY ./Caddyfile /etc/caddy/Caddyfile
+# Install curl and python so the container can run the tiny hello app for probes.
+RUN apk add --no-cache curl python3
 
-ENTRYPOINT ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
+# Copy the rendered Caddyfile and the hello app into the image
+COPY ./Caddyfile /etc/caddy/Caddyfile
+COPY ./app.py /app/app.py
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
 EOF
 
-        # copy hello app Dockerfile and app
-        mkdir -p "$tmpdir/hello"
-        cp "$PROXY_DIR/test/hello/Dockerfile" "$tmpdir/hello/Dockerfile"
-        cp "$PROXY_DIR/test/hello/app.py" "$tmpdir/hello/app.py"
+        # copy hello app into the tempdir (we'll bundle it into the proxy image)
+        cp "$PROXY_DIR/test/hello/app.py" "$tmpdir/app.py"
 
-        # create a compose file that builds both proxy and hello in this tempdir
+        # create an entrypoint script that launches the hello app in background and then caddy
+        cat > "$tmpdir/entrypoint.sh" <<'EOF'
+#!/bin/sh
+set -e
+# Start hello backend
+python3 /app/app.py &
+# Run caddy in foreground with the provided Caddyfile
+exec caddy run --config /etc/caddy/Caddyfile
+EOF
+
+        # create a compose file that builds a single proxy service (which includes hello)
             # If NO_TLS, map host PROXY_HOST_PORT to container 80 (HTTP); otherwise map to 443 (HTTPS)
             target_port=443
             if [ "${INTEGRATION_NO_TLS:-0}" = "1" ]; then
@@ -315,16 +333,6 @@ EOF
                             - APP_HOST=hello
                         ports:
                             - "${PROXY_HOST_PORT}:${target_port}"
-                        depends_on:
-                            - hello
-
-                    hello:
-                        build:
-                            context: ./hello
-                            dockerfile: Dockerfile
-                        image: openproject/proxy-hello-integration:latest
-                        expose:
-                            - "8080"
 
                 networks:
                     default:
