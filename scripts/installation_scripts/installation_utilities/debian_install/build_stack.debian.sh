@@ -334,12 +334,14 @@ check_stack_health() {
     # Test basic connectivity
     local host="${OPENPROJECT_HOST_NAME:-localhost}"
     local protocol="http"
+    # prefer canonical RAILS_RELATIVE_URL_ROOT, fall back to RAILS_URL_ROOT or '/'
+    local relroot="${RAILS_RELATIVE_URL_ROOT:-${RAILS_URL_ROOT:-/}}"
     
     if [ "${OPENPROJECT_HTTPS:-false}" = "true" ]; then
         protocol="https"
     fi
     
-    echo "Testing connectivity to $protocol://$host..."
+    echo "Testing connectivity to $protocol://${host}${relroot}..."
     
     # Wait for service to be ready with Debian-specific timeout
     local max_attempts=60
@@ -352,17 +354,26 @@ check_stack_health() {
 
     # Initialize a known-width progress bar using the total attempts when enabled
     if [ "$USE_PB" != "0" ] && command -v progress_bar_init >/dev/null 2>&1; then
-        progress_bar_init "Waiting for OpenProject at ${protocol}://${host}" "$max_attempts" 40
+        progress_bar_init "Waiting for OpenProject at ${protocol}://${host}${relroot}" "$max_attempts" 40
     else
-        printf "%s" "Waiting for OpenProject at ${protocol}://${host}"
+        printf "%s" "Waiting for OpenProject at ${protocol}://${host}${relroot}"
     fi
 
+    # Normalize relroot and build the health endpoint to check
+    if [ "${relroot}" = "/" ]; then
+        relpath=""
+    else
+        # strip trailing slash if present
+        relpath="${relroot%/}"
+    fi
+    endpoint="${protocol}://${host}${relpath}/health_checks/default"
+
     while [ $attempt -le $max_attempts ]; do
-        if curl -s -o /dev/null -w "%{http_code}" "${protocol}://${host}" 2>/dev/null | grep -q "200\|302\|401"; then
+        if curl -s -o /dev/null -w "%{http_code}" "${endpoint}" 2>/dev/null | grep -q "200\|302\|401"; then
             if command -v progress_bar_finish >/dev/null 2>&1; then
-                progress_bar_finish "✓ OpenProject is responding at ${protocol}://${host}"
+                progress_bar_finish "✓ OpenProject is responding at ${endpoint}"
             else
-                printf "\n✓ OpenProject is responding at %s://%s\n" "$protocol" "$host"
+                printf "\n✓ OpenProject is responding at %s\n" "$endpoint"
             fi
             break
         else

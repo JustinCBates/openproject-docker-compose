@@ -182,8 +182,7 @@ if [ -f "$DEPLOY_CONFIG" ]; then
             esac
         fi
     fi
-    # No legacy migration: only canonical URI_NAMESPACE and URI_NAMESPACE_ENABLED are supported
-    # No legacy migrations here: the installer expects canonical keys only
+    # Installer expects canonical keys (URI_NAMESPACE, URI_NAMESPACE_ENABLED)
 fi
 
 # Check if we're in the right directory

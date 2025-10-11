@@ -24,6 +24,16 @@ echo "=========================================="
 echo "Proxy Configuration Utility"
 echo "=========================================="
 
+# Helper: read from a real terminal if available so prompts work when stdin/stdout are redirected
+tty_read() {
+    local prompt_text=${1:-}
+    if [ -c /dev/tty ]; then
+        read -r -p "$prompt_text" < /dev/tty || true
+    else
+        read -r -p "$prompt_text" || true
+    fi
+}
+
 # Support an integration test mode to run an isolated proxy+hello backend and validate
 # the active Caddy template end-to-end without leaving artifacts.
 if [ "${1:-}" = "--integration-test" ]; then
@@ -50,6 +60,15 @@ if [ "${1:-}" = "--integration-test" ]; then
 
     if curl -sSf "$TEST_URL" -m 5 >/dev/null 2>&1; then
         echo "✓ Integration proxy responded at $TEST_URL"
+        # Prompt the user before cleaning up so they can inspect the integration project
+        if [ -t 0 ] || [ -c /dev/tty ]; then
+            echo "Press ENTER to tear down the integration project and continue the deploy (or Ctrl-C to leave it running)"
+            # use tty_read to ensure the prompt appears when stdin/stdout are redirected
+            tty_read ""
+        else
+            # Non-interactive: wait a short moment to allow checks, then proceed
+            sleep 3
+        fi
         # Clean up the integration project
         "$HELPER_SCRIPT" down
         "$HELPER_SCRIPT" clean
@@ -96,6 +115,10 @@ PROXY_TLS_MODE=${PROXY_TLS_MODE:-internal}
 # Use only canonical PROXY_HTTPS_REDIRECT
 PROXY_HTTPS_REDIRECT=${PROXY_HTTPS_REDIRECT:-}
 
+# Ensure proxy paths are defined early to avoid unbound variable when script is parsed
+PROXY_DIR=${PROXY_DIR:-"$PROJECT_ROOT/proxy"}
+TEMPLATE_FILE=${TEMPLATE_FILE:-"$PROXY_DIR/Caddyfile.template"}
+
 # If RELATIVE_ROOT contains unresolved ${...} references, expand them
 if [[ "$RELATIVE_ROOT" == *'${'* ]]; then
     eval "RELATIVE_ROOT=\"$RELATIVE_ROOT\""
@@ -107,11 +130,9 @@ fi
     val=$(grep -E '^(RAILS_RELATIVE_URL_ROOT)=' "$PROJECT_ROOT/.env" || true)
         if [ -n "$val" ]; then
             RELATIVE_ROOT=${val#*=}
-            RELATIVE_ROOT=
             # strip surrounding quotes if present
-            RELATIVE_ROOT=${val#*=}
-            RELATIVE_ROOT=${RELATIVE_ROOT%"}
-            RELATIVE_ROOT=${RELATIVE_ROOT#"}
+            RELATIVE_ROOT=${RELATIVE_ROOT%\"}
+            RELATIVE_ROOT=${RELATIVE_ROOT#\"}
         fi
     fi
 
@@ -147,11 +168,11 @@ fi
 if [ -n "$RELATIVE_ROOT" ] && [ "$RELATIVE_ROOT" != "/" ]; then
     # If the config explicitly disables HTTP->HTTPS redirects, prepend the global Caddy option
     if [ -n "$PROXY_HTTPS_REDIRECT" ] && [ "$PROXY_HTTPS_REDIRECT" = "false" ]; then
-        cat > "$TEMPLATE_FILE" <<'CADDY_GLOBAL'
+          cat > "$TEMPLATE_FILE" <<'EOF'
 {
     auto_https disable_redirects
 }
-CADDY_GLOBAL
+EOF
     fi
     # Choose TLS behavior based on PROXY_TLS_MODE
     case "$PROXY_TLS_MODE" in
@@ -199,11 +220,11 @@ EOF
 else
     # If the config explicitly disables HTTP->HTTPS redirects, prepend the global Caddy option
     if [ -n "$PROXY_HTTPS_REDIRECT" ] && [ "$PROXY_HTTPS_REDIRECT" = "false" ]; then
-        cat > "$TEMPLATE_FILE" <<'CADDY_GLOBAL'
+          cat > "$TEMPLATE_FILE" <<'EOF'
 {
     auto_https disable_redirects
 }
-CADDY_GLOBAL
+EOF
     fi
 
     # Non-relative-root (root site) rendering: choose TLS block similarly

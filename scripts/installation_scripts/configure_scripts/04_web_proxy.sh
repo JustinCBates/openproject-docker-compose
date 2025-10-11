@@ -328,7 +328,7 @@ EOF
     # Reprint the preview after the namespace prompt so users see the final URL
     final_domain="${domain_name:-$current_domain}"
         final_namespace="${namespace:-$(get_cfg "URI_NAMESPACE")}" 
-    # No legacy fallback to NAMESPACE — use canonical URI_NAMESPACE only
+    # Use canonical URI_NAMESPACE only
     # Determine scheme again for the final preview
     final_scheme="https"
     if [ "${use_https_lc:-}" != "true" ]; then

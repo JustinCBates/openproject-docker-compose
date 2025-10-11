@@ -394,7 +394,11 @@ main() {
 
     # Configure proxy (render Caddyfile/template) if proxy utility exists
     if [ -f "$SCRIPT_DIR/../proxy/configure_proxy.sh" ]; then
-        "$SCRIPT_DIR/../proxy/configure_proxy.sh"
+        if [ "${INTEGRATION_TEST:-}" = "1" ]; then
+            "$SCRIPT_DIR/../proxy/configure_proxy.sh" --integration-test
+        else
+            "$SCRIPT_DIR/../proxy/configure_proxy.sh"
+        fi
     fi
     echo
     

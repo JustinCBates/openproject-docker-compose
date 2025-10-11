@@ -22,10 +22,10 @@ create_temp_project() {
         # copy current Caddyfile.template (user edits respected) unless NO_TLS requested
         if [ "${INTEGRATION_NO_TLS:-0}" = "1" ]; then
                 cat > "$tmpdir/Caddyfile.template" <<'EOF'
-            :80 {
-                reverse_proxy hello:8080
-            }
-            EOF
+:80 {
+    reverse_proxy hello:8080
+}
+EOF
         else
             if [ -f "$PROXY_DIR/Caddyfile.template" ]; then
                 cp "$PROXY_DIR/Caddyfile.template" "$tmpdir/Caddyfile.template"
@@ -41,8 +41,8 @@ create_temp_project() {
     FROM caddy:2
     COPY ./Caddyfile.template /etc/caddy/Caddyfile
 
-    ENTRYPOINT ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
-    EOF
+ENTRYPOINT ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
+EOF
 
         # copy hello app Dockerfile and app
         mkdir -p "$tmpdir/hello"
@@ -82,15 +82,15 @@ create_temp_project() {
                 networks:
                     default:
                         name: "${proj_name}_net"
-                EOF
+EOF
 
         # record state
         cat > "$STATE_FILE" <<EOF
     TS=$ts
     PROJECT_DIR=$tmpdir
     PROJECT_NAME=$proj_name
-    PROXY_HOST_PORT=$PROXY_HOST_PORT
-    EOF
+PROXY_HOST_PORT=$PROXY_HOST_PORT
+EOF
 }
 
 case "$cmd" in
@@ -102,13 +102,19 @@ case "$cmd" in
         echo "Started integration proxy on host port ${PROXY_HOST_PORT}. To test: curl -k https://localhost:${PROXY_HOST_PORT}/"
         ;;
     down)
-        if [ -f "$STATE_FILE" ]; then
-                source "$STATE_FILE"
-                echo "Tearing down project $PROJECT_NAME in $PROJECT_DIR"
-                (cd "$PROJECT_DIR" && docker compose down)
-        else
-                echo "No integration state found; nothing to stop"
+    if [ -f "$STATE_FILE" ]; then
+        source "$STATE_FILE"
+        echo "Tearing down project $PROJECT_NAME in $PROJECT_DIR"
+        # prompt using /dev/tty when available so prompts are visible in redirected contexts
+        if [ -c /dev/tty ]; then
+            read -r -p "Press ENTER to confirm teardown (or Ctrl-C to abort)" < /dev/tty || true
+        elif [ -t 0 ]; then
+            read -r -p "Press ENTER to confirm teardown (or Ctrl-C to abort)" || true
         fi
+        (cd "$PROJECT_DIR" && docker compose down)
+    else
+        echo "No integration state found; nothing to stop"
+    fi
         ;;
     clean)
         if [ -f "$STATE_FILE" ]; then

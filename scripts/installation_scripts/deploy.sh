@@ -9,6 +9,7 @@ echo "=========================================="
 echo "OpenProject Deployment Script"
 echo "=========================================="
 echo
+clear
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -27,6 +28,11 @@ while [ "$#" -gt 0 ]; do
     case "$1" in
         -n|--dry-run)
             DRY_RUN=1
+            shift
+            ;;
+        --integration-test)
+            INTEGRATION_TEST=1
+            export INTEGRATION_TEST=1
             shift
             ;;
         --)
