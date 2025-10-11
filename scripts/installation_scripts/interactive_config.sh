@@ -318,6 +318,42 @@ else
     done
 fi
 
+
+
+
+# Offer to run an integration proxy test so users can validate their settings
+# before committing to a full build/deploy. This uses the existing proxy
+# integration helper which spins up a temporary proxy+hello backend and waits
+# for the user to inspect/confirm before tearing down.
+
+
+    integration_test_body=$(cat <<EOF
+Choose the OpenProject repository tag (release or branch) to deploy. 
+If unsure, use the default stable tag. Not currently used for any 
+functionality in the build process. So don't sweat it too much.
+EOF
+)
+    section "Quick Test" "$integration_test_body"
+
+if validate_yn "Would you like to run an integration proxy test to validate these settings now?" "n"; then
+    echo
+    echo "Running integration proxy test (prober)..."
+    PROBER="$SCRIPT_DIR/../../proxy/test/prober.sh"
+    if [ -x "$PROBER" ]; then
+        # Prober will manage prompts and call the run_integration_test helper.
+        "$PROBER" || {
+            echo "Integration prober failed or was left running. You may re-run interactive configuration to adjust settings." >&2
+        }
+    else
+        echo "⚠ Integration prober not found at: $PROBER" >&2
+    fi
+fi
+
+
+
+
+    # ...existing code continues
+
 # Ask if user wants to run deployment now (run_finalize will already have printed
 # the final configuration summary for the user).
 # If required keys are missing, use a safer confirmation prompt and default to 'n'.
@@ -375,3 +411,4 @@ else
     echo "To deploy OpenProject, run:"
     echo "  ./scripts/installation_scripts/deploy.sh"
 fi
+

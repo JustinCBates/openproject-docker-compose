@@ -1,0 +1,52 @@
+2025-10-11T04:34:17Z === diagnostics started ===
+2025-10-11T04:34:17Z PROXY_HOST=srv1035368.hstgr.cloud PROXY_IP=127.0.0.1 RELROOT=/StatesmenProjects UPSTREAM=web
+2025-10-11T04:34:17Z Checking docker compose status...
+2025-10-11T04:34:17Z 1) Upstream app health (from web container -> http://localhost:8080/StatesmenProjects/health_checks/default)
+2025-10-11T04:34:17Z exec in web: curl -sS -o /tmp/_probe_upstream_body -w '%{http_code}' http://localhost:8080/StatesmenProjects/health_checks/default
+2002025-10-11T04:34:18Z Upstream HTTP status: 200
+2025-10-11T04:34:18Z exec in web: head -c 200 /tmp/_probe_upstream_body || true
+default: PASSED Application is running (0.000s)2025-10-11T04:34:18Z 2) Proxy container -> web service (http://web:8080/StatesmenProjects/health_checks/default)
+2025-10-11T04:34:18Z exec in proxy: curl -sS -o /tmp/_probe_proxy_web_body -w '%{http_code}' http://web:8080/StatesmenProjects/health_checks/default
+sh: curl: not found
+2025-10-11T04:34:18Z COMMAND FAILED: exec proxy -> curl -sS -o /tmp/_probe_proxy_web_body -w '%{http_code}' http://web:8080/StatesmenProjects/health_checks/default
+2025-10-11T04:34:18Z proxy->web HTTP status: ERR
+2025-10-11T04:34:18Z exec in proxy: head -c 200 /tmp/_probe_proxy_web_body || true
+head: /tmp/_probe_proxy_web_body: No such file or directory
+2025-10-11T04:34:18Z 3) Caddyfile present in proxy: /etc/caddy/Caddyfile
+
+
+:80 {
+    # Redirect all HTTP to HTTPS (Caddy will handle redirect target)
+    redir https://{host}{uri} 308
+}
+
+
+
+
+:443 example.test {
+    tls {
+        ca https://acme-staging-v02.api.letsencrypt.org/directory
+    }
+
+    @openproject path /StatesmenProjects*
+    handle @openproject {
+        reverse_proxy web:8080 {
+            header_up X-Forwarded-Proto {http.request.scheme}
+            header_up X-Forwarded-For {remote}
+            header_up Host {http.request.host}
+        }
+    }
+
+    file_server
+    log
+}
+2025-10-11T04:34:18Z Running caddy adapt --config /etc/caddy/Caddyfile
+{"level":"warn","ts":1760157258.6774883,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-Proto: the reverse proxy's default behavior is to pass headers to the upstream"}
+{"level":"warn","ts":1760157258.6775098,"logger":"caddyfile","msg":"Unnecessary header_up X-Forwarded-For: the reverse proxy's default behavior is to pass headers to the upstream"}
+{"level":"warn","ts":1760157258.6808662,"logger":"caddyfile","msg":"Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies","file":"/etc/caddy/Caddyfile","line":1}
+2025-10-11T04:34:18Z caddy adapt: OK
+2025-10-11T04:34:18Z 4) External HTTPS probe: https://srv1035368.hstgr.cloud/StatesmenProjects/health_checks/default (resolve srv1035368.hstgr.cloud:443 -> 127.0.0.1)
+curl: (35) OpenSSL/3.0.17: error:0A000438:SSL routines::tlsv1 alert internal error
+2025-10-11T04:34:18Z External HTTP status: ERR
+2025-10-11T04:34:18Z $ curl -sS -k -I --resolve 'srv1035368.hstgr.cloud:443:127.0.0.1' -H 'Host: srv1035368.hstgr.cloud' 'https://srv1035368.hstgr.cloud/StatesmenProjects/health_checks/default' | sed -n '1,40p'
+curl: (35) OpenSSL/3.0.17: error:0A000438:SSL routines::tlsv1 alert internal error

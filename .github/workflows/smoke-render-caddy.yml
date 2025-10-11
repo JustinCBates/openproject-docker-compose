@@ -1,0 +1,31 @@
+name: Smoke render Caddy
+
+on:
+  pull_request:
+    paths:
+      - 'proxy/Caddyfile.template'
+      - 'scripts/deploy/render_caddy.sh'
+      - 'scripts/ci/smoke_render_caddy.sh'
+
+jobs:
+  smoke-render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl ca-certificates
+      - name: Install gomplate
+        run: |
+          GOMPLATE_URL="https://github.com/hairyhenderson/gomplate/releases/latest/download/gomplate_linux_amd64"
+          curl -fsSL "$GOMPLATE_URL" -o gomplate && chmod +x gomplate
+          sudo mv gomplate /usr/local/bin/gomplate
+      - name: Install caddy (for adapt)
+        run: |
+          CADDY_URL="https://github.com/caddyserver/caddy/releases/latest/download/caddy_2.6.4_linux_amd64.tar.gz"
+          curl -sL "$CADDY_URL" | tar xz
+          sudo mv caddy /usr/local/bin/caddy || true
+      - name: Run smoke render
+        run: |
+          ./scripts/ci/smoke_render_caddy.sh

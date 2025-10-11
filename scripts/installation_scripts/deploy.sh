@@ -128,6 +128,25 @@ else
 fi
 echo
 
+# If deploy was invoked with --integration-test, run the proxy integration helper
+# so the test container is part of the configuration workflow. This uses the
+# existing configure_proxy.sh --integration-test flow which starts an isolated
+# proxy+hello backend and validates it end-to-end.
+if [ "${INTEGRATION_TEST:-0}" = "1" ]; then
+    echo "Integration-test mode: running proxy integration helper..."
+    if [ -x "$UTILITIES_DIR/proxy/configure_proxy.sh" ]; then
+        "$UTILITIES_DIR/proxy/configure_proxy.sh" --integration-test || {
+            echo "Error: integration proxy test failed" >&2
+            exit 1
+        }
+        echo "✓ Integration proxy test completed"
+    else
+        echo "⚠ Warning: configure_proxy.sh not found; cannot run integration-test helper" >&2
+    fi
+    echo
+fi
+
+
 echo "Step 5: Rendering and validating proxy configuration (Caddyfile)"
 echo "=============================================================="
 # Render the Caddyfile unless we're doing a dry-run
