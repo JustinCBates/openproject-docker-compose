@@ -12,12 +12,55 @@ if [ -f "$SCRIPT_DIR/../../common/common_ui.sh" ]; then
     # shellcheck source=/dev/null
     source "$SCRIPT_DIR/../../common/common_ui.sh"
 fi
+# Source shared config renderer for validation helpers
+if [ -f "$SCRIPT_DIR/../../common/config_render.sh" ]; then
+    # shellcheck source=/dev/null
+    source "$SCRIPT_DIR/../../common/config_render.sh"
+fi
 # The central interactive_config.cfg lives two levels up from installation_utilities/proxy
 CONFIG_FILE="$SCRIPT_DIR/../../interactive_config.cfg"
 
 echo "=========================================="
 echo "Proxy Configuration Utility"
 echo "=========================================="
+
+# Support an integration test mode to run an isolated proxy+hello backend and validate
+# the active Caddy template end-to-end without leaving artifacts.
+if [ "${1:-}" = "--integration-test" ]; then
+    HELPER_SCRIPT="$PROJECT_ROOT/proxy/test/run_integration_test.sh"
+    if [ ! -x "$HELPER_SCRIPT" ]; then
+        echo "❌ Integration helper not found or not executable: $HELPER_SCRIPT"
+        exit 2
+    fi
+
+    echo "Running integration test (isolated project)..."
+    # Start isolated project in NO_TLS mode so we can test HTTP quickly
+    INTEGRATION_NO_TLS=1 "$HELPER_SCRIPT" up
+
+    # read state to find host port
+    STATE_FILE="$PROJECT_ROOT/proxy/test/integration_state"
+    if [ -f "$STATE_FILE" ]; then
+        # shellcheck disable=SC1090
+        source "$STATE_FILE"
+    fi
+
+    TEST_URL="http://localhost:${PROXY_HOST_PORT:-8082}/"
+    echo "Waiting briefly for integration proxy to accept connections..."
+    sleep 1
+
+    if curl -sSf "$TEST_URL" -m 5 >/dev/null 2>&1; then
+        echo "✓ Integration proxy responded at $TEST_URL"
+        # Clean up the integration project
+        "$HELPER_SCRIPT" down
+        "$HELPER_SCRIPT" clean
+        exit 0
+    else
+        echo "✗ Integration proxy did not respond at $TEST_URL" >&2
+        echo "Leaving integration project running for investigation: state file at $STATE_FILE" >&2
+        # Do not auto-clean so user can inspect; return non-zero
+        exit 3
+    fi
+fi
 
 # Load defaults first to provide fallbacks
 DEFAULTS_FILE="$SCRIPT_DIR/../../interactive_config.cfg.defaults"
@@ -34,11 +77,17 @@ if [ -f "$CONFIG_FILE" ]; then
     source "$CONFIG_FILE"
 fi
 
+# If the shared renderer is available, compute deployment values (RAILS_RELATIVE_URL_ROOT, etc.)
+if type detect_deployment_values >/dev/null 2>&1; then
+    detect_deployment_values "$PROJECT_ROOT" "$DEFAULTS_FILE" "$CONFIG_FILE"
+fi
+
 # Compute values
 # Compute values (use safe expansions)
 APP_HOST=${APP_HOST:-web}
 DOMAIN_NAME=${DOMAIN_NAME:-${OPENPROJECT_HOST_NAME:-}}
-RELATIVE_ROOT=${RAILS_URL_ROOT:-}
+# Use the renderer-provided path value
+RELATIVE_ROOT=${RAILS_RELATIVE_URL_ROOT:-}
 PROXY_BIND_ADDRESS=${PROXY_BIND_ADDRESS:-0.0.0.0}
 PROXY_HTTP_PORT=${PROXY_HTTP_PORT:-80}
 PROXY_HTTPS_PORT=${PROXY_HTTPS_PORT:-443}
@@ -53,18 +102,22 @@ if [[ "$RELATIVE_ROOT" == *'${'* ]]; then
 fi
 
 # Fallback to reading project .env if still empty
-if [ -z "$RELATIVE_ROOT" ] && [ -f "$PROJECT_ROOT/.env" ]; then
-    val=$(grep -E '^RAILS_URL_ROOT=' "$PROJECT_ROOT/.env" || true)
-    if [ -n "$val" ]; then
+    if [ -z "$RELATIVE_ROOT" ] && [ -f "$PROJECT_ROOT/.env" ]; then
+    # Prefer explicit RAILS_RELATIVE_URL_ROOT in .env
+    val=$(grep -E '^(RAILS_RELATIVE_URL_ROOT)=' "$PROJECT_ROOT/.env" || true)
+        if [ -n "$val" ]; then
+            RELATIVE_ROOT=${val#*=}
+            RELATIVE_ROOT=
+            # strip surrounding quotes if present
+            RELATIVE_ROOT=${val#*=}
+            RELATIVE_ROOT=${RELATIVE_ROOT%"}
+            RELATIVE_ROOT=${RELATIVE_ROOT#"}
+        fi
+    fi
 
 # Truncate the template file so multiple runs don't append duplicate site blocks
 if [ -f "$TEMPLATE_FILE" ]; then
     : > "$TEMPLATE_FILE"
-fi
-    RELATIVE_ROOT=${val#*=}
-    RELATIVE_ROOT=${RELATIVE_ROOT%\"}
-    RELATIVE_ROOT=${RELATIVE_ROOT#\"}
-    fi
 fi
 
 PROXY_DIR="$PROJECT_ROOT/proxy"
@@ -195,5 +248,16 @@ EOF
 fi
 
 echo "✓ Generated $TEMPLATE_FILE"
+
+# If validate_caddy is available, run it against the generated template to catch errors early
+if type validate_caddy >/dev/null 2>&1; then
+    echo "Running Caddy validation against generated template..."
+    # We want to validate the exact file on disk; call validate_caddy by rendering to a temp file
+    if ! validate_caddy; then
+        echo "✗ Caddy validation failed for $TEMPLATE_FILE. Not proceeding with proxy build."
+        exit 2
+    fi
+    echo "✓ Caddy validation passed"
+fi
 
 exit 0

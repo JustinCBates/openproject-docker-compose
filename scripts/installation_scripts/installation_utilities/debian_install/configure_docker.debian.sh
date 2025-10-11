@@ -11,6 +11,11 @@ if [ -f "$SCRIPT_DIR/../common/common_ui.sh" ]; then
     # shellcheck source=/dev/null
     source "$SCRIPT_DIR/../common/common_ui.sh"
 fi
+# Source shared config renderer
+if [ -f "$SCRIPT_DIR/../common/config_render.sh" ]; then
+    # shellcheck source=/dev/null
+    source "$SCRIPT_DIR/../common/config_render.sh"
+fi
 CONFIG_FILE="$SCRIPT_DIR/../../interactive_config.cfg"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 
@@ -68,13 +73,15 @@ update_env_file() {
     fi
 
     # Relative URL root for path-based deployments (e.g. /subdomain)
-    if [ -n "$RAILS_URL_ROOT" ]; then
-        if grep -q "^RAILS_URL_ROOT=" "$env_file"; then
-            sed -i "s|^RAILS_URL_ROOT=.*|RAILS_URL_ROOT=$RAILS_URL_ROOT|" "$env_file"
+    # Prefer renderer path value (RAILS_RELATIVE_URL_ROOT)
+    local write_relroot="${RAILS_RELATIVE_URL_ROOT:-}"
+    if [ -n "$write_relroot" ]; then
+        if grep -q "^RAILS_RELATIVE_URL_ROOT=" "$env_file"; then
+            sed -i "s|^RAILS_RELATIVE_URL_ROOT=.*|RAILS_RELATIVE_URL_ROOT=$write_relroot|" "$env_file"
         else
-            echo "RAILS_URL_ROOT=$RAILS_URL_ROOT" >> "$env_file"
+            echo "RAILS_RELATIVE_URL_ROOT=$write_relroot" >> "$env_file"
         fi
-        echo "✓ Updated relative URL root: $RAILS_URL_ROOT"
+        echo "✓ Updated relative URL root: $write_relroot"
     fi
     
     if [ -n "$OPENPROJECT_HTTPS" ]; then
@@ -364,29 +371,25 @@ main() {
     load_config
     echo
 
-    # Ensure RAILS_URL_ROOT is present in the interactive config
-    # If the interactive config didn't already set a relative root, construct it
-    # from the collected NAMESPACE (if any) so downstream scripts (proxy builder)
-    # can render templates consistently.
-    if [ -z "${RAILS_URL_ROOT:-}" ]; then
-        if [ -n "${NAMESPACE:-}" ] && [ "${NAMESPACE}" != "" ]; then
-            _relroot="/${NAMESPACE%/}"
+    # Ensure a path-only relative URL root is present. Prefer RAILS_RELATIVE_URL_ROOT
+    # when available, otherwise compute from URI_NAMESPACE/NAMESPACE and export
+    # RAILS_RELATIVE_URL_ROOT so downstream steps can use the canonical path value.
+    if [ -z "${RAILS_RELATIVE_URL_ROOT:-}" ]; then
+        ns="${URI_NAMESPACE:-${NAMESPACE:-}}"
+        if [ -n "${ns}" ]; then
+            _relroot="/${ns%/}"
         else
             _relroot=""
         fi
+        export RAILS_RELATIVE_URL_ROOT="${_relroot}"
+        echo "✓ Computed relative URL root: ${RAILS_RELATIVE_URL_ROOT}"
+    else
+        echo "✓ Using provided RAILS_RELATIVE_URL_ROOT: ${RAILS_RELATIVE_URL_ROOT}"
+    fi
 
-        if [ -n "${_relroot}" ]; then
-            # Write into interactive_config.cfg idempotently
-            if grep -q '^RAILS_URL_ROOT=' "$CONFIG_FILE" 2>/dev/null; then
-                    # replace existing line
-                    sed -i "s|^RAILS_URL_ROOT=.*|RAILS_URL_ROOT=\"${_relroot}\"|" "$CONFIG_FILE" 2>/dev/null || true
-                else
-                    echo "RAILS_URL_ROOT=\"${_relroot}\"" >> "$CONFIG_FILE"
-                fi
-                echo "✓ Set RAILS_URL_ROOT to '${_relroot}' in $(basename "$CONFIG_FILE")"
-                # Export into the current shell for immediate use
-                export RAILS_URL_ROOT="${_relroot}"
-        fi
+    # Ensure renderer has computed deployment values (RAILS_RELATIVE_URL_ROOT etc.)
+    if type detect_deployment_values >/dev/null 2>&1; then
+        detect_deployment_values "$PROJECT_ROOT"
     fi
 
     # Configure proxy (render Caddyfile/template) if proxy utility exists
@@ -398,6 +401,17 @@ main() {
     # Update .env file with Debian-specific variables
     update_env_file
     echo
+
+    # Centralized generation of .env and docker-compose.override.yml
+    # Use config_render helper to detect values and write files. We skip
+    # writing the Caddy template here because proxy/configure_proxy.sh
+    # has its own rendering flow and enforces additional guards.
+    if type detect_deployment_values >/dev/null 2>&1; then
+        detect_deployment_values "$PROJECT_ROOT"
+        # write_files APPLY_FLAG SKIP_CADDY
+        write_files true true
+        echo "✓ Deployment .env and docker-compose.override.yml generated"
+    fi
     
     # Create docker-compose.override.yml with Debian optimizations
     create_override_file

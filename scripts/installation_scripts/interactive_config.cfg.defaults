@@ -3,8 +3,10 @@ DOMAIN_NAME="srv1035368.hstgr.cloud"
 OPENPROJECT_HOST_NAME="srv1035368.hstgr.cloud"
 OPENPROJECT_HTTPS="true"
 OPENPROJECT_TAG="stable/16"
-NAMESPACE="StatesmenProjects"
-RAILS_URL_ROOT="/StatesmenProjects"
+URI_NAMESPACE="StatesmenProjects"
+# NOTE: The defaults generator does not emit a combined DOMAIN/namespace value.
+# The renderer derives the runtime path-only value (`RAILS_RELATIVE_URL_ROOT`)
+# from `DOMAIN_NAME` and `URI_NAMESPACE` and will populate the generated `.env`.
 OS_FAMILY="debian"
 # Installer-specified defaults
 DEFAULT_DBADMIN_PASSWORD="admin123"

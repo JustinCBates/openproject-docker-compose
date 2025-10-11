@@ -1,0 +1,15 @@
+services:
+  hello:
+    build:
+      context: ./test/hello
+      dockerfile: Dockerfile
+    image: openproject/proxy-hello-test:latest
+    container_name: openproject_proxy_hello_test
+    ports:
+      - "8081:8080"  # bind to host 8081 so it doesn't clash with other services
+    volumes:
+      - hello-test-data:/data
+
+volumes:
+  hello-test-data:
+    driver: local

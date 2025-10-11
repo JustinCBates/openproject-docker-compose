@@ -117,7 +117,7 @@ save_config() {
                 *) value="$_lc" ;;
             esac
             ;;
-        NAMESPACE_ENABLED)
+        NAMESPACE_ENABLED|URI_NAMESPACE_ENABLED)
             _lc=$(printf "%s" "$value" | tr '[:upper:]' '[:lower:]')
             case "$_lc" in
                 t|true|1|yes|y) value="true" ;;

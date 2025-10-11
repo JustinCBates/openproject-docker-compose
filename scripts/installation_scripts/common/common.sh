@@ -130,11 +130,11 @@ init_install_defaults() {
     current_git_user_cfg="$(get_effective "GIT_USERNAME" || true)"
     current_git_email_cfg="$(get_effective "GIT_EMAIL" || true)"
     current_domain="$(get_effective "DOMAIN_NAME" || true)"
-    # Namespace / subdomain compatibility: prefer SUBDOMAIN then NAMESPACE
-    current_subdomain="$(get_effective "SUBDOMAIN" || get_effective "NAMESPACE" || true)"
+    # Namespace / subdomain compatibility: prefer SUBDOMAIN then URI_NAMESPACE then legacy NAMESPACE
+    current_subdomain="$(get_effective "SUBDOMAIN" || get_effective "URI_NAMESPACE" || get_effective "NAMESPACE" || true)"
     current_env_type="$(get_effective "ENVIRONMENT_TYPE" || true)"
     current_os_family_raw="$(get_effective "OS_FAMILY" || true)"
-    current_relative_root="$(get_effective "RAILS_URL_ROOT" || true)"
+    current_relative_root="$(get_effective "RAILS_RELATIVE_URL_ROOT" || true)"
 
     # (detect_domain_name defined at top-level)
 
@@ -306,21 +306,19 @@ generate_interactive_config_defaults() {
 
     # Write defaults file (overwrite)
 # Write defaults file (overwrite)
-    # Compute rails relative root from NAMESPACE when present
-    local rails_root
-    rails_root=""
-    if [ -n "StatesmenProjects" ]; then
-        rails_root="/StatesmenProjects"
-    fi
-
-    cat > "$defaults_file" <<EOF
+    # Compute defaults. We intentionally do NOT emit a combined DOMAIN/namespace
+    # value here anymore: the renderer computes a path-only runtime value from
+    # `DOMAIN_NAME` and `URI_NAMESPACE` and writes `RAILS_RELATIVE_URL_ROOT`.
+cat > "$defaults_file" <<EOF
 # Generated defaults for interactive_config.sh
 DOMAIN_NAME="$domain"
 OPENPROJECT_HOST_NAME="$host"
 OPENPROJECT_HTTPS="${https}"
 OPENPROJECT_TAG="$tag"
-NAMESPACE="StatesmenProjects"
-RAILS_URL_ROOT="$rails_root"
+URI_NAMESPACE="StatesmenProjects"
+# NOTE: The defaults generator no longer emits a combined DOMAIN_NAME/namespace
+# value. The renderer will derive the runtime path-only value
+# (`RAILS_RELATIVE_URL_ROOT`) from `DOMAIN_NAME` and `URI_NAMESPACE`.
 OS_FAMILY="${os_family:-}"
 # Installer-specified defaults
 DEFAULT_DBADMIN_PASSWORD="admin123"

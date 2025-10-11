@@ -43,7 +43,7 @@ print_config_summary() {
         PROXY_HTTP_PORT
         PROXY_HTTPS_PORT
         PROXY_TLS_MODE
-        RAILS_URL_ROOT
+    RAILS_RELATIVE_URL_ROOT
         DUCKDNS_TOKEN
     )
 
