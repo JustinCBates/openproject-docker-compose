@@ -1,0 +1,431 @@
+# AI Assistant Context - OpenProject Control Flow System
+# Load this file to restore full project understanding
+#
+# REMINDER FOR AI AGENTS:
+#   If you see this file, READ IT COMPLETELY before starting work.
+#   This saves you from re-analyzing entire conversation histories.
+#   Check 'last_updated' below - if stale, prompt user to update it.
+#   See AI/README.md for maintenance guidelines.
+
+last_updated: "2025-10-13T00:00:00"  # ISO 8601 timestamp - update when context changes
+
+project:
+  name: "OpenProject Control Flow System"
+  purpose: "Multi-component Docker deployment orchestration with design-first control flow specifications"
+  repository: "https://github.com/JustinCBates/openproject-docker-compose"
+  philosophy: "Design before coding - specifications generate documentation, not the reverse"
+
+# ============================================================================
+# REPOSITORY STRUCTURE
+# ============================================================================
+
+repository_structure:
+  main:
+    path: "/opt/openproject"
+    type: "Docker orchestration (main repo)"
+    branch: "feature/python-rebuild"
+    contains:
+      - "docker-compose.yml files"
+      - "Submodule references"
+      - "NO component-specific documentation"
+    
+  submodules:
+    - name: "config-manager"
+      path: "external/config-manager"
+      purpose: "Discover, collect, validate OpenProject configuration"
+      has_control_flow: true
+      status: "~95% complete"
+      critical_gaps: ["update flow defined but not spec'd"]
+      
+    - name: "deploy-manager"
+      path: "external/deploy-manager"
+      purpose: "Deploy, upgrade, rollback OpenProject instances"
+      has_control_flow: true
+      status: "~85% complete"
+      critical_gaps: ["rollback flow PLANNED but not implemented - PRODUCTION CRITICAL"]
+      
+    - name: "prober"
+      path: "external/prober"
+      purpose: "Health checking and service monitoring"
+      has_control_flow: true
+      status: "Unknown - needs investigation"
+      
+    - name: "control-flow"
+      path: "external/control-flow"
+      purpose: "Shared control flow engine and visualization library"
+      has_control_flow: false
+      note: "This IS the engine, doesn't describe its own flow"
+      
+    - name: "dependency-manager"
+      path: "external/dependency-manager"
+      purpose: "Resolve and manage component dependencies"
+      has_control_flow: false
+      note: "May need control flow spec"
+      
+    - name: "tui-form-designer"
+      path: "external/tui-form-designer"
+      purpose: "Terminal UI form generation and interaction"
+      has_control_flow: false
+      note: "Library component, may not need control flow"
+
+# ============================================================================
+# CORE PHILOSOPHY & PRINCIPLES
+# ============================================================================
+
+core_principles:
+  design_first:
+    - "Write control_flows.yml BEFORE implementing"
+    - "Define phases, artifacts, dependencies upfront"
+    - "Status markers track implementation progress"
+    
+  single_source_of_truth:
+    - "control_flows.yml IS the documentation"
+    - "Diagrams are generated, never hand-drawn"
+    - "Don't duplicate in prose what YAML expresses"
+    
+  visual_communication:
+    - "Generate professional diagrams automatically"
+    - "SVG for web, PNG for docs, PDF for publication"
+    - "Three diagram types: phases, artifacts, combined"
+    
+  minimal_documentation:
+    - "Only write prose for complex subsystems"
+    - "Technical deep-dives when control_flows.yml insufficient"
+    - "Component READMEs for installation/quickstart only"
+
+# ============================================================================
+# CONTROL FLOW SPECIFICATION FORMAT
+# ============================================================================
+
+control_flows_yml_schema:
+  location: "design_specs/control_flows.yml (in each component)"
+  
+  top_level_keys:
+    component:
+      description: "Component name, version, description"
+      required: true
+      
+    entry_points:
+      description: "CLI commands or API endpoints"
+      format: "Dict of {command_name: {status, description, flow_id}}"
+      required: true
+      
+    flows:
+      description: "High-level processes (usually one main flow)"
+      format: "Dict of flow_name -> {description, phases or steps}"
+      required: true
+      
+    phases:
+      description: "Individual execution steps within a flow"
+      location: "Inside flows.[flow_name].phases"
+      format: "List of phase objects"
+      required_keys: ["phase_id", "name", "status"]
+      optional_keys: ["description", "artifacts_produced", "artifacts_consumed", "sub_flows"]
+      
+    artifacts:
+      description: "Data products (files) that flow between phases"
+      format: "Dict of artifact_name -> {description, format}"
+      required: true
+      
+    decision_points:
+      description: "Configuration options that affect flow"
+      format: "Dict of decision_name -> {description, options, default}"
+      optional: true
+      
+    implementation_status:
+      description: "Overall status tracking"
+      format: "{overall, last_updated, notes}"
+      optional: true
+
+  status_values:
+    standard_set: ["IMPLEMENTED", "PLANNED", "IN_PROGRESS", "BLOCKED"]
+    case: "UPPERCASE (by convention)"
+    note: "graphviz_generator.py converts to lowercase internally"
+    color_mapping:
+      IMPLEMENTED: "#90EE90"  # Light green
+      IN_PROGRESS: "#FFE4B5"  # Moccasin
+      PLANNED: "#E6E6FA"      # Lavender (pending)
+      BLOCKED: "#FFB6C1"      # Light pink
+    implementation_note: "Code uses 'completed'/'pending' but handles 'implemented'/'planned' through lowercase conversion"
+
+# ============================================================================
+# FILE ORGANIZATION RULES
+# ============================================================================
+
+file_organization:
+  component_repos:
+    design_specs:
+      path: "design_specs/"
+      contents:
+        - name: "control_flows.yml"
+          purpose: "The specification (single source of truth)"
+        - name: "graphics/"
+          purpose: "Auto-generated diagrams"
+          contents: ["phase_flow.{svg,png,pdf}", "artifact_flow.{svg,png,pdf}", "combined_flow.{svg,png,pdf}"]
+          
+    docs:
+      path: "docs/"
+      when_to_use: "Only for complex subsystems that need technical deep-dive"
+      examples: ["DISCOVERY_SYSTEM.md (config-manager)", "TUI_INTEGRATION.md (config-manager)"]
+      anti_pattern: "Don't create docs that duplicate control_flows.yml"
+      
+    src:
+      path: "src/"
+      purpose: "Actual implementation code"
+      
+  control_flow_repo:
+    structure:
+      - "src/control_flow_engine/ (the engine code)"
+      - "docs/ (engine usage docs)"
+      - "examples/ (example specs and test scripts)"
+      
+  main_repo:
+    contains_only:
+      - "Docker orchestration files"
+      - "Submodule references"
+      - "Root-level CI/CD configs"
+      - "AI/ folder (this context file)"
+    does_not_contain:
+      - "Component-specific documentation"
+      - "Implementation code"
+
+# ============================================================================
+# THE GRAPHVIZ VISUALIZER
+# ============================================================================
+
+graphviz_visualizer:
+  location: "external/control-flow/src/control_flow_engine/visualizer/graphviz_generator.py"
+  class: "GraphvizFlowVisualizer"
+  
+  features:
+    - "Parses both flat and nested YAML formats"
+    - "Auto-detects format (looks for 'flows' vs 'phases' key)"
+    - "Generates three diagram types: phases, artifacts, combined"
+    - "Outputs multiple formats: SVG, PNG, PDF"
+    - "Color-codes phases by status"
+    - "Infers dependencies from artifact flow"
+    
+  diagram_types:
+    phase_flow:
+      description: "Shows execution sequence and dependencies"
+      layout: "Top-to-bottom (TB)"
+      nodes: "Phases (rounded boxes)"
+      edges: "Dependencies (red bold lines)"
+      
+    artifact_flow:
+      description: "Shows data dependencies between phases"
+      layout: "Left-to-right (LR)"
+      nodes: "Phases (boxes) and Artifacts (diamonds)"
+      edges: "produces (green), consumed_by (blue)"
+      
+    combined_flow:
+      description: "Complete view with phases and artifacts"
+      layout: "Top-to-bottom (TB)"
+      clustering: "Phases in one cluster, artifacts in another"
+      
+  usage:
+    command_line: |
+      cd external/control-flow
+      python3 -c "
+      from pathlib import Path
+      import sys
+      sys.path.insert(0, 'src')
+      from control_flow_engine.visualizer.graphviz_generator import GraphvizFlowVisualizer
+      viz = GraphvizFlowVisualizer(Path('../config-manager/design_specs/control_flows.yml'))
+      viz.parse_yaml_spec()
+      viz.generate_diagrams(Path('../config-manager/design_specs/graphics'), formats=['svg','png','pdf'])
+      "
+        
+    programmatic: |
+      from control_flow_engine.visualizer.graphviz_generator import GraphvizFlowVisualizer
+      viz = GraphvizFlowVisualizer("design_specs/control_flows.yml")
+      viz.parse_yaml_spec()
+      viz.generate_diagrams("design_specs/graphics", formats=['svg','png','pdf'])
+
+# ============================================================================
+# ANTI-PATTERNS TO AVOID
+# ============================================================================
+
+anti_patterns:
+  - pattern: "Creating prose documentation that duplicates control_flows.yml"
+    why_bad: "YAML already documents structure, diagrams show it visually"
+    examples: ["CONTROL_FLOWS_GUIDE.md", "PROJECT_ANALYSIS.md"]
+    
+  - pattern: "Generating temporary conversion files"
+    why_bad: "GraphvizFlowVisualizer handles nested format directly"
+    example: "control_flows_graphviz.yml"
+    
+  - pattern: "Putting diagrams in wrong locations"
+    correct: "design_specs/graphics/ within each component"
+    wrong: ["repo root", "docs folder", "src folder"]
+    
+  - pattern: "Auto-committing after every operation"
+    correct: "Prompt user: 'Ready to commit?'"
+    why_bad: "User should control git operations"
+    
+  - pattern: "Creating explanation scripts for self-explanatory code"
+    example: "explain_control_flows.py"
+    why_bad: "If it needs explanation, improve the code/spec"
+    
+  - pattern: "Static analysis documents"
+    example: "PROJECT_ANALYSIS.md"
+    why_bad: "Status changes constantly, query YAML on-demand"
+
+# ============================================================================
+# CURRENT IMPLEMENTATION STATUS
+# ============================================================================
+
+implementation_status:
+  config_manager:
+    completion: "95%"
+    main_flow: "IMPLEMENTED (5 phases: discovery -> tui_mapping -> collection -> validation -> export)"
+    defined_but_incomplete:
+      - name: "update"
+        status: "Entry point defined, flow not spec'd"
+        priority: "LOW (convenience feature)"
+        
+  deploy_manager:
+    completion: "85%"
+    main_flow: "IMPLEMENTED (deployment orchestration)"
+    critical_gaps:
+      - name: "rollback"
+        status: "PLANNED but not implemented"
+        priority: "CRITICAL (can't safely deploy to prod without rollback)"
+        phases_needed: ["snapshot_validation", "graceful_shutdown", "restore", "verify"]
+    defined_but_incomplete:
+      - name: "template"
+        status: "Entry point defined, flow not even spec'd"
+        priority: "MEDIUM (reusable configs)"
+        
+  prober:
+    completion: "Unknown"
+    needs: "Read control_flows.yml to assess"
+    
+  other_components:
+    dependency_manager: "No control_flows.yml found"
+    tui_form_designer: "No control_flows.yml found (library, may not need)"
+
+# ============================================================================
+# COMMON WORKFLOWS
+# ============================================================================
+
+common_workflows:
+  generate_diagrams:
+    purpose: "Create visual documentation from control_flows.yml"
+    steps:
+      - "cd external/control-flow"
+      - "Run Python script to generate diagrams (see usage above)"
+      - "Check design_specs/graphics/ for generated files"
+      
+  analyze_status:
+    purpose: "Determine what needs implementation"
+    method: "Parse control_flows.yml and filter"
+    look_for:
+      - "status: PLANNED (designed but not coded)"
+      - "Entry points without corresponding flows"
+      - "Empty or minimal phase definitions"
+      
+  design_new_flow:
+    purpose: "Add new functionality"
+    steps:
+      - "Add entry_point to control_flows.yml"
+      - "Define flow with phases"
+      - "Specify artifacts produced/consumed"
+      - "Set all phases to status: PLANNED"
+      - "Generate diagrams to visualize"
+      - "Review design before implementing"
+      
+  track_implementation:
+    purpose: "Update as you code"
+    steps:
+      - "Change status: PLANNED -> IN_PROGRESS when starting"
+      - "Change status: IN_PROGRESS -> IMPLEMENTED when done"
+      - "Regenerate diagrams to show progress"
+      - "Commit both code and updated control_flows.yml together"
+
+# ============================================================================
+# QUESTIONS TO ASK USER
+# ============================================================================
+
+questions_to_ask:
+  context:
+    - "Which component are we working on?"
+    - "Should I scan all control_flows.yml files to understand dependencies?"
+    
+  actions:
+    - "Generate/regenerate flow diagrams?"
+    - "Should I analyze what needs implementation?"
+    - "Ready to commit these changes?"
+    
+  clarifications:
+    - "Where should this file go? (check file_organization)"
+    - "Is this prose doc necessary, or should it be in control_flows.yml?"
+    - "Should this be a technical deep-dive doc, or enhance the spec?"
+
+# ============================================================================
+# KEY INSIGHTS & LESSONS LEARNED
+# ============================================================================
+
+key_insights:
+  - "The control flow system is self-documenting - specs generate diagrams, diagrams ARE documentation"
+  - "Status tracking reveals priorities automatically - no need for separate roadmap docs"
+  - "The system demonstrates its own value - it documents itself through its own specs"
+  - "Minimize prose - only write what can't be expressed in YAML/diagrams"
+  - "Design-first prevents architectural mistakes - think through data flow before coding"
+  - "Visual diagrams communicate faster than prose to both humans and AI"
+
+migration_history:
+  mermaid_to_graphviz:
+    when: "October 2025"
+    why: "Better layout algorithms, publication-quality output, no JS dependency"
+    status: "Complete, Mermaid removed"
+
+# ============================================================================
+# WHEN AI LOSES CONTEXT
+# ============================================================================
+
+context_restoration_steps:
+  1: "Read this file (AI/ai_context.yaml) first"
+  2: "Ask which component we're working on"
+  3: "Read that component's design_specs/control_flows.yml"
+  4: "Check if diagrams exist in design_specs/graphics/"
+  5: "Read component's README.md for installation/quickstart"
+  6: "Only read technical docs (DISCOVERY_SYSTEM.md, etc.) if needed for specific subsystem"
+  7: "Check git status to see what's uncommitted"
+  8: "Ask user what we were working on"
+
+quick_reference:
+  main_spec_location: "design_specs/control_flows.yml (in each component)"
+  diagram_location: "design_specs/graphics/ (in each component)"
+  visualizer_code: "external/control-flow/src/control_flow_engine/visualizer/graphviz_generator.py"
+  this_context_file: "AI/ai_context.yaml (main repo root)"
+
+# ============================================================================
+# IMMEDIATE ACTION ITEMS
+# ============================================================================
+
+immediate_todos:
+  pending_commits:
+    control_flow:
+      - "Modified graphviz_generator.py (handles nested format)"
+      - "Deleted unnecessary docs (MIGRATION, etc.)"
+    config_manager:
+      - "Moved diagrams to graphics/ subfolder"
+      - "Deleted old diagram locations"
+      
+  critical:
+    - task: "Implement deploy-manager rollback flow"
+      why: "Can't safely deploy to production without rollback capability"
+      phases: ["snapshot_validation", "graceful_shutdown", "snapshot_restoration", "service_restart", "rollback_verification"]
+      
+  cleanup:
+    - task: "Delete unnecessary documentation"
+      files: ["control-flow: CONTROL_FLOWS_GUIDE.md, PROJECT_ANALYSIS.md, explain_control_flows.py"]
+      why: "System is self-documenting, these duplicate what YAML expresses"
+      
+  investigation:
+    - task: "Check prober control_flows.yml"
+      why: "Understand status and identify gaps"
+      
+    - task: "Determine if dependency-manager needs control flow spec"
+      why: "Maintain consistency across components"

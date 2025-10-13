@@ -1,0 +1,326 @@
+# Production Manifest - EXAMPLE/TEMPLATE
+#
+# This is a TEMPLATE for projects using dependency-manager.
+# Copy this to your project root as 'production_manifest.yaml' and customize.
+#
+# Philosophy:
+#   - Production branch = deployable, minimal, secure, documented
+#   - Development branch = everything (tooling, tests, demos, experiments)
+#
+# Usage:
+#   1. Copy to your project root: cp production_manifest.example.yaml ../../production_manifest.yaml
+#   2. Customize repository sections for your project
+#   3. Run: python external/dependency-manager/tools/setup_production_branch.py
+#
+# The tool will auto-discover submodules from .gitmodules
+
+manifest_version: "1.0"
+last_updated: "2025-10-13"
+
+# ============================================================================
+# GLOBAL PATTERNS - Apply to ALL repositories
+# ============================================================================
+
+global_patterns:
+  # ALWAYS include in production (if they exist)
+  production_include:
+    - "README.md"                    # User-facing documentation
+    - "LICENSE"                      # Legal requirement
+    - "pyproject.toml"              # Python project metadata (filtered - see below)
+    - "Dockerfile"                   # Container build definition
+    - "docker-compose*.yml"          # Orchestration configs
+    - "entrypoint.sh"               # Container startup scripts
+    - ".dockerignore"               # Docker build optimization
+    - "requirements.txt"            # Python dependencies (if used)
+    - "package.json"                # Node dependencies (if used)
+    - "src/**/*.py"                 # Source code
+    - "scripts/*.sh"                # Production automation scripts
+    - "configs/**/*.yml"            # Production configurations
+    - "configs/**/*.yaml"           # Production configurations
+    - "configs/**/*.json"           # Production configurations
+    
+  # ALWAYS exclude from production
+  production_exclude:
+    - "**/__pycache__/"             # Python bytecode cache
+    - "**/*.pyc"                     # Compiled Python
+    - "**/.pytest_cache/"           # Test cache
+    - "**/.git/"                     # Git internals
+    - "**/.venv/"                    # Virtual environments
+    - "**/venv/"                     # Virtual environments
+    - "**/env/"                      # Virtual environments
+    - "**/.vscode/"                  # Editor config (dev preference)
+    - "**/.idea/"                    # Editor config
+    - "**/*.egg-info/"              # Python build artifacts
+    - "**/dist/"                     # Build outputs
+    - "**/build/"                    # Build outputs
+    - "**/.DS_Store"                # macOS cruft
+    - "**/Thumbs.db"                # Windows cruft
+    
+  # Development-only patterns
+  development_only:
+    - "testing/**"                   # All test infrastructure
+    - "tests/**"                     # All test code
+    - "test_*.py"                   # Test files
+    - "*_test.py"                   # Test files
+    - "demo_*.py"                   # Demo/example scripts
+    - "example_*.py"                # Example scripts
+    - "**/examples/**"              # Example code directories
+    - "docs/**"                     # Internal documentation
+    - "documents/**"                # Internal documentation
+    - "design_specs/**"             # Design specifications
+    - "*.md"                        # Most markdown (except README/LICENSE)
+    - "!README.md"                  # Exception: keep README
+    - "!LICENSE.md"                 # Exception: keep LICENSE
+    - ".gitignore"                  # Dev tooling
+    - ".gitmodules"                 # Dev tooling (main repo only)
+    - "setup-dev-environment.sh"    # Dev setup scripts
+    - "migration_backup/**"         # Historical data
+    - "tools/**"                    # Development tools
+    - "AI/**"                       # AI context (dev documentation)
+
+# ============================================================================
+# REPOSITORY-SPECIFIC RULES - Override or extend global patterns
+#
+# NOTE: Repositories are auto-discovered from .gitmodules
+#       Just specify the repo NAME (not path)
+# ============================================================================
+
+repositories:
+  # Main orchestration repository
+  main:
+    # No path needed - auto-detected as workspace root
+    production_include:
+      - "docker-compose.yml"
+      - "docker-compose.control.yml"
+      - "README.md"
+      - "LICENSE"
+      - "control/**"                # Control plane components
+      - "proxy/**"                  # Reverse proxy
+      - ".env.example"              # Template for production config
+    production_exclude:
+      - "github_issues.md"
+      - "MIGRATION_PLAN.md"
+      - "PYTHON_REBUILD.md"
+      - "PROJECT_*.md"
+      - "ARCHITECTURE.md"           # Dev docs, not production
+    
+  # Configuration management service
+  config-manager:
+    # Auto-discovered from .gitmodules
+    production_include:
+      - "src/**/*.py"
+      - "README.md"
+      - "pyproject.toml"
+      - "dependencies/install_deps.py"  # Runtime dependency installer
+    production_exclude:
+      - "design_specs/**"
+      - "documents/**"
+      - "output/**"                 # Generated test outputs
+      - "NETWORK_DISCOVERY.md"
+    
+  # Deployment orchestration service  
+  deploy-manager:
+    production_include:
+      - "src/**/*.py"
+      - "README.md"
+      - "pyproject.toml"
+    production_exclude:
+      - "testing/**"                # Extensive test suite
+      
+  # System probe/discovery service
+  prober:
+    production_include:
+      - "app.py"
+      - "Dockerfile"
+      - "entrypoint.sh"
+      - "README.md"
+      - "scripts/collect_host_info.py"
+      - "scripts/precheck.sh"
+      - "scripts/view_probe_data.py"
+    production_exclude:
+      - "scripts/deploy.sh"         # Dev deployment helper
+      - "scripts/install_optional.sh"
+      - "PROJECT_OVERVIEW.md"
+      - "testing/**"
+    
+  # Control flow engine library
+  control-flow:
+    production_include:
+      - "src/**/*.py"
+      - "pyproject.toml"
+      - "README.md"
+      - "LICENSE"
+      - "templates/**"              # Flow spec templates
+    production_exclude:
+      - "docs/**"
+      - "examples/**"
+      - "demo_*.py"
+      - "diagram_alternatives_comparison.py"
+      - "migrate_to_repo.sh"
+      - "CONTRIBUTING.md"
+      - "tools/**"
+    
+  # Dependency tracking/management library
+  dependency-manager:
+    production_include:
+      - "src/**/*.py"
+      - "scripts/install_deps.py"
+      - "scripts/check_deps.sh"
+      - "configs/production_manifest.example.yaml"  # Template for other projects
+      - "pyproject.toml"
+      - "README.md"
+    production_exclude:
+      - "demo_*.py"
+      - "test_*.py"
+      - "migration_backup/**"
+      - "MIGRATION_LOG.md"
+      - "tools/**"                  # Tools stay in dev (other projects use them from dev)
+      - "tests/**"
+      - "docs/**"
+    
+  # TUI form designer library
+  tui-form-designer:
+    production_include:
+      - "src/**/*.py"
+      - "pyproject.toml"
+      - "README.md"
+      - "LICENSE"
+      - "tui_layouts/**"            # Layout specifications
+    production_exclude:
+      - "documents/**"
+      - "tests/**"
+      - "build.sh"                  # Dev build script
+      - "ARCHITECTURE.md"
+
+# ============================================================================
+# PYPROJECT.TOML FILTERING - Strip dev dependencies from production
+# ============================================================================
+
+pyproject_filtering:
+  # Remove these entire sections from pyproject.toml in production
+  remove_sections:
+    - "tool.pytest"
+    - "tool.black"
+    - "tool.flake8"
+    - "tool.mypy"
+    - "tool.coverage"
+    - "tool.tox"
+  
+  # Remove these dependency groups (PEP 735 style)
+  remove_dependency_groups:
+    - "dev"
+    - "test"
+    - "docs"
+    - "lint"
+    
+  # Keep only these in [project.optional-dependencies]
+  keep_optional_groups:
+    - "prod"
+    - "production"
+    - "runtime"
+
+# ============================================================================
+# DOCKER IMAGE OPTIMIZATION - Multi-stage build patterns
+# ============================================================================
+
+docker_optimization:
+  # Suggest multi-stage builds for these repos
+  multi_stage_candidates:
+    - config-manager
+    - deploy-manager
+    - prober
+    
+  # Base image recommendations
+  production_base_images:
+    python: "python:3.11-slim"      # Minimal Python runtime
+    alpine: "python:3.11-alpine"    # Even smaller (if compatible)
+    
+  # Packages to exclude from production images
+  exclude_packages:
+    - pytest
+    - pytest-cov
+    - black
+    - flake8
+    - mypy
+    - ipython
+    - jupyter
+
+# ============================================================================
+# VALIDATION RULES - Enforce production requirements
+# ============================================================================
+
+validation:
+  # Files that MUST exist in production branch
+  required_files:
+    - README.md
+    - LICENSE
+    
+  # Maximum file size for production (in MB)
+  max_file_size_mb: 10
+  
+  # Forbidden patterns in production code
+  forbidden_patterns:
+    - "import pdb"                  # Debug breakpoints
+    - "import ipdb"                 # Debug breakpoints  
+    - "breakpoint()"                # Debug breakpoints
+    - "print("                      # Use logging instead (warn only)
+    - "TODO:"                       # Unfinished work
+    - "FIXME:"                      # Known issues
+    - "XXX:"                        # Problematic code
+    
+  # Required patterns in production code
+  required_patterns:
+    python:
+      - "import logging"            # Must use proper logging
+      - '__version__'               # Must have version info
+
+# ============================================================================
+# BRANCH STRATEGY
+# ============================================================================
+
+branch_strategy:
+  # Branch names
+  production_branch: "production"
+  development_branch: "develop"
+  feature_branch_prefix: "feature/"
+  
+  # Merge workflow
+  merge_workflow:
+    description: "Development → Production promotion workflow"
+    steps:
+      - "1. Develop in 'develop' branch (anything goes)"
+      - "2. Use this manifest to filter production files"
+      - "3. Run validation checks"
+      - "4. Create filtered commit for 'production' branch"
+      - "5. Test production branch independently"
+      - "6. Tag production releases with semantic versions"
+  
+  # Protection rules (configure on GitHub)
+  protection:
+    production:
+      - "Require pull request reviews (2+ approvals)"
+      - "Require status checks to pass"
+      - "Require linear history"
+      - "No force pushes"
+      - "No deletions"
+    develop:
+      - "Require pull request reviews (1+ approval)"
+      - "Allow force push (with lease)"
+
+# ============================================================================
+# NOTES
+# ============================================================================
+
+notes: |
+  This manifest enables a clean production/development split:
+  
+  - Production branch: Minimal, secure, performant, ready to deploy
+  - Development branch: Full context, tooling, tests, documentation
+  
+  Use the companion script 'setup_production_branch.py' to:
+  1. Create production branch from develop
+  2. Apply this manifest to filter files
+  3. Validate production readiness
+  4. Push to remote with protection
+  
+  Update this manifest as the project evolves.
