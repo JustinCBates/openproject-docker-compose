@@ -7,13 +7,34 @@
 #   Check 'last_updated' below - if stale, prompt user to update it.
 #   See AI/README.md for maintenance guidelines.
 
-last_updated: "2025-10-13T00:00:00"  # ISO 8601 timestamp - update when context changes
+last_updated: "2025-10-13T17:50:00"  # ISO 8601 timestamp - update when context changes
 
 project:
   name: "OpenProject Control Flow System"
   purpose: "Multi-component Docker deployment orchestration with design-first control flow specifications"
   repository: "https://github.com/JustinCBates/openproject-docker-compose"
   philosophy: "Design before coding - specifications generate documentation, not the reverse"
+  
+git_workflow:
+  upstream_fork: "https://github.com/opf/openproject (stable/16 branch)"
+  branches:
+    stable_16:
+      status: "LOCKED - Never modify"
+      purpose: "Upstream reference from OpenProject fork"
+      location: "remote only"
+    production:
+      status: "ACTIVE - Deployment branch"
+      purpose: "Clean filtered code for deployment"
+      filtering: "Via production_manifest.yaml - removes dev/test/docs"
+      created: "2025-10-13"
+    develop:
+      status: "ACTIVE - Development branch"
+      purpose: "Full development environment with all tooling"
+      contains: "AI context, tests, docs, migration scripts"
+      created: "2025-10-13 (renamed from feature/python-rebuild)"
+  safety:
+    backup_tags: "backup-20251013-174556-* (all 7 repos)"
+    reversible: "Yes - all changes can be rolled back via tags"
 
 # ============================================================================
 # REPOSITORY STRUCTURE
@@ -23,10 +44,14 @@ repository_structure:
   main:
     path: "/opt/openproject"
     type: "Docker orchestration (main repo)"
-    branch: "feature/python-rebuild"
+    current_branch: "develop"
+    branches: ["develop", "production", "stable/16 (remote)"]
     contains:
       - "docker-compose.yml files"
       - "Submodule references"
+      - "AI context system (AI/)"
+      - "Production filtering manifests"
+      - "Branch management scripts"
       - "NO component-specific documentation"
     
   submodules:
@@ -35,6 +60,7 @@ repository_structure:
       purpose: "Discover, collect, validate OpenProject configuration"
       has_control_flow: true
       status: "~95% complete"
+      branches: ["main", "develop", "production"]
       critical_gaps: ["update flow defined but not spec'd"]
       
     - name: "deploy-manager"
@@ -42,6 +68,7 @@ repository_structure:
       purpose: "Deploy, upgrade, rollback OpenProject instances"
       has_control_flow: true
       status: "~85% complete"
+      branches: ["main", "develop", "production"]
       critical_gaps: ["rollback flow PLANNED but not implemented - PRODUCTION CRITICAL"]
       
     - name: "prober"
@@ -49,23 +76,30 @@ repository_structure:
       purpose: "Health checking and service monitoring"
       has_control_flow: true
       status: "Unknown - needs investigation"
+      branches: ["main", "develop", "production"]
       
     - name: "control-flow"
       path: "external/control-flow"
       purpose: "Shared control flow engine and visualization library"
       has_control_flow: false
+      branches: ["main", "develop", "production"]
+      status: "Complete - Graphviz migration done"
       note: "This IS the engine, doesn't describe its own flow"
       
     - name: "dependency-manager"
       path: "external/dependency-manager"
       purpose: "Resolve and manage component dependencies"
       has_control_flow: false
-      note: "May need control flow spec"
+      branches: ["main", "develop", "production (filtered)"]
+      status: "Production-ready - Portable/reusable design"
+      production_filtering: "Removes MIGRATION_LOG.md, README.md, migration_backup/"
+      note: "Contains production branch tooling (setup_production_branch.py)"
       
     - name: "tui-form-designer"
       path: "external/tui-form-designer"
       purpose: "Terminal UI form generation and interaction"
       has_control_flow: false
+      branches: ["main", "develop", "production"]
       note: "Library component, may not need control flow"
 
 # ============================================================================
@@ -344,6 +378,59 @@ common_workflows:
       - "Commit both code and updated control_flows.yml together"
 
 # ============================================================================
+# RECENT ACCOMPLISHMENTS (October 13, 2025)
+# ============================================================================
+
+recent_work:
+  branch_restructuring:
+    completed: "2025-10-13T17:45:00"
+    scope: "7 repositories (main + 6 submodules)"
+    objective: "Separate production deployment from development"
+    
+    changes:
+      - "Main repo: feature/python-rebuild → develop"
+      - "Main repo: origin/develop → origin/production"
+      - "All submodules: Created develop branches"
+      - "All submodules: Created production branches"
+      - "Created backup tags: backup-20251013-174556-* (all repos)"
+      
+    infrastructure_added:
+      ai_context_system:
+        - "AI/ai_context.yaml - Complete project context"
+        - "AI/README.md - Human guide for AI usage"
+        - "AI/update_context.py - Staleness checker"
+        
+      production_filtering:
+        - "production_manifest.yaml - File filtering rules (329 lines)"
+        - "dependency-manager/configs/production_manifest.example.yaml"
+        - "dependency-manager/tools/setup_production_branch.py (400+ lines)"
+        - "dependency-manager/docs/BRANCH_STRATEGY.md"
+        - "dependency-manager/docs/ARCHITECTURE_REUSABLE.md"
+        - "dependency-manager/USAGE.md"
+        
+      branch_management:
+        - "scripts/restructure-branches.sh - One-time migration"
+        - "scripts/switch-branch.sh - Branch switching helper"
+        - "scripts/create-production-branch.sh - Production filtering"
+        
+    commits:
+      - "b37d87a - feat: complete branch restructuring (1530+ insertions)"
+      - "9cd2c42 - docs: add mission completion summary"
+      
+    status: "✅ COMPLETE"
+    
+  control_flow_migration:
+    completed: "2025-10-13T14:00:00"
+    objective: "Complete Mermaid → Graphviz migration"
+    changes:
+      - "Restored emptied files (README.md, pyproject.toml, __init__.py)"
+      - "Enhanced GraphvizFlowVisualizer for nested YAML format"
+      - "Generated 9 flow diagrams for config-manager"
+      - "Installed python3-graphviz system package"
+      - "Committed 2 commits to control-flow repo"
+    status: "✅ COMPLETE"
+
+# ============================================================================
 # QUESTIONS TO ASK USER
 # ============================================================================
 
@@ -356,6 +443,11 @@ questions_to_ask:
     - "Generate/regenerate flow diagrams?"
     - "Should I analyze what needs implementation?"
     - "Ready to commit these changes?"
+    
+  documentation:
+    - "Should I create a summary document for this work?"
+    - "Would you like detailed documentation, or just update ai_context.yaml?"
+    - "What format would be most useful (markdown, diagram, checklist)?"
     
   clarifications:
     - "Where should this file go? (check file_organization)"
@@ -373,12 +465,19 @@ key_insights:
   - "Minimize prose - only write what can't be expressed in YAML/diagrams"
   - "Design-first prevents architectural mistakes - think through data flow before coding"
   - "Visual diagrams communicate faster than prose to both humans and AI"
+  - "ALWAYS update ai_context.yaml first, then ask user if documentation is needed"
+  - "Let user decide documentation format - don't assume they want prose"
 
 migration_history:
   mermaid_to_graphviz:
     when: "October 2025"
     why: "Better layout algorithms, publication-quality output, no JS dependency"
     status: "Complete, Mermaid removed"
+    
+  branch_restructuring:
+    when: "October 13, 2025"
+    why: "Separate production deployment from development, protect upstream fork"
+    status: "Complete, all 7 repos restructured"
 
 # ============================================================================
 # WHEN AI LOSES CONTEXT
