@@ -6,8 +6,21 @@
 #   This saves you from re-analyzing entire conversation histories.
 #   Check 'last_updated' below - if stale, prompt user to update it.
 #   See AI/README.md for maintenance guidelines.
+#
+# CRITICAL CLARIFICATION:
+#   Each component has its OWN design_specs/control_flows.yml file
+#   These files describe THAT COMPONENT'S flows, NOT the control-flow engine!
+#   
+#   Example: external/config-manager/design_specs/control_flows.yml
+#            → Describes how config-manager works (discovery, collection, etc.)
+#            → NOT about the control-flow engine itself
+#   
+#   The control-flow engine is just a TOOL that:
+#   - Reads these component-specific control_flows.yml files
+#   - Generates diagrams from them
+#   - Helps visualize each component's architecture
 
-last_updated: "2025-10-13T17:50:00"  # ISO 8601 timestamp - update when context changes
+last_updated: "2025-10-13T22:10:00"  # ISO 8601 timestamp - update when context changes
 
 project:
   name: "OpenProject Control Flow System"
@@ -132,7 +145,23 @@ core_principles:
 # ============================================================================
 
 control_flows_yml_schema:
-  location: "design_specs/control_flows.yml (in each component)"
+  location: "design_specs/control_flows.yml (in each component repo)"
+  
+  purpose: |
+    CRITICAL: Each component has its OWN control_flows.yml that describes THAT component.
+    
+    Examples:
+    - external/config-manager/design_specs/control_flows.yml
+      → Describes config-manager's flows (discovery, collection, validation, export)
+    - external/deploy-manager/design_specs/control_flows.yml  
+      → Describes deploy-manager's flows (deployment, upgrade, rollback)
+    - external/prober/design_specs/control_flows.yml
+      → Describes prober's flows (health checks, monitoring)
+    
+    The control-flow engine (external/control-flow/) is just a TOOL that:
+    - Reads these component-specific files
+    - Generates diagrams from them
+    - The engine itself does NOT have a control_flows.yml (it IS the engine)
   
   top_level_keys:
     component:
@@ -281,6 +310,11 @@ graphviz_visualizer:
 # ============================================================================
 
 anti_patterns:
+  - pattern: "Confusing component specs with the control-flow engine"
+    correct: "external/config-manager/design_specs/control_flows.yml describes config-manager"
+    wrong: "Thinking it describes the control-flow engine itself"
+    clarification: "Each component has its own control_flows.yml describing its OWN architecture"
+    
   - pattern: "Creating prose documentation that duplicates control_flows.yml"
     why_bad: "YAML already documents structure, diagrams show it visually"
     examples: ["CONTROL_FLOWS_GUIDE.md", "PROJECT_ANALYSIS.md"]
@@ -382,6 +416,101 @@ common_workflows:
 # ============================================================================
 
 recent_work:
+  config_manager_phase_migration:
+    started: "2025-10-13T19:00:00"
+    last_updated: "2025-10-13T23:30:00"
+    completed: "2025-10-13T23:30:00"
+    objective: "Migrate config-manager from monolithic src/ to phases/ architecture"
+    control_flows_file: "external/config-manager/design_specs/control_flows.yml"
+    
+    migration_summary:
+      total_phases: 5
+      phases_completed: 5
+      total_lines_migrated: ~2300
+      total_tests: "6 integration + unit (scaffolded)"
+      architecture: "Phase-based with orchestrators and step modules"
+    
+    phase_status:
+      phase_1_discovery:
+        status: "IMPLEMENTED"
+        completed: "2025-10-13T20:00:00"
+        steps: 3
+        lines_migrated: ~1100
+        tests: "6/6 passing"
+        output: "phases/phase_1_discovery/outputs/discovery/enhanced_defaults.yml"
+        
+      phase_2_tui_mapping:
+        status: "IMPLEMENTED"
+        completed: "2025-10-13T20:30:00"
+        steps: 1
+        lines_migrated: ~170
+        tests: "6/6 passing"
+        output: "phases/phase_2_tui_mapping/outputs/tui/tui_defaults.yml"
+        
+      phase_3_collection:
+        status: "IMPLEMENTED"
+        completed: "2025-10-13T21:50:00"
+        steps: 1
+        lines_migrated: ~280
+        tests: "Scaffolded (need updating)"
+        outputs:
+          - "phases/phase_3_collection/outputs/collected_configuration.yml"
+          - "phases/phase_3_collection/outputs/config_tui.layout_responses.json"
+        notes:
+          - "TUI collector migrated from src/collector/tui_collector.py"
+          - "Layouts copied to step_1_collect_user_configuration/layouts/"
+          - "Supports mock responses for testing (TUI engine optional)"
+          - "Integration with Phase 2 TUI defaults working"
+        lessons_learned:
+          - "Check existing test structure before creating new test files"
+          - "Update control_flows.yml immediately after implementation"
+          - "Remove '(pending migration)' notes from control_flows.yml"
+          
+      phase_4_validation:
+        status: "IMPLEMENTED"
+        completed: "2025-10-13T23:15:00"
+        steps: 3
+        lines_migrated: ~545
+        files_created:
+          - "phases/phase_4_validation/step_1_schema_validation/schema_validator.py (195 lines)"
+          - "phases/phase_4_validation/step_2_dependency_validation/dependency_validator.py (165 lines)"
+          - "phases/phase_4_validation/step_3_environment_validation/environment_validator.py (185 lines)"
+        integration: "All validators integrated in orchestrator_validation.py"
+        output: "phases/outputs/validation_report.yml"
+        notes:
+          - "Split monolithic validator.py (525 lines) into focused modules"
+          - "Each validator has own result dataclass and validate() method"
+          - "Orchestrator aggregates all validation results"
+        
+      phase_5_export:
+        status: "IMPLEMENTED"
+        completed: "2025-10-13T23:30:00"
+        steps: 1
+        lines_migrated: ~200
+        outputs:
+          - "phases/outputs/docker-compose.yml"
+          - "phases/outputs/.env"
+          - "phases/outputs/configuration_manifest.yml"
+        notes:
+          - "Generates docker-compose.yml with OpenProject + PostgreSQL services"
+          - "Produces .env file with all configuration parameters"
+          - "Creates manifest for deploy-manager consumption"
+          - "cfg_writer.py available for .cfg format if needed"
+    
+    pipeline_tests:
+      phases_1_to_3: "Working with mock responses"
+      full_pipeline_1_to_5: "Pending end-to-end test"
+      orchestrator: "7/7 tests passing"
+    
+    files_requiring_sync:
+      critical:
+        - file: "design_specs/control_flows.yml"
+          purpose: "Phase status, dependencies, artifact locations"
+          must_update: "After every phase migration"
+        - file: "pyproject.toml"
+          purpose: "Dependencies (pyyaml, pydantic, etc.)"
+          must_update: "When adding new libraries"
+      
   branch_restructuring:
     completed: "2025-10-13T17:45:00"
     scope: "7 repositories (main + 6 submodules)"
@@ -448,25 +577,130 @@ questions_to_ask:
     - "Should I create a summary document for this work?"
     - "Would you like detailed documentation, or just update ai_context.yaml?"
     - "What format would be most useful (markdown, diagram, checklist)?"
+    - "May I create/update README/guide files, or would you prefer to review first?"
     
   clarifications:
     - "Where should this file go? (check file_organization)"
     - "Is this prose doc necessary, or should it be in control_flows.yml?"
     - "Should this be a technical deep-dive doc, or enhance the spec?"
 
+user_preferences:
+  documentation_creation:
+    policy: "ALWAYS ASK BEFORE CREATING DOCUMENTATION"
+    rationale: "User prefers to control what documentation gets created"
+    examples:
+      - "Don't create README.md files without asking"
+      - "Don't create guide files without permission"
+      - "Don't generate comprehensive documentation unprompted"
+    exceptions:
+      - "Updating ai_context.yaml itself (this file)"
+      - "Updating existing documentation when explicitly requested"
+      - "Adding inline code comments (minimal, as needed)"
+    workflow:
+      1: "Complete the technical work"
+      2: "Update ai_context.yaml if needed"
+      3: "Ask: 'Would you like me to create documentation for this?'"
+      4: "Wait for user approval before creating docs"
+  
+  required_updates:
+    policy: "ALWAYS UPDATE THESE FILES WITHOUT ASKING"
+    rationale: "These files must stay in sync with code changes"
+    files_to_update:
+      - file: "design_specs/control_flows.yml"
+        when: "Any phase status changes, implementation changes, or artifact locations change"
+        what_to_update:
+          - "Phase status (PLANNED → SCAFFOLDED → IMPLEMENTED → TESTED)"
+          - "Dependencies list with actual file paths (remove 'pending migration')"
+          - "Side effects with actual artifact locations"
+          - "Implementation notes and method signatures"
+          - "Step status in sub_flows section"
+        critical: true
+        
+      - file: "pyproject.toml or requirements files"
+        when: "New dependencies added or removed"
+        what_to_update:
+          - "dependencies list"
+          - "optional-dependencies if dev/test deps"
+        critical: true
+        
+      - file: "AI/ai_context.yaml"
+        when: "Major changes, new insights, or workflow updates"
+        what_to_update:
+          - "last_updated timestamp"
+          - "key_insights if lessons learned"
+          - "migration_history for major changes"
+        critical: true
+  
+  test_file_policy:
+    policy: "UPDATE EXISTING TESTS, DON'T CREATE NEW ONES"
+    rationale: "Test structure is scaffolded by control flow generator - use what exists"
+    workflow:
+      1: "Check phases/phase_N_*/tests/ for existing test files"
+      2: "Read existing test files to see if they're scaffolded placeholders"
+      3: "If scaffolded, UPDATE them with actual test implementation"
+      4: "If already implemented, ADD new test cases to existing files"
+      5: "ONLY create new test files if explicitly requested or truly needed"
+    examples:
+      good: "Update test_orchestrator_collection.py with working tests"
+      bad: "Create test_manual.py alongside existing test_orchestrator_collection.py"
+    applies_to:
+      - "Unit tests in phases/phase_N_*/tests/unit/"
+      - "Integration tests in phases/phase_N_*/tests/integration/"
+      - "Step tests for individual steps"
+
 # ============================================================================
 # KEY INSIGHTS & LESSONS LEARNED
 # ============================================================================
 
 key_insights:
+  - "Each component has its own control_flows.yml that describes THAT component's architecture"
+  - "control_flows.yml is NOT about the control-flow engine - it's about the component it lives in"
   - "The control flow system is self-documenting - specs generate diagrams, diagrams ARE documentation"
   - "Status tracking reveals priorities automatically - no need for separate roadmap docs"
-  - "The system demonstrates its own value - it documents itself through its own specs"
   - "Minimize prose - only write what can't be expressed in YAML/diagrams"
   - "Design-first prevents architectural mistakes - think through data flow before coding"
   - "Visual diagrams communicate faster than prose to both humans and AI"
   - "ALWAYS update ai_context.yaml first, then ask user if documentation is needed"
   - "Let user decide documentation format - don't assume they want prose"
+  - "PROMPT before creating guides, READMEs, or comprehensive documentation"
+  - "BEFORE creating tests, check what already exists in tests/ and testing/ directories"
+  - "ALWAYS update control_flows.yml when phase status or implementation changes - THIS IS REQUIRED"
+  - "UPDATE existing test files instead of creating new ones - respect scaffolded structure"
+  - "Keep pyproject.toml dependencies in sync when adding libraries"
+  - "Remove '(pending migration)' notes from control_flows.yml after completing migration"
+
+phase_migration_checklist:
+  description: "Follow this checklist when migrating phases to prevent duplication and ensure completeness"
+  reference: "See user_preferences.required_updates and user_preferences.test_file_policy"
+  steps:
+    1_before_starting:
+      - "Read design_specs/control_flows.yml to see current phase status"
+      - "Check phases/phase_N_*/tests/ for existing test structure"
+      - "Check testing/ directory for existing integration tests"
+      - "List files in step directories to see what scaffolding exists"
+      - "Read existing test files to determine if they're scaffolded placeholders"
+    2_during_migration:
+      - "Migrate code to existing step directories (don't create new ones)"
+      - "UPDATE existing test files with actual implementation (don't create new test files)"
+      - "If tests are scaffolded, replace placeholder code with working tests"
+      - "Add test cases to existing test files, don't create parallel test files"
+      - "Don't create test_manual.py or test_integration.py if tests/ structure exists"
+    3_after_migration:
+      - "REQUIRED: Update design_specs/control_flows.yml phase status to IMPLEMENTED"
+      - "REQUIRED: Update control_flows.yml dependencies with actual file paths"
+      - "REQUIRED: Update control_flows.yml side_effects with actual artifact locations"
+      - "REQUIRED: Remove '(pending migration)' notes from control_flows.yml"
+      - "REQUIRED: Update step status in control_flows.yml sub_flows section"
+      - "REQUIRED: Update pyproject.toml if new dependencies added"
+      - "Update ai_context.yaml timestamp and migration_history"
+      - "Run existing tests to verify migration"
+      - "Delete any duplicate test files created"
+    4_efficient_checks:
+      - "Use file_search tool to find existing test files: **/test*.py"
+      - "Use list_dir on tests/ directories before creating new files"
+      - "Use grep_search to find phase status in control_flows.yml"
+      - "Use read_file to check if tests are scaffolded (look for 'placeholder' or 'Generated by')"
+      - "Check pyproject.toml for current dependencies before adding new ones"
 
 migration_history:
   mermaid_to_graphviz:
@@ -494,16 +728,41 @@ context_restoration_steps:
   8: "Ask user what we were working on"
 
 quick_reference:
-  main_spec_location: "design_specs/control_flows.yml (in each component)"
-  diagram_location: "design_specs/graphics/ (in each component)"
+  component_specs: "design_specs/control_flows.yml (in each component repo)"
+  component_diagrams: "design_specs/graphics/ (in each component repo)"
   visualizer_code: "external/control-flow/src/control_flow_engine/visualizer/graphviz_generator.py"
   this_context_file: "AI/ai_context.yaml (main repo root)"
+  
+  example_locations:
+    config_manager_spec: "external/config-manager/design_specs/control_flows.yml"
+    deploy_manager_spec: "external/deploy-manager/design_specs/control_flows.yml"
+    prober_spec: "external/prober/design_specs/control_flows.yml"
+    
+  important_note: |
+    Each control_flows.yml describes THE COMPONENT IT'S IN, not the control-flow engine!
+    The engine just reads and visualizes these specs.
 
 # ============================================================================
 # IMMEDIATE ACTION ITEMS
 # ============================================================================
 
 immediate_todos:
+  architecture_decisions:
+    phase_refactoring:
+      priority: "HIGH"
+      document: "external/config-manager/design_specs/PHASE_REFACTORING_STRATEGY.md"
+      problem: "Hardcoded phase/step numbering causes brittleness"
+      impact: "Reordering, deletion, or insertion requires extensive file/import changes"
+      solutions_proposed:
+        1: "Semantic directory names (discovery/ instead of phase_1_discovery/)"
+        2: "Manifest-based ordering with dynamic loading"
+        3: "Hybrid: semantic names + order from control_flows.yml (RECOMMENDED)"
+      decision_needed: "User review and approval before implementation"
+      questions:
+        - "Should we migrate all components at once or incrementally?"
+        - "Should step ordering be in control_flows.yml or phase orchestrator?"
+        - "Should we auto-generate migration scripts?"
+        
   pending_commits:
     control_flow:
       - "Modified graphviz_generator.py (handles nested format)"

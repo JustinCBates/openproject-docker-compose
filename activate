@@ -1,0 +1,25 @@
+#!/bin/bash
+# Quick activation script for openproject venv
+# Usage: source activate
+
+if [ -z "$BASH_VERSION" ]; then
+    echo "Error: This script must be sourced in bash"
+    echo "Usage: source activate"
+    return 1 2>/dev/null || exit 1
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ ! -d "$SCRIPT_DIR/venv" ]; then
+    echo "❌ Virtual environment not found at $SCRIPT_DIR/venv"
+    echo "Run: python3 -m venv venv"
+    return 1 2>/dev/null || exit 1
+fi
+
+source "$SCRIPT_DIR/venv/bin/activate"
+
+echo "✅ Virtual environment activated"
+echo "📍 Python: $(which python)"
+echo "📦 Packages: $(pip list --format=freeze | wc -l) installed"
+echo ""
+echo "To deactivate: deactivate"
