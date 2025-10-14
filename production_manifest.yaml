@@ -115,7 +115,7 @@ repositories:
     production_exclude:
       - "design_specs/**"
       - "documents/**"
-      - "output/**"                 # Generated test outputs
+      - "outputs/**"                # Generated test outputs
       - "NETWORK_DISCOVERY.md"
     
   # Deployment orchestration service  
