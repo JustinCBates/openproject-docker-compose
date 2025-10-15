@@ -26,7 +26,10 @@ Migration plans and rebuild documentation
 ### 📋 **project/**
 Project overview and summary documentation
 - `PROJECT_OVERVIEW.md` - Complete project overview and component descriptions  
+- `PROJECT_STRUCTURE_MASTER.md` - Master reference for project structure
 - `MULTI_REPO_SUMMARY.md` - Multi-repository structure and relationships
+- `BRANCH_RESTRUCTURE_COMPLETE.md` - Branch restructuring completion summary
+- `DEPENDENCY_ANALYSIS.md` - Cross-repository dependency analysis
 
 ## 🎯 **Document Categories**
 
