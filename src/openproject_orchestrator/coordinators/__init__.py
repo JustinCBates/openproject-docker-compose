@@ -6,7 +6,15 @@ and adapt them for use in the main orchestrator.
 
 Coordinators:
 - ConfigCoordinator: Wraps config-manager
-- DeployCoordinator: Wraps deploy-manager
+- DeployCoordinator: Wraps deploy-manager (to be implemented in Phase 3)
 """
 
-# To be implemented in Phase 2 and 3
+from openproject_orchestrator.coordinators.config_coordinator import (
+    ConfigCoordinator,
+    ConfigState,
+)
+
+__all__ = [
+    "ConfigCoordinator",
+    "ConfigState",
+]

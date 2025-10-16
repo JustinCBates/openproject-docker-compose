@@ -7,12 +7,15 @@ It displays the main menu and coordinates all workflows.
 
 from typing import Optional
 from dataclasses import dataclass
+from pathlib import Path
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.layout import Layout
 from rich import box
+
+from openproject_orchestrator.coordinators import ConfigCoordinator
 
 
 @dataclass
@@ -42,9 +45,13 @@ class TUIController:
         self.console = Console()
         self.debug = debug
         
-        # Coordinators (to be implemented in later phases)
-        # self.config_coordinator = ConfigCoordinator()
-        # self.deploy_coordinator = DeployCoordinator()
+        # Workspace directory for generated files
+        self.workspace_dir = Path("./workspace")
+        self.workspace_dir.mkdir(exist_ok=True)
+        
+        # Coordinators
+        self.config_coordinator = ConfigCoordinator(workspace_dir=self.workspace_dir)
+        # self.deploy_coordinator = DeployCoordinator()  # Phase 3
         
     def run(self):
         """Main TUI loop"""
@@ -171,10 +178,30 @@ Interactive deployment and management for OpenProject.
         self.console.input("Press Enter to continue...")
     
     def _workflow_configure(self):
-        """Configuration workflow (to be implemented in Phase 2)"""
-        self.console.print("\n[cyan]Configuration Workflow[/cyan]")
+        """Configuration workflow"""
+        self.console.print("\n[bold cyan]Configuration Workflow[/bold cyan]")
         self.console.print("[dim]Interactive configuration using config-manager.[/dim]\n")
-        self.console.print("[yellow]⏳ Not yet implemented - Coming in Phase 2[/yellow]\n")
+        
+        # Check if already configured
+        if self.config_coordinator.is_configured():
+            self.console.print("[yellow]⚠️  System is already configured.[/yellow]\n")
+            reconfigure = self.console.input("Do you want to reconfigure? (y/N): ").strip().lower()
+            if reconfigure not in ["y", "yes"]:
+                self.console.print("[dim]Keeping existing configuration.[/dim]\n")
+                self.console.input("Press Enter to continue...")
+                return
+        
+        # Run interactive configuration
+        success = self.config_coordinator.run_interactive_configuration(
+            template="openproject",
+            prober_enabled=True
+        )
+        
+        if success:
+            self.console.print("[green]✓[/green] Configuration workflow complete!\n")
+        else:
+            self.console.print("[red]✗[/red] Configuration failed.\n")
+        
         self.console.input("Press Enter to continue...")
     
     def _workflow_deploy(self):
@@ -185,20 +212,40 @@ Interactive deployment and management for OpenProject.
         self.console.input("Press Enter to continue...")
     
     def _show_status_dashboard(self):
-        """Status dashboard (to be implemented in Phase 4)"""
-        self.console.print("\n[cyan]Status Dashboard[/cyan]")
+        """Status dashboard"""
+        self.console.print("\n[bold cyan]Status Dashboard[/bold cyan]")
         self.console.print("[dim]View deployment status and system information.[/dim]\n")
         
-        # Placeholder status
+        # Configuration status
         status_table = Table(title="Current Status", box=box.SIMPLE)
         status_table.add_column("Component", style="cyan")
         status_table.add_column("Status", style="yellow")
+        status_table.add_column("Details", style="dim")
         
-        status_table.add_row("Configuration", "❌ Not configured")
-        status_table.add_row("Deployment", "❌ Not deployed")
+        # Configuration status
+        if self.config_coordinator.is_configured():
+            config_file = self.config_coordinator.get_config_file()
+            status_table.add_row(
+                "Configuration",
+                "[green]✓ Configured[/green]",
+                str(config_file) if config_file else ""
+            )
+        else:
+            status_table.add_row(
+                "Configuration",
+                "[red]❌ Not configured[/red]",
+                "Run 'Configure' to set up"
+            )
+        
+        # Deployment status (Phase 3)
+        status_table.add_row(
+            "Deployment",
+            "[dim]❌ Not deployed[/dim]",
+            "[dim]Coming in Phase 3[/dim]"
+        )
         
         self.console.print(status_table)
-        self.console.print("\n[yellow]⏳ Full dashboard coming in Phase 4[/yellow]\n")
+        self.console.print("\n[yellow]⏳ Full dashboard with live monitoring coming in Phase 4[/yellow]\n")
         self.console.input("Press Enter to continue...")
     
     def _show_not_implemented(self, feature_name: str):
