@@ -120,6 +120,8 @@ dependencies = [
 ║  [7] 🏥 Health Check    - System health status          [NOT COMPLETE] ║
 ║  [8] 📊 Status          - Deployment status dashboard   ║
 ║  [9] 🔧 Maintenance     - Additional tools              [NOT COMPLETE] ║
+║  [A] 📁 File Server     - Install file server           [NOT COMPLETE] ║
+║  [B] 🔧 Gitea           - Install Gitea (Git hosting)   [NOT COMPLETE] ║
 ║  [0] ❌ Exit                                             ║
 ║                                                          ║
 ╚══════════════════════════════════════════════════════════╝
@@ -225,6 +227,18 @@ class TUIController:
                 value="maintenance",
                 title="🔧 Maintenance [NOT COMPLETE]",
                 description="Additional maintenance tools (BACKLOG)",
+                disabled=True
+            ),
+            MenuChoice(
+                value="file_server",
+                title="📁 File Server [NOT COMPLETE]",
+                description="Install and configure file server (BACKLOG)",
+                disabled=True
+            ),
+            MenuChoice(
+                value="gitea",
+                title="🔧 Gitea [NOT COMPLETE]",
+                description="Install Gitea Git hosting server (BACKLOG)",
                 disabled=True
             ),
             MenuChoice(
@@ -1552,6 +1566,83 @@ src/openproject_orchestrator/maintenance/
 - Tail logs with auto-scroll
 
 **Estimated Effort**: 1 week
+
+### File Server Integration (Future v2.4.0)
+
+**Scope**: Deploy and manage file server alongside OpenProject
+
+**Features**:
+- **File Server Options**:
+  - Nextcloud (full-featured cloud storage)
+  - Seafile (high-performance file sync)
+  - FileBrowser (lightweight file manager)
+  - MinIO (S3-compatible object storage)
+
+- **Integration Features**:
+  - Configure file server from TUI
+  - Deploy file server container
+  - Link with OpenProject (shared authentication)
+  - Configure storage volumes
+  - Backup integration
+  - SSL/TLS configuration
+
+- **Configuration Options**:
+  - Storage location and quotas
+  - User authentication method
+  - Network configuration
+  - Reverse proxy setup
+  - External access settings
+
+**Estimated Effort**: 2-3 weeks
+
+**Benefits**:
+- Centralized file storage for project documents
+- Integration with OpenProject work packages
+- Team collaboration on files
+- Version control for documents
+- Backup and restore capabilities
+
+### Gitea Integration (Future v2.5.0)
+
+**Scope**: Deploy and manage Gitea Git hosting server
+
+**Features**:
+- **Gitea Deployment**:
+  - Install Gitea container
+  - Configure database (SQLite, PostgreSQL, MySQL)
+  - Setup SSH access for Git operations
+  - Configure web interface
+
+- **Integration Features**:
+  - Single Sign-On with OpenProject
+  - Link repositories to work packages
+  - Webhook integration
+  - Issue tracking sync
+  - User management sync
+
+- **Configuration Options**:
+  - Repository storage location
+  - SSH port configuration
+  - Web interface port
+  - Authentication method (local, LDAP, OAuth)
+  - Email notifications
+  - LFS (Large File Storage) support
+
+- **Additional Features**:
+  - Repository backup and restore
+  - Repository migration tools
+  - Organization and team management
+  - CI/CD integration (Gitea Actions)
+  - Package registry
+
+**Estimated Effort**: 2-3 weeks
+
+**Benefits**:
+- Self-hosted Git server alongside OpenProject
+- Complete project management + code hosting
+- Integration between code and project tracking
+- No external dependencies (GitHub, GitLab)
+- Full control over repositories
 
 ### Advanced Features (Future v3.0.0+)
 
