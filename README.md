@@ -264,7 +264,6 @@ Check GitHub Actions for build status:
 - [control-flow builds](https://github.com/JustinCBates/control-flow/actions)
 - [dependency-manager builds](https://github.com/JustinCBates/dependency-manager/actions)
 - [tui-form-designer builds](https://github.com/JustinCBates/TUI_Form_Designer/actions)
-- [prober builds](https://github.com/JustinCBates/docker_prober_utility/actions)
 
 ## Troubleshooting
 
