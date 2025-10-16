@@ -114,12 +114,12 @@ dependencies = [
 ║  [1] 🚀 Quick Deploy   - Guided setup and deployment   ║
 ║  [2] ⚙️  Configure      - Interactive configuration     ║
 ║  [3] 📦 Deploy          - Deploy with existing config   ║
-║  [4] 💾 Backup          - Backup OpenProject data       ║
-║  [5] ⬆️  Upgrade        - Upgrade OpenProject version   ║
-║  [6] 🔄 Restore         - Restore from backup           ║
-║  [7] 🏥 Health Check    - System health status          ║
+║  [4] 💾 Backup          - Backup OpenProject data       [NOT COMPLETE] ║
+║  [5] ⬆️  Upgrade        - Upgrade OpenProject version   [NOT COMPLETE] ║
+║  [6] 🔄 Restore         - Restore from backup           [NOT COMPLETE] ║
+║  [7] 🏥 Health Check    - System health status          [NOT COMPLETE] ║
 ║  [8] 📊 Status          - Deployment status dashboard   ║
-║  [9] 🔧 Maintenance     - Additional tools              ║
+║  [9] 🔧 Maintenance     - Additional tools              [NOT COMPLETE] ║
 ║  [0] ❌ Exit                                             ║
 ║                                                          ║
 ╚══════════════════════════════════════════════════════════╝
@@ -194,23 +194,27 @@ class TUIController:
             ),
             MenuChoice(
                 value="backup",
-                title="💾 Backup",
-                description="Backup OpenProject data and configuration"
+                title="💾 Backup [NOT COMPLETE]",
+                description="Backup OpenProject data and configuration (BACKLOG)",
+                disabled=True
             ),
             MenuChoice(
                 value="upgrade",
-                title="⬆️  Upgrade",
-                description="Upgrade OpenProject to newer version"
+                title="⬆️  Upgrade [NOT COMPLETE]",
+                description="Upgrade OpenProject to newer version (BACKLOG)",
+                disabled=True
             ),
             MenuChoice(
                 value="restore",
-                title="🔄 Restore",
-                description="Restore from backup"
+                title="🔄 Restore [NOT COMPLETE]",
+                description="Restore from backup (BACKLOG)",
+                disabled=True
             ),
             MenuChoice(
                 value="health",
-                title="🏥 Health Check",
-                description="Verify system health and configuration"
+                title="🏥 Health Check [NOT COMPLETE]",
+                description="Verify system health and configuration (BACKLOG)",
+                disabled=True
             ),
             MenuChoice(
                 value="status",
@@ -219,8 +223,9 @@ class TUIController:
             ),
             MenuChoice(
                 value="maintenance",
-                title="🔧 Maintenance",
-                description="Additional maintenance tools"
+                title="🔧 Maintenance [NOT COMPLETE]",
+                description="Additional maintenance tools (BACKLOG)",
+                disabled=True
             ),
             MenuChoice(
                 value="exit",
@@ -1304,69 +1309,92 @@ if Path('./external/config-manager').exists():
 - Handles errors gracefully
 - Shows deployment summary
 
-### Phase 5: Maintenance Manager (Week 5)
+### Phase 5: Maintenance Manager (Week 5) - **BACKLOG**
 
 **Goal**: Backup/restore/upgrade
 
+**Status**: ⏸️ **DEFERRED TO FUTURE PHASE**
+
 **Tasks**:
-- ✅ Implement MaintenanceManager class
-- ✅ Add backup functionality
-- ✅ Add restore functionality
-- ✅ Add upgrade functionality
-- ✅ Wire up maintenance menu options
+- ⏳ Implement MaintenanceManager class
+- ⏳ Add backup functionality
+- ⏳ Add restore functionality
+- ⏳ Add upgrade functionality
+- ⏳ Wire up maintenance menu options
 
 **Deliverables**:
 - Backup/restore/upgrade workflows work
 - Backup list and selection
 - Pre-upgrade backups automatic
 
-### Phase 6: Status Dashboard (Week 6)
+**Note**: Maintenance features are intentionally backlogged. Focus is on core deployment workflow first.
+
+### Phase 6: Status Dashboard (Week 6) - **PARTIAL**
 
 **Goal**: Live status monitoring
+
+**Status**: 🟡 **PARTIAL - Health checks backlogged**
 
 **Tasks**:
 - ✅ Implement status dashboard
 - ✅ Query deployment status
-- ✅ Show service health
-- ✅ Add auto-refresh
-- ✅ Display logs
+- ⏳ Show service health (BACKLOG)
+- ⏳ Add auto-refresh (BACKLOG)
+- ⏳ Display logs (BACKLOG)
 
-**Deliverables**:
-- Status dashboard shows live data
-- Service health visible
-- Logs accessible
+**Deliverables** (Minimum):
+- Status dashboard shows deployment state
+- Configuration status visible
+- Basic deployment information
+
+**Backlogged Features**:
+- Live service health monitoring
+- Auto-refresh functionality
+- Log viewing
 
 ### Phase 7: Polish & Testing (Week 7-8)
 
-**Goal**: Production ready
+**Goal**: Production ready (Core Features)
 
 **Tasks**:
 - ✅ Add comprehensive error handling
 - ✅ Add help text and documentation
-- ✅ Write integration tests
+- ✅ Write integration tests (for core workflows)
 - ✅ Add logging
 - ✅ Package submodules
 - ✅ Update README and guides
-- ✅ Beta testing
+- ✅ Beta testing (core deployment workflow)
 
 **Deliverables**:
-- Production-ready TUI orchestrator
+- Production-ready TUI orchestrator (core features)
 - Packaged submodules on PyPI (or private registry)
 - Complete documentation
-- Tested end-to-end
+- Tested end-to-end (configure → deploy)
+
+**Backlogged for Future**:
+- Maintenance workflows (backup/restore/upgrade)
+- Advanced health monitoring
+- Log viewing and debugging tools
 
 ---
 
 ## Benefits & Features
 
-### User Experience Benefits
+### User Experience Benefits (Core Features)
 
 1. **Single Entry Point**: `openproject deploy` - one command to do everything
 2. **Guided Workflows**: Step-by-step guidance for complex operations
 3. **Smart Defaults**: Auto-discovery reduces manual configuration
 4. **Visual Feedback**: Progress bars, spinners, colored output
-5. **Error Recovery**: Automatic rollback on failure
+5. **Error Recovery**: Automatic rollback on failure *(future)*
 6. **No Docker Knowledge Required**: Abstracts Docker complexity
+
+### User Experience Benefits (Backlogged)
+
+1. **Automated Backups**: Regular backups with easy restore *(future)*
+2. **Safe Upgrades**: Automatic pre-upgrade backups with rollback *(future)*
+3. **Health Monitoring**: Continuous health checks *(future)*
+4. **Live Logs**: Real-time log viewing *(future)*
 
 ### Technical Benefits
 
@@ -1377,13 +1405,16 @@ if Path('./external/config-manager').exists():
 5. **Version Control**: Submodules can version independently
 6. **Extensibility**: Easy to add new workflows or maintenance operations
 
-### Operational Benefits
+### Operational Benefits (Core Features)
 
 1. **One-Command Deployment**: Complete OpenProject setup in minutes
-2. **Automated Backups**: Regular backups with easy restore
-3. **Safe Upgrades**: Automatic pre-upgrade backups with rollback
-4. **Health Monitoring**: Continuous health checks
-5. **Centralized Management**: All operations through one interface
+2. **Centralized Management**: All operations through one interface
+
+### Operational Benefits (Backlogged)
+
+1. **Automated Backups**: Regular backups with easy restore *(future)*
+2. **Safe Upgrades**: Automatic pre-upgrade backups with rollback *(future)*
+3. **Health Monitoring**: Continuous health checks *(future)*
 
 ---
 
@@ -1397,16 +1428,25 @@ if Path('./external/config-manager').exists():
 - ✅ Deployment status visible
 - ✅ Basic error handling works
 
-### Production Ready
+### Production Ready (Core Features)
 
-- ✅ All workflows implemented (configure, deploy, backup, restore, upgrade)
+- ✅ Core workflows implemented (configure, deploy, status)
 - ✅ Comprehensive error handling
-- ✅ Rollback on failures
-- ✅ Status dashboard with live updates
+- ⏳ Rollback on failures *(future)*
+- ✅ Status dashboard with deployment info
 - ✅ Logging and debugging support
 - ✅ Documentation complete
-- ✅ Integration tests passing
+- ✅ Integration tests passing (core workflows)
 - ✅ Submodules packaged and installable
+
+### Backlogged Features (Future Releases)
+
+- ⏳ Backup workflow
+- ⏳ Restore workflow
+- ⏳ Upgrade workflow with automatic backups
+- ⏳ Health check with live monitoring
+- ⏳ Maintenance menu tools
+- ⏳ Log viewing interface
 
 ### Stretch Goals
 
@@ -1448,6 +1488,85 @@ if Path('./external/config-manager').exists():
 
 ---
 
+## Backlog - Future Features
+
+The following features are intentionally backlogged and will be implemented in future releases:
+
+### Maintenance Manager Module (Future v2.1.0)
+
+**Scope**: Backup, restore, and upgrade workflows
+
+**Components to Implement**:
+```
+src/openproject_orchestrator/maintenance/
+├── __init__.py
+├── maintenance_manager.py    # Main maintenance coordinator
+├── backup.py                 # Backup operations
+├── restore.py                # Restore operations
+└── upgrade.py                # Upgrade workflows
+```
+
+**Features**:
+- **Backup Workflow**:
+  - Create snapshots of OpenProject data
+  - Store backups with timestamps
+  - List available backups
+  - Verify backup integrity
+
+- **Restore Workflow**:
+  - Select from available backups
+  - Restore configuration and data
+  - Verify restore success
+
+- **Upgrade Workflow**:
+  - Check for new versions
+  - Automatic pre-upgrade backup
+  - Upgrade OpenProject version
+  - Rollback on failure
+
+**Estimated Effort**: 2-3 weeks
+
+### Health Monitoring (Future v2.2.0)
+
+**Scope**: Real-time health checks and monitoring
+
+**Features**:
+- Docker container health checks
+- Service availability monitoring
+- Resource usage monitoring (CPU, memory, disk)
+- Database connectivity checks
+- Auto-refresh status dashboard
+- Alert system for critical issues
+
+**Estimated Effort**: 1-2 weeks
+
+### Log Viewing (Future v2.3.0)
+
+**Scope**: Interactive log viewing and debugging
+
+**Features**:
+- View container logs in real-time
+- Filter logs by service
+- Search logs
+- Export logs
+- Tail logs with auto-scroll
+
+**Estimated Effort**: 1 week
+
+### Advanced Features (Future v3.0.0+)
+
+**Potential Future Enhancements**:
+- Multi-instance support (manage multiple deployments)
+- Remote deployment (SSH to target servers)
+- Scheduled backups
+- Automated upgrade checks
+- Web UI (in addition to TUI)
+- Monitoring and alerting integration
+- Configuration templates library
+- Deployment recipes
+
+---
+
 ## Next Steps
 
 ### Immediate Actions
@@ -1463,12 +1582,15 @@ if Path('./external/config-manager').exists():
 Week 1:  Core Structure + TUI Framework
 Week 2:  Config Coordinator Integration
 Week 3:  Deploy Coordinator Integration
-Week 4:  Quick Deploy Workflow
-Week 5:  Maintenance Manager
-Week 6:  Status Dashboard
-Week 7-8: Polish, Testing, Documentation
+Week 4:  Quick Deploy Workflow + Status Dashboard
+Week 5-6: Polish, Testing, Documentation
 
-Total: 8 weeks to production-ready v2.0.0
+Total: 6 weeks to MVP v2.0.0 (core features)
+
+Future Phases (Backlogged):
+- Maintenance Manager (backup/restore/upgrade)
+- Advanced Health Monitoring
+- Log Viewing Tools
 ```
 
 ### Dependencies
@@ -1482,7 +1604,7 @@ Total: 8 weeks to production-ready v2.0.0
 **Can Develop In Parallel**:
 - Deploy-manager remaining features
 - Documentation updates
-- Additional maintenance operations
+- Additional maintenance operations *(backlogged)*
 
 ---
 
