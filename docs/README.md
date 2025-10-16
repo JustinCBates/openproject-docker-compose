@@ -28,14 +28,17 @@ Project overview and summary documentation
 - `PROJECT_OVERVIEW.md` - Complete project overview and component descriptions  
 - `PROJECT_STRUCTURE_MASTER.md` - Master reference for project structure
 - `MULTI_REPO_SUMMARY.md` - Multi-repository structure and relationships
+- `CONTROL_FLOW_INTEGRATION.md` - How control-flow engine integrates across all repos
 - `BRANCH_RESTRUCTURE_COMPLETE.md` - Branch restructuring completion summary
 - `DEPENDENCY_ANALYSIS.md` - Cross-repository dependency analysis
+- `COMPLETE_PROJECT_CONTEXT.md` - Complete system context and architecture
 
 ## 🎯 **Document Categories**
 
 ### **For Developers**
 - Start with `project/PROJECT_OVERVIEW.md` for system understanding
-- Review `architecture/ARCHITECTURE.md` for technical details
+- Review `project/CONTROL_FLOW_INTEGRATION.md` for workflow orchestration
+- Study `architecture/ARCHITECTURE.md` for technical details
 - Check `guides/` for development workflows
 - Reference `migration/` for current development status
 
@@ -53,6 +56,7 @@ Project overview and summary documentation
 
 Many documents reference each other. Key relationships:
 - `PROJECT_OVERVIEW.md` ↔ `ARCHITECTURE.md` (overview ↔ details)
+- `CONTROL_FLOW_INTEGRATION.md` ↔ `external/control-flow/docs/` (integration ↔ engine details)
 - `MIGRATION_PLAN.md` ↔ `PYTHON_REBUILD.md` (planning ↔ execution)
 - `MULTI_REPO_SUMMARY.md` ↔ `SUBMODULES_GUIDE.md` (structure ↔ workflow)
 
@@ -69,8 +73,9 @@ This documentation is actively maintained and updated as the system evolves. Whe
 
 **New to the project?** Start here:
 1. `project/PROJECT_OVERVIEW.md` - Understand what this system does
-2. `architecture/ARCHITECTURE.md` - Learn how it works
-3. `guides/SUBMODULES_GUIDE.md` - Set up your development environment
-4. `migration/PYTHON_REBUILD.md` - See current development status
+2. `project/CONTROL_FLOW_INTEGRATION.md` - Learn how workflows are orchestrated
+3. `architecture/ARCHITECTURE.md` - Deep dive into technical architecture
+4. `guides/SUBMODULES_GUIDE.md` - Set up your development environment
+5. `migration/PYTHON_REBUILD.md` - See current development status
 
-The documentation is organized to support both high-level understanding and deep technical implementation details.
+The documentation is organized to support both high-level understanding and deep technical implementation details. For control-flow engine specifics, see `external/control-flow/docs/DOCUMENTATION_INDEX.md`.
