@@ -1574,6 +1574,7 @@ src/openproject_orchestrator/maintenance/
 **Features**:
 - **File Server Options**:
   - Nextcloud (full-featured cloud storage)
+  - ownCloud (enterprise file sync and share)
   - Seafile (high-performance file sync)
   - FileBrowser (lightweight file manager)
   - MinIO (S3-compatible object storage)

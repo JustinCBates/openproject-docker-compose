@@ -424,7 +424,7 @@ src/openproject_orchestrator/
 - Log export
 
 ### v2.4.0 - File Server Integration (Future)
-- Deploy file server (Nextcloud, Seafile, FileBrowser, or MinIO)
+- Deploy file server (Nextcloud, ownCloud, Seafile, FileBrowser, or MinIO)
 - Configure file server from TUI
 - Integration with OpenProject
 - Shared authentication
