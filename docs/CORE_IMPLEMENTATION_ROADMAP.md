@@ -425,6 +425,11 @@ src/openproject_orchestrator/
 
 ### v2.4.0 - File Server Integration (Future)
 - Deploy file server (Nextcloud, ownCloud, Seafile, FileBrowser, or MinIO)
+  - **Nextcloud** - FREE, full-featured cloud storage
+  - **ownCloud** - Enterprise option (subscription for support)
+  - **Seafile** - FREE Community Edition, high-performance
+  - **FileBrowser** - FREE, lightweight web file manager
+  - **MinIO** - FREE, S3-compatible object storage
 - Configure file server from TUI
 - Integration with OpenProject
 - Shared authentication
