@@ -1,70 +1,16 @@
-# OpenProject installation with Docker Compose
+# OpenProject Development Environment
 
-This repository contains the installation method for OpenProject using Docker Compose.
+This is the development branch containing all source code, build tools, and development documentation.
 
+> **End Users:** If you just want to install and use OpenProject, see the [production branch](https://github.com/JustinCBates/openproject-docker-compose/tree/production) for simple installation instructions.
 
-> [!NOTE]
-> Looking for the Kubernetes installation method?
-> Please use the [OpenProject helm chart](https://charts.openproject.org) to install OpenProject on kubernetes.
+## Development Setup
 
-## Quick start
+### Quick Start
 
-First, you must clone the [openproject-docker-compose](https://github.com/opf/openproject-docker-compose) repository:
-
-```shell
-git clone https://github.com/opf/openproject-docker-compose.git --depth=1 --branch=stable/16 openproject
-```
-
-Copy the example `.env` file and edit any values you want to change:
-
-```shell
-cp .env.example .env
-vim .env
-```
-
-If you are using the default value of OPDATA that is used in the ```.env.example``` you need to make sure that the folder exist, and you have the right permissions:
-
-```shell
-sudo mkdir -p /var/openproject/assets
-sudo chown 1000:1000 -R /var/openproject/assets
-```
-
-Next you start up the containers in the background while making sure to pull the latest versions of all used images.
-
-```shell
-OPENPROJECT_HTTPS=false docker compose up -d --build --pull always
-```
-
-After a while, OpenProject should be up and running on `http://localhost:8080`. The default username and password is login: `admin`, and password: `admin`.
-The `OPENPROJECT_HTTPS=false` environment variable explicitly disables HTTPS mode for the first startup. Without this, OpenProject assumes it's running behind HTTPS in production by default.
-We do strongly recommend you use OpenProject behind a TLS terminated proxy for production purposes and remove this flag before actually starting to use it.
-
-## For End Users (Standard Installation)
-
-**End users only need git and Docker Compose - no additional tools required:**
-
-```shell
-# Clone complete system (all code automatically downloaded)
-git clone --recursive -b feature/python-rebuild https://github.com/JustinCBates/openproject-docker-compose.git
-cd openproject-docker-compose
-
-# Standard OpenProject setup
-cp .env.example .env
-# Edit .env file as needed
-docker-compose up -d
-```
-
-> **Note**: The `--recursive` flag automatically downloads all required external components via git submodules. No VS Code, Python setup, or developer tools needed for basic OpenProject usage.
-
-## Development Setup (Optional - For Contributors)
-
-This repository uses git submodules to organize external components. **This section is only for developers who want to contribute or customize the system:**
-
-### Quick Development Setup
-
-```shell
-# Clone with all submodules (complete system)
-git clone --recursive -b feature/python-rebuild https://github.com/JustinCBates/openproject-docker-compose.git
+```bash
+# Clone with all development components
+git clone --recursive -b develop https://github.com/JustinCBates/openproject-docker-compose.git
 cd openproject-docker-compose
 
 # Run automated development environment setup
@@ -74,26 +20,115 @@ cd openproject-docker-compose
 code openproject.code-workspace
 ```
 
-### Repository Structure
+### Repository Architecture
+
+This repository uses a **three-tier branching strategy**:
+
+- **`develop`** - Active development (source code, tests, documentation)
+- **`build`** - Automated builds (GitHub Actions creates releases)
+- **`production`** - Clean deployment (user installation only)
+
+### Component Structure
 
 ```
 openproject-docker-compose/
-├── external/config-manager/    # Interactive configuration management
-├── external/deploy-manager/    # Deployment utilities  
-├── external/prober/            # Docker environment probing
-├── external/control-flow/      # Control flow engine and visualization
-└── openproject.code-workspace  # VS Code multi-repo workspace
+├── external/                   # Git submodules (development only)
+│   ├── config-manager/         # Interactive configuration management
+│   ├── deploy-manager/         # Deployment utilities
+│   ├── control-flow/          # Control flow engine
+│   ├── dependency-manager/    # Dependency management
+│   ├── tui-form-designer/     # TUI form builder
+│   └── prober/               # Docker environment probing (experimental)
+├── src/                       # Main orchestrator source
+├── tests/                     # Test suites
+├── docs/                      # Development documentation
+├── scripts/                   # Build and automation scripts
+└── pyproject.toml            # Python package configuration
 ```
 
-### VS Code Workspace Features
+### Package Distribution
 
-- **Multi-Repository Support**: All 5 repositories accessible as separate folders
-- **Integrated Git**: Submodule detection and management
-- **Python Development**: Configured paths, linting, formatting, testing
-- **Built-in Tasks**: Test, format, lint, and submodule management
-- **Debug Configurations**: Ready-to-use Python debugging
+Components are distributed as **pip-installable packages** via GitHub Releases:
 
-### Available VS Code Tasks
+```bash
+# Install from releases (production)
+pip install https://github.com/user/config-manager/releases/latest/download/package.whl
+
+# Install from local development (development)
+pip install -e ./external/config-manager/
+```
+
+## Development Workflow
+
+### 1. Component Development
+
+Each `external/` directory is a separate Git repository:
+
+```bash
+# Make changes in any component
+cd external/config-manager/
+# ... make changes ...
+git add . && git commit -m "feature: add new capability"
+git push origin develop
+
+# Test locally
+cd ../../
+pip install -e ./external/config-manager/
+pytest tests/
+```
+
+### 2. Release Workflow
+
+```bash
+# 1. Update version in component
+cd external/config-manager/
+# Edit pyproject.toml version: 2.0.1 -> 2.0.2
+
+# 2. Create changelog
+echo "## v2.0.2\n- Feature: New capability" >> CHANGELOG.md
+
+# 3. Commit and merge to build branch
+git add . && git commit -m "release: bump version to 2.0.2"
+git push origin develop
+
+# 4. Merge develop -> build (triggers GitHub Actions)
+git checkout build
+git merge develop
+git push origin build
+
+# GitHub Actions automatically:
+# - Runs tests
+# - Builds wheel packages
+# - Creates GitHub release
+# - Publishes packages
+```
+
+### 3. Integration Testing
+
+```bash
+# Test with released packages
+pip install -r requirements-github.txt
+
+# Test with local development packages
+pip install -r requirements-local.txt
+
+# Run full test suite
+pytest tests/ external/*/tests/
+```
+
+## VS Code Workspace
+
+### Features
+
+- **Multi-Repository Support** - All components as separate folders
+- **Integrated Git** - Submodule management
+- **Python Development** - Configured paths, linting, formatting
+- **Built-in Tasks** - Test, format, lint across all repos
+- **Debug Configurations** - Ready-to-use debugging
+
+### Available Tasks
+
+Run from VS Code Command Palette (Ctrl+Shift+P > "Tasks: Run Task"):
 
 - `Run Tests (All Repos)` - Execute pytest across all components
 - `Format Code (Black - All Repos)` - Auto-format Python code
@@ -102,230 +137,168 @@ openproject-docker-compose/
 - `Initialize Submodules (First Time Setup)` - Set up repos for new clones
 - `Switch All Submodules to Main Branch` - Prepare for development
 
-### Development Workflow
+## Automation Scripts
 
-1. **Make changes** in any `external/` directory (each is a separate git repo)
-2. **Commit and push** changes to the respective component repository  
-3. **Update submodule references** in main repo to track new versions
-4. **Use VS Code tasks** for testing, formatting, and submodule management
-
-> **Important**: The development setup with VS Code workspace and setup script is **completely optional**. End users can use OpenProject normally without any of these developer tools.
-
-### Customization
-
-The `docker-compose.yml` file present in the repository can be adjusted to your convenience. But note that with each pull, it will be overwritten.
-Best practice is to use the file `docker-compose.override.yml` for that case.
-For instance you could mount specific configuration files, override environment variables, or switch off services you don't need.
-
-Please refer to the official [Docker Compose documentation](https://docs.docker.com/compose/extends/) for more details.
-
-### Troubleshooting
-
-**pull access denied for openproject/proxy, repository does not exist or may require 'docker login': denied: requested access to the resource is denied**
-
-If you encounter this after `docker compose up` this is merely a warning which can be ignored.
-
-If this happens during `docker compose pull` this is simply a warning as well.
-But it will result in the command's exit code to be a failure even though all images are pulled.
-To prevent this you can add the `--ignore-buildable` option, running `docker compose pull  --ignore-buildable`.
-
-### HTTPS/SSL
-
-By default OpenProject starts with the HTTPS option **enabled**, but it **does not** handle SSL termination itself. This
-is usually done separately via a [reverse proxy
-setup](https://www.openproject.org/docs/installation-and-operations/installation/docker/#apache-reverse-proxy-setup).
-Without this you will run into an `ERR_SSL_PROTOCOL_ERROR` when accessing OpenProject.
-
-See below how to disable HTTPS.
-
-Be aware that if you want to use the integrated Caddy proxy as a proxy with outbound connections, you need to rewrite the
-`Caddyfile`. In the default state, it is configured to forward the `X-Forwarded-*` headers from the reverse proxy in
-front of it and not setting them itself. This is considered a security flaw and should instead be solved by configuring
-`trusted_proxies` inside the `Caddyfile`. For more information read
-the [Caddy documentation](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy).
-
-### PORT
-
-By default the port is bound to `0.0.0.0` means access to OpenProject will be public.
-See below how to change that.
-
-## Image configuration
-
-OpenProject publishes `slim` containers that you should be using for this compose setup.
-Please see https://www.openproject.org/docs/installation-and-operations/installation/docker/#available-containers for more information on the containers and versions we push.
-
-## Configuration
-
-Environment variables can be added to `docker-compose.yml` under `x-op-app -> environment` to change
-OpenProject's configuration. Some are already defined and can be changed via the environment.
-
-You can pass those variables directly when starting the stack as follows.
-
-```
-VARIABLE=value docker-compose up -d
-```
-
-You can also put those variables into an `.env` file in your current working
-directory, and Docker Compose will pick it up automatically. See `.env.example`
-for details.
-
-## HTTPS
-
-You can disable OpenProject's HTTPS option via:
-
-```
-OPENPROJECT_HTTPS=false
-```
-
-## PORT
-
-If you want to specify a different port, you can do so with:
-
-```
-PORT=4000
-```
-
-If you don't want OpenProject to bind to `0.0.0.0` you can bind it to localhost only like this:
-
-```
-PORT=127.0.0.1:8080
-```
-
-## TAG
-
-If you want to specify a custom tag for the OpenProject docker image, you can do so with:
-
-```
-TAG=my-docker-tag
-```
-
-## BIM edition
-
-In order to install or change to BIM inside a Docker environment, please navigate to the [Docker Installation for OpenProject BIM](https://www.openproject.org/docs/installation-and-operations/bim-edition/#docker-installation-openproject-bim) paragraph at the BIM edition documentation.
-
-## Upgrade
-
-Retrieve any changes from the `openproject-docker-compose` repository:
-
-    git pull origin stable/16
-
-Build the control plane:
-
-    docker-compose -f docker-compose.yml -f docker-compose.control.yml build
-
-Take a backup of your existing postgresql data and openproject assets:
-
-    docker-compose -f docker-compose.yml -f docker-compose.control.yml run backup
-
-Run the upgrade:
-
-    docker-compose -f docker-compose.yml -f docker-compose.control.yml run upgrade
-
-Relaunch the containers, ensure you are pulling to use the latest version of the Docker images:
-
-    docker compose up -d --build --pull always
-
-
-
-## Backup
-
-Switch off your current installation:
-
-    docker-compose down
-
-Build the control scripts:
-
-    docker-compose -f docker-compose.yml -f docker-compose.control.yml build
-
-Take a backup of your existing PostgreSQL data and OpenProject assets:
-
-    docker-compose -f docker-compose.yml -f docker-compose.control.yml run backup
-
-Restart your OpenProject installation
-
-    docker-compose up -d
-
-
-
-## Uninstall
-
-If you want to stop the containers without removing them directly:
+### Repository Management
 
 ```bash
-docker-compose stop
+# Set up build branches for all repositories
+scripts/setup_all_build_branches.sh
+
+# Add GitHub Actions workflows to all repositories
+scripts/add_workflows_to_submodules.sh
+
+# Verify all repositories are configured correctly
+scripts/verify_all_repos.sh
 ```
 
-You can remove the container stack with:
+### Build and Release
 
 ```bash
-docker-compose down
+# Build local packages for testing
+python -m build external/config-manager/
+python -m build external/deploy-manager/
+# ... etc for each component
+
+# Create release packages
+scripts/build_all_releases.sh
 ```
 
-> [!NOTE]
-> This will not remove your data which is persisted in named volumes, likely called `compose_opdata` (for attachments) and `compose_pgdata` (for the database).
-> The exact name depends on the name of the directory where your `docker-compose.yml` and/or you `docker-compose.override.yml` files are stored (`compose` in this case).
+## Documentation
 
-If you want to start from scratch and remove the existing data you will have to remove these volumes via
-`docker volume rm compose_opdata compose_pgdata`.
+### Architecture Documentation
+
+- [`docs/MULTI_REPO_STRATEGY.md`](docs/MULTI_REPO_STRATEGY.md) - Three-tier branching strategy
+- [`docs/PACKAGE_MANAGEMENT_EXPLAINED.md`](docs/PACKAGE_MANAGEMENT_EXPLAINED.md) - Package distribution
+- [`docs/ARCHITECTURE_VISUAL.md`](docs/ARCHITECTURE_VISUAL.md) - System architecture
+- [`docs/DEVELOPMENT_WORKSPACE_SETUP.md`](docs/DEVELOPMENT_WORKSPACE_SETUP.md) - Development environment
+
+### Integration Guides
+
+- [`docs/GITHUB_PIP_INTEGRATION.md`](docs/GITHUB_PIP_INTEGRATION.md) - GitHub releases + pip
+- [`docs/QUICK_REFERENCE.md`](docs/QUICK_REFERENCE.md) - Command quick reference
+
+### Build System
+
+- [`docs/BUILD_BRANCH_SETUP_COMPLETE.md`](docs/BUILD_BRANCH_SETUP_COMPLETE.md) - Build configuration
+- [`docs/REPOSITORY_STATUS_REPORT.md`](docs/REPOSITORY_STATUS_REPORT.md) - Repository status
+- [`docs/MULTI_REPO_BUILD_SYSTEM_COMPLETE.md`](docs/MULTI_REPO_BUILD_SYSTEM_COMPLETE.md) - Complete build system
+
+## Testing
+
+### Running Tests
+
+```bash
+# All tests across all repositories
+pytest
+
+# Specific component tests
+pytest external/config-manager/tests/
+pytest tests/test_integration.py
+
+# With coverage
+pytest --cov=src --cov-report=html
+```
+
+### Test Structure
+
+```
+tests/
+├── test_integration.py        # Cross-component integration
+├── test_orchestrator.py       # Main orchestrator
+└── test_deployment.py         # End-to-end deployment
+
+external/*/tests/              # Component-specific tests
+```
+
+## Contributing
+
+### Code Standards
+
+- **Python:** Black formatting, Flake8 linting, mypy type checking
+- **Commits:** Conventional commits (`feat:`, `fix:`, `docs:`)
+- **Testing:** Minimum 80% test coverage
+- **Documentation:** All public APIs documented
+
+### Pull Request Process
+
+1. **Fork and branch** from `develop`
+2. **Make changes** in appropriate component repositories
+3. **Test locally** with `pytest` and automation scripts
+4. **Update documentation** if needed
+5. **Submit PR** to `develop` branch
+
+### Development Environment Requirements
+
+```bash
+# Python 3.9+
+python --version
+
+# Development tools (installed by setup-dev-environment.sh)
+pip install black flake8 mypy pytest pytest-cov
+
+# Container tools
+docker --version
+docker-compose --version
+
+# VS Code (recommended)
+code --version
+```
+
+## Release Management
+
+### Current Versions
+
+- config-manager: v2.0.1
+- deploy-manager: v2.1.0
+- control-flow: v0.2.0
+- dependency-manager: v0.2.0
+- tui-form-designer: v1.0.1
+- prober: v0.1.0 (⚠️ experimental)
+
+### Release Status
+
+Check GitHub Actions for build status:
+- [config-manager builds](https://github.com/JustinCBates/openproject-config-manager/actions)
+- [deploy-manager builds](https://github.com/JustinCBates/openproject-deploy-manager/actions)
+- [control-flow builds](https://github.com/JustinCBates/control-flow/actions)
+- [dependency-manager builds](https://github.com/JustinCBates/dependency-manager/actions)
+- [tui-form-designer builds](https://github.com/JustinCBates/TUI_Form_Designer/actions)
+- [prober builds](https://github.com/JustinCBates/docker_prober_utility/actions)
 
 ## Troubleshooting
 
-You can look at the logs with:
+### Common Development Issues
 
-    docker-compose logs -n 1000
-
-For the complete documentation, please refer to https://docs.openproject.org/installation-and-operations/.
-
-### Network issues
-
-If you're running into weird network issues and timeouts such as the one described in
-[OP#42802](https://community.openproject.org/work_packages/42802), you might have success in remove the two separate
-frontend and backend networks. This might be connected to using podman for orchestration, although we haven't been able
-to confirm this.
-
-### SMTP setup fails: Network is unreachable.
-
-Make sure your container has DNS resolution to access external SMTP server when set up as described in
-[OP#44515](https://community.openproject.org/work_packages/44515).
-
-```yml
-worker:
-  dns:
-    - "Your DNS IP" # OR add a public DNS resolver like 8.8.8.8
+**Submodule out of sync:**
+```bash
+git submodule update --remote --merge
 ```
 
-## Dependencies
+**Build failures:**
+```bash
+# Check individual component
+cd external/config-manager/
+python -m build
+pytest
 
-### Production (End Users)
+# Check GitHub Actions logs
+```
 
-**Required:**
-- `docker-compose` - Container orchestration
-- `docker` - Container runtime
+**Import errors in development:**
+```bash
+# Install in development mode
+pip install -e ./external/config-manager/
+pip install -e ./external/deploy-manager/
+# ... etc
+```
 
-**Optional Features:**
-- `git` - Version control (if using git submodules)
-- `curl` - HTTP requests (if downloading resources)
-- `openssl` - SSL certificates (if generating certs)
+### Getting Help
 
-### Development (Contributors)
+- **Issues:** [GitHub Issues](https://github.com/JustinCBates/openproject-docker-compose/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/JustinCBates/openproject-docker-compose/discussions)
+- **Documentation:** [`docs/`](docs/) directory
 
-**Required:**
-- `git` - Version control
-- `make` - Build automation (if using Makefile)
+---
 
-**Optional Tools:**
-- `jq` - JSON processing (if parsing JSON configs)
-- `yamllint` - YAML validation (if validating compose files)
-- `shellcheck` - Shell script linting (if using shell scripts)
-
-## 📚 Documentation
-
-For comprehensive documentation, architecture details, and development guides, see the [`documents/`](documents/) directory:
-
-- **New to the project?** Start with [`documents/project/PROJECT_OVERVIEW.md`](documents/project/PROJECT_OVERVIEW.md)
-- **Need technical details?** Review [`documents/architecture/ARCHITECTURE.md`](documents/architecture/ARCHITECTURE.md)  
-- **Setting up development?** Check [`documents/guides/SUBMODULES_GUIDE.md`](documents/guides/SUBMODULES_GUIDE.md)
-- **Want to contribute?** See [`documents/migration/MIGRATION_PLAN.md`](documents/migration/MIGRATION_PLAN.md)
-
-All design documents, guides, and project documentation are organized in the [`documents/`](documents/) directory with detailed README files for navigation.
-
+**Remember:** This branch contains the complete development environment. For simple OpenProject installation, users should use the [production branch](https://github.com/JustinCBates/openproject-docker-compose/tree/production).

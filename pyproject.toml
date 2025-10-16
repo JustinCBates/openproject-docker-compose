@@ -35,6 +35,15 @@ dependencies = [
     "docker>=7.0.0",
     "rich>=13.0.0",
     "jinja2>=3.0",
+    # OpenProject component packages
+    # NOTE: Once GitHub releases are created, these will install from release URLs
+    # For now, use editable installs: pip install -e ./external/<repo>/
+    "openproject-config-manager>=2.0.0",
+    "openproject-deploy-manager>=2.0.0",
+    "control-flow-engine>=0.1.0",
+    "dependency-manager>=0.1.0",
+    "tui-form-designer>=1.0.0",
+    # Note: docker-prober-utility is experimental/optional (not integrated)
 ]
 
 [project.optional-dependencies]
