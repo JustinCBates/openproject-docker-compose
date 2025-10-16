@@ -53,6 +53,13 @@ This repository serves as the **integration point** that orchestrates the standa
 - `pyyaml` - Config parsing
 - `docker-prober-utility` - Live validation
 
+**📖 Implementation Details**: See [config-manager/docs/CONFIG_MANAGER_IMPLEMENTATION.md](../../external/config-manager/docs/CONFIG_MANAGER_IMPLEMENTATION.md) for complete implementation reference, including:
+- 5-phase control-flow based workflow
+- Actual directory structure and file locations
+- Libraries and units (probing, discovery, validation)
+- YAML workflow specifications
+- Development guide
+
 ---
 
 #### **2. openproject-deploy-manager** (External Dependency)
@@ -74,6 +81,12 @@ This repository serves as the **integration point** that orchestrates the standa
 - `jinja2` - Template rendering
 - `pyyaml` - Config parsing
 - `docker-prober-utility` - Pre-deployment validation
+
+**📖 Implementation Details**: See [deploy-manager/docs/](../../external/deploy-manager/docs/) for detailed documentation:
+- **DEPLOY_MANAGER_PROPOSAL.md** - Complete component architecture and design
+- **IMPLEMENTATION_PROGRESS.md** - Current implementation status and test results
+- **Phase completion docs** - PHASE_1_COMPLETE.md, PHASE_2A_SUMMARY.md, etc.
+- **Scaffolding docs** - System scaffolding details
 
 ---
 

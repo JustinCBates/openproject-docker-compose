@@ -1,5 +1,9 @@
 # Configuration Variable Flow Summary
 
+> **Note**: This document describes the conceptual configuration flow. For current implementation details, see:
+> - **Config-Manager**: [config-manager/docs/CONFIG_MANAGER_IMPLEMENTATION.md](../../external/config-manager/docs/CONFIG_MANAGER_IMPLEMENTATION.md)
+> - **Deploy-Manager**: [deploy-manager/docs/DEPLOY_MANAGER_PROPOSAL.md](../../external/deploy-manager/docs/DEPLOY_MANAGER_PROPOSAL.md)
+
 ## Overview
 
 This document summarizes the **configuration variable flow** from the Configuration Manager to the Deployment Manager in the OpenProject Python rebuild architecture.

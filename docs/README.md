@@ -7,7 +7,6 @@ This directory contains all design documents, architectural specifications, guid
 ### 🏗️ **architecture/**
 System architecture and design specifications
 - `ARCHITECTURE.md` - Comprehensive system architecture and component interactions
-- `INTERACTIVE_CONFIG_ARCHITECTURE.md` - Interactive configuration system design
 
 ### 🎨 **design/**  
 Design specifications and workflow documentation
@@ -32,6 +31,18 @@ Project overview and summary documentation
 - `BRANCH_RESTRUCTURE_COMPLETE.md` - Branch restructuring completion summary
 - `DEPENDENCY_ANALYSIS.md` - Cross-repository dependency analysis
 - `COMPLETE_PROJECT_CONTEXT.md` - Complete system context and architecture
+
+### 📦 **Submodule Documentation**
+Implementation details in external repositories
+- `SUBMODULE_DOCUMENTATION.md` - **Complete index of all submodule documentation**
+- **Config-Manager**: `external/config-manager/docs/CONFIG_MANAGER_IMPLEMENTATION.md`
+- **Deploy-Manager**: `external/deploy-manager/docs/`
+- **Control-Flow**: `external/control-flow/docs/DOCUMENTATION_INDEX.md`
+
+### 📜 **archive/**
+Historical documentation preserved for context
+- `historical/` - Archived design proposals superseded by implementation
+- See `archive/historical/README.md` for details on archived documents
 
 ## 🎯 **Document Categories**
 
@@ -59,6 +70,21 @@ Many documents reference each other. Key relationships:
 - `CONTROL_FLOW_INTEGRATION.md` ↔ `external/control-flow/docs/` (integration ↔ engine details)
 - `MIGRATION_PLAN.md` ↔ `PYTHON_REBUILD.md` (planning ↔ execution)
 - `MULTI_REPO_SUMMARY.md` ↔ `SUBMODULES_GUIDE.md` (structure ↔ workflow)
+- `ARCHITECTURE.md` ↔ `SUBMODULE_DOCUMENTATION.md` (strategy ↔ implementation)
+
+### **Documentation Philosophy**
+
+**Main Repository Docs** (this directory):
+- ✅ Strategic architecture and integration patterns
+- ✅ Cross-repository coordination and planning
+- ✅ High-level guides and project overview
+
+**Submodule Docs** (external/*/docs/):
+- ✅ Implementation details and API references
+- ✅ Component-specific development guides
+- ✅ Progress tracking and completion reports
+
+**See**: `SUBMODULE_DOCUMENTATION.md` for complete submodule documentation index
 
 ## 📝 **Maintenance**
 
@@ -75,7 +101,14 @@ This documentation is actively maintained and updated as the system evolves. Whe
 1. `project/PROJECT_OVERVIEW.md` - Understand what this system does
 2. `project/CONTROL_FLOW_INTEGRATION.md` - Learn how workflows are orchestrated
 3. `architecture/ARCHITECTURE.md` - Deep dive into technical architecture
-4. `guides/SUBMODULES_GUIDE.md` - Set up your development environment
-5. `migration/PYTHON_REBUILD.md` - See current development status
+4. `SUBMODULE_DOCUMENTATION.md` - **Navigate to implementation details**
+5. `guides/SUBMODULES_GUIDE.md` - Set up your development environment
+6. `migration/PYTHON_REBUILD.md` - See current development status
 
-The documentation is organized to support both high-level understanding and deep technical implementation details. For control-flow engine specifics, see `external/control-flow/docs/DOCUMENTATION_INDEX.md`.
+The documentation is organized to support both high-level understanding and deep technical implementation details. 
+
+**Implementation Details**:
+- For control-flow engine: `external/control-flow/docs/DOCUMENTATION_INDEX.md`
+- For config-manager: `external/config-manager/docs/CONFIG_MANAGER_IMPLEMENTATION.md`
+- For deploy-manager: `external/deploy-manager/docs/`
+- **Complete index**: `SUBMODULE_DOCUMENTATION.md`
