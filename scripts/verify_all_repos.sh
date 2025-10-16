@@ -82,8 +82,17 @@ for submodule in "${SUBMODULES[@]}"; do
                 echo -e "Version: ${YELLOW}No pyproject.toml${NC}"
             fi
             
-            # Check for build workflow
-            if [ -f ".github/workflows/build-and-release.yml" ] || [ -f ".github/workflows/release.yml" ]; then
+            # Check for build workflow (on build branch)
+            WORKFLOW_EXISTS=false
+            if git show-ref --verify --quiet refs/remotes/origin/build || git show-ref --verify --quiet refs/heads/build; then
+                if git ls-tree -r origin/build --name-only 2>/dev/null | grep -q "\.github/workflows/build-and-release.yml"; then
+                    WORKFLOW_EXISTS=true
+                elif git ls-tree -r origin/build --name-only 2>/dev/null | grep -q "\.github/workflows/release.yml"; then
+                    WORKFLOW_EXISTS=true
+                fi
+            fi
+            
+            if [ "$WORKFLOW_EXISTS" = true ]; then
                 echo -e "Workflow: ${GREEN}✓${NC}"
             else
                 echo -e "Workflow: ${YELLOW}Missing${NC}"
@@ -132,10 +141,12 @@ for submodule in "${SUBMODULES[@]}"; do
         
         if git show-ref --verify --quiet refs/remotes/origin/build || git show-ref --verify --quiet refs/heads/build; then
             HAS_BUILD=true
-        fi
-        
-        if [ -f ".github/workflows/build-and-release.yml" ] || [ -f ".github/workflows/release.yml" ]; then
-            HAS_WORKFLOW=true
+            # Check for workflow on build branch
+            if git ls-tree -r origin/build --name-only 2>/dev/null | grep -q "\.github/workflows/build-and-release.yml"; then
+                HAS_WORKFLOW=true
+            elif git ls-tree -r origin/build --name-only 2>/dev/null | grep -q "\.github/workflows/release.yml"; then
+                HAS_WORKFLOW=true
+            fi
         fi
         
         if [ "$HAS_DEVELOP" = true ] && [ "$HAS_BUILD" = true ] && [ "$HAS_WORKFLOW" = true ]; then
