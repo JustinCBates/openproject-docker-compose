@@ -16,7 +16,10 @@ from rich.layout import Layout
 from rich import box
 
 from openproject_orchestrator.coordinators import ConfigCoordinator, DeployCoordinator
+from openproject_orchestrator.utils import get_logger
 
+
+logger = get_logger(__name__)
 
 @dataclass
 class MenuChoice:
@@ -50,16 +53,20 @@ class TUIController:
         self.workspace_dir.mkdir(exist_ok=True)
         
         # Coordinators
+        logger.debug("Initializing coordinators")
         self.config_coordinator = ConfigCoordinator(workspace_dir=self.workspace_dir)
         self.deploy_coordinator = DeployCoordinator(workspace_dir=self.workspace_dir)
+        logger.debug("Coordinators initialized successfully")
         
     def run(self):
         """Main TUI loop"""
+        logger.info("Starting TUI main loop")
         self._show_welcome()
         
         while True:
             try:
                 choice = self._show_main_menu()
+                logger.info(f"User selected menu option: {choice}")
                 
                 if choice == "quick_deploy":
                     self._workflow_quick_deploy()

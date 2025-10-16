@@ -9,4 +9,10 @@ Utilities:
 - file_utils: File operations
 """
 
-# To be implemented in Phase 5
+"""
+Utils package - utility functions and helpers.
+"""
+
+from .logging import setup_logging, get_logger, get_log_file
+
+__all__ = ["setup_logging", "get_logger", "get_log_file"]
