@@ -1,7 +1,8 @@
 """
 Workflows package
 
-This package contains workflow implementations for complex operations.
+This package contains workflow implementations and helper utilities
+for complex operations.
 
 Workflows:
 - quick_deploy: End-to-end deployment workflow
@@ -10,4 +11,24 @@ Workflows:
 - status_dashboard: Status monitoring
 """
 
-# To be implemented in Phase 4
+from .workflow_helpers import (
+    display_workflow_header,
+    display_configuration_summary,
+    confirm_action,
+    display_success_panel,
+    display_error_panel,
+    display_verification_table,
+    prompt_deployment_mode,
+    WorkflowStep,
+)
+
+__all__ = [
+    "display_workflow_header",
+    "display_configuration_summary",
+    "confirm_action",
+    "display_success_panel",
+    "display_error_panel",
+    "display_verification_table",
+    "prompt_deployment_mode",
+    "WorkflowStep",
+]
