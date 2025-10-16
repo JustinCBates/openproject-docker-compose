@@ -4,33 +4,36 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openproject-deploy"
-version = "1.0.0"
-description = "Python-based deployment and management utilities for OpenProject Docker Compose"
+version = "2.0.0"
+description = "Interactive TUI orchestrator for OpenProject deployment and management"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
     {name = "OpenProject Contributors"}
 ]
-keywords = ["openproject", "docker", "deployment", "devops"]
+keywords = ["openproject", "docker", "deployment", "devops", "tui", "orchestrator"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Systems Administration",
 ]
 
 dependencies = [
-    "click>=8.0",
+    "click>=8.0.0",
     "python-dotenv>=1.0",
     "pyyaml>=6.0",
-    "docker>=6.0",
-    "rich>=13.0",
+    "docker>=7.0.0",
+    "rich>=13.0.0",
     "jinja2>=3.0",
 ]
 
@@ -45,7 +48,7 @@ dev = [
 ]
 
 [project.scripts]
-openproject = "openproject_deploy.cli:main"
+openproject = "openproject_orchestrator.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
