@@ -1,0 +1,13 @@
+# OpenProject Component Packages - Local Development
+#
+# Use this for local development before GitHub releases are available
+# Install with: pip install -r requirements-local.txt
+#
+# This installs packages in editable mode from local submodule directories
+
+-e ./external/config-manager/
+-e ./external/deploy-manager/
+-e ./external/control-flow/
+-e ./external/dependency-manager/
+-e ./external/tui-form-designer/
+# -e ./external/prober/  # OPTIONAL - Experimental, not integrated
