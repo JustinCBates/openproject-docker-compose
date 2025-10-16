@@ -1,20 +1,13 @@
 """
-Coordinators package
-
-This package contains coordinator classes that wrap the submodule packages
-and adapt them for use in the main orchestrator.
-
-Coordinators:
-- ConfigCoordinator: Wraps config-manager
-- DeployCoordinator: Wraps deploy-manager (to be implemented in Phase 3)
+Coordinators package - manages interactions with config-manager and deploy-manager.
 """
 
-from openproject_orchestrator.coordinators.config_coordinator import (
-    ConfigCoordinator,
-    ConfigState,
-)
+from .config_coordinator import ConfigCoordinator, ConfigState
+from .deploy_coordinator import DeployCoordinator, DeploymentState
 
 __all__ = [
     "ConfigCoordinator",
     "ConfigState",
+    "DeployCoordinator",
+    "DeploymentState",
 ]

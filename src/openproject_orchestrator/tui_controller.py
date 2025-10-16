@@ -15,7 +15,7 @@ from rich.table import Table
 from rich.layout import Layout
 from rich import box
 
-from openproject_orchestrator.coordinators import ConfigCoordinator
+from openproject_orchestrator.coordinators import ConfigCoordinator, DeployCoordinator
 
 
 @dataclass
@@ -51,7 +51,7 @@ class TUIController:
         
         # Coordinators
         self.config_coordinator = ConfigCoordinator(workspace_dir=self.workspace_dir)
-        # self.deploy_coordinator = DeployCoordinator()  # Phase 3
+        self.deploy_coordinator = DeployCoordinator(workspace_dir=self.workspace_dir)
         
     def run(self):
         """Main TUI loop"""
@@ -205,10 +205,63 @@ Interactive deployment and management for OpenProject.
         self.console.input("Press Enter to continue...")
     
     def _workflow_deploy(self):
-        """Deployment workflow (to be implemented in Phase 3)"""
-        self.console.print("\n[cyan]Deployment Workflow[/cyan]")
-        self.console.print("[dim]Deploy OpenProject using deploy-manager.[/dim]\n")
-        self.console.print("[yellow]⏳ Not yet implemented - Coming in Phase 3[/yellow]\n")
+        """Deployment workflow"""
+        self.console.print("\n[cyan]═══ Deployment Workflow ═══[/cyan]\n")
+        
+        # Check if configuration exists
+        if not self.config_coordinator.is_configured():
+            self.console.print(Panel(
+                "[yellow]⚠ No configuration found![/yellow]\n\n"
+                "You must configure OpenProject before deploying.\n"
+                "Please run the 'Configure' option first.",
+                title="Configuration Required",
+                border_style="yellow"
+            ))
+            self.console.input("\nPress Enter to continue...")
+            return
+        
+        # Display current configuration
+        config = self.config_coordinator.get_configuration()
+        self.console.print("[dim]Current configuration:[/dim]")
+        self.console.print(f"  Domain: {config.get('domain', 'N/A')}")
+        self.console.print(f"  Admin Email: {config.get('admin_email', 'N/A')}")
+        self.console.print()
+        
+        # Check if already deployed
+        if self.deploy_coordinator.is_deployed():
+            self.console.print("[yellow]⚠ Services are already deployed.[/yellow]")
+            response = self.console.input("Redeploy? (yes/no) [no]: ").strip().lower()
+            if response != "yes":
+                self.console.print("[dim]Keeping existing deployment.[/dim]\n")
+                self.console.input("Press Enter to continue...")
+                return
+            
+            # Stop existing deployment
+            self.console.print("\n[dim]Stopping existing deployment...[/dim]")
+            self.deploy_coordinator.stop()
+            self.console.print()
+        
+        # Prompt for deployment mode
+        self.console.print("[cyan]Select deployment mode:[/cyan]")
+        self.console.print("  1. Development (local testing)")
+        self.console.print("  2. Production (secure, optimized)")
+        mode_choice = self.console.input("\nChoice [1]: ").strip() or "1"
+        
+        mode = "development" if mode_choice == "1" else "production"
+        
+        self.console.print(f"\n[dim]Deploying in {mode} mode...[/dim]\n")
+        
+        # Run deployment
+        success = self.deploy_coordinator.deploy(
+            configuration=config,
+            mode=mode
+        )
+        
+        if success:
+            self.console.print("\n[green]✓[/green] Deployment workflow complete!\n")
+        else:
+            self.console.print("\n[red]✗[/red] Deployment failed.\n")
+        
         self.console.input("Press Enter to continue...")
     
     def _show_status_dashboard(self):
@@ -238,11 +291,20 @@ Interactive deployment and management for OpenProject.
             )
         
         # Deployment status (Phase 3)
-        status_table.add_row(
-            "Deployment",
-            "[dim]❌ Not deployed[/dim]",
-            "[dim]Coming in Phase 3[/dim]"
-        )
+        if self.deploy_coordinator.is_deployed():
+            services_running = self.deploy_coordinator.get_services_running()
+            deployment_time = self.deploy_coordinator.get_deployment_time()
+            status_table.add_row(
+                "Deployment",
+                f"[green]✓ Deployed ({services_running} services)[/green]",
+                deployment_time if deployment_time else ""
+            )
+        else:
+            status_table.add_row(
+                "Deployment",
+                "[red]❌ Not deployed[/red]",
+                "Run 'Deploy' to start services"
+            )
         
         self.console.print(status_table)
         self.console.print("\n[yellow]⏳ Full dashboard with live monitoring coming in Phase 4[/yellow]\n")
