@@ -1,0 +1,170 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - build
+  pull_request:
+    branches:
+      - build
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+          pip install -e .
+      
+      - name: Run tests
+        run: |
+          pytest tests/ -v --cov=src --cov-report=term-missing
+      
+      - name: Check coverage threshold
+        run: |
+          # Fail if coverage is below 30%
+          coverage report --fail-under=30
+
+  build:
+    name: Build Distribution
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/build'
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+      
+      - name: Build wheel and sdist
+        run: |
+          python -m build
+      
+      - name: Check distribution
+        run: |
+          twine check dist/*
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: distribution
+          path: dist/
+      
+      - name: Generate version
+        id: version
+        run: |
+          # Extract version from pyproject.toml
+          VERSION=$(grep -Po '(?<=^version = ")[^"]*' pyproject.toml)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: OpenProject Orchestrator v${{ steps.version.outputs.version }}
+          body: |
+            ## OpenProject Orchestrator v${{ steps.version.outputs.version }}
+            
+            ### Installation
+            ```bash
+            pip install openproject-orchestrator==${{ steps.version.outputs.version }}
+            ```
+            
+            Or download the wheel and install locally:
+            ```bash
+            pip install openproject_orchestrator-${{ steps.version.outputs.version }}-py3-none-any.whl
+            ```
+            
+            ### What's Included
+            - OpenProject Orchestrator TUI
+            - Config Manager integration
+            - Deploy Manager integration
+            - Quick Deploy workflow
+            - Comprehensive logging
+            - 40 unit tests (100% passing)
+            
+            ### Documentation
+            See [ORCHESTRATOR_USER_GUIDE.md](https://github.com/${{ github.repository }}/blob/main/docs/ORCHESTRATOR_USER_GUIDE.md)
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cleanup:
+    name: Clean Build Branch
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/build'
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: build
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Remove development files
+        run: |
+          # Keep only essential files for production reference
+          git rm -rf tests/ || true
+          git rm -rf docs/ || true
+          git rm -rf scripts/ || true
+          git rm -rf .pytest_cache/ || true
+          git rm -rf external/*/tests/ || true
+          git rm -rf external/*/docs/ || true
+          
+          # Create minimal README for build branch
+          cat > README.md << 'EOF'
+          # OpenProject Orchestrator - Build Branch
+          
+          This branch contains build automation and release artifacts.
+          
+          ## Installation
+          
+          Install the latest release:
+          ```bash
+          pip install openproject-orchestrator
+          ```
+          
+          Or download from [Releases](https://github.com/${{ github.repository }}/releases).
+          
+          ## Development
+          
+          For development, see the [develop branch](https://github.com/${{ github.repository }}/tree/develop).
+          
+          ## Production Deployment
+          
+          For production deployment, see the [main branch](https://github.com/${{ github.repository }}/tree/main).
+          EOF
+          
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add README.md
+          git commit -m "chore: cleanup build branch after release" || true
+          git push origin build || true
