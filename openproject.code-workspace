@@ -13,10 +13,6 @@
             "path": "external/deploy-manager"
         },
         {
-            "name": "prober",
-            "path": "external/prober"
-        },
-        {
             "name": "control-flow",
             "path": "external/control-flow"
         },
