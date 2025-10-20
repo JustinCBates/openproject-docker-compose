@@ -13,15 +13,9 @@
             "path": "external/deploy-manager"
         },
         {
-            "name": "control-flow",
             "path": "external/control-flow"
         },
         {
-            "name": "dependency-manager",
-            "path": "external/dependency-manager"
-        },
-        {
-            "name": "tui-form-designer",
             "path": "external/tui-form-designer"
         }
     ],
@@ -33,9 +27,7 @@
         "python.linting.flake8Enabled": true,
         "python.formatting.provider": "black",
         "editor.formatOnSave": true,
-        "editor.rulers": [
-            100
-        ],
+        "editor.rulers": [100],
         "files.exclude": {
             "**/__pycache__": true,
             "**/*.pyc": true,
@@ -63,19 +55,9 @@
         },
         "git.ignoredRepositories": [],
         "git.detectSubmodules": true,
-        "git.enableSmartCommit": true,
-        "git.confirmSync": false,
-        "git.autofetch": true,
-        "scm.defaultViewMode": "tree",
         "terminal.integrated.env.linux": {
-            "PYTHONPATH": "${workspaceFolder:openproject-docker-compose (main)}/src:${workspaceFolder:config-manager}/src"
-        },
-        "python.analysis.extraPaths": [
-            "${workspaceFolder:config-manager}/src",
-            "${workspaceFolder:deploy-manager}/src",
-            "${workspaceFolder:prober}",
-            "${workspaceFolder:tui-form-designer}/src"
-        ]
+            "PYTHONPATH": "${workspaceFolder:openproject-docker-compose (main)}/src"
+        }
     },
     "extensions": {
         "recommendations": [
@@ -106,9 +88,7 @@
                 "type": "python",
                 "request": "launch",
                 "module": "openproject_deploy.cli",
-                "args": [
-                    "--help"
-                ],
+                "args": ["--help"],
                 "console": "integratedTerminal",
                 "cwd": "${workspaceFolder:openproject-docker-compose (main)}"
             },
@@ -151,39 +131,6 @@
                 "label": "Update Submodules",
                 "type": "shell",
                 "command": "git submodule update --remote --merge",
-                "group": "build",
-                "presentation": {
-                    "echo": true,
-                    "reveal": "always",
-                    "focus": false,
-                    "panel": "shared"
-                },
-                "problemMatcher": []
-            },
-            {
-                "label": "Initialize Submodules (First Time Setup)",
-                "type": "shell",
-                "command": "git submodule update --init --recursive",
-                "group": "build",
-                "presentation": {
-                    "echo": true,
-                    "reveal": "always",
-                    "focus": false,
-                    "panel": "shared"
-                },
-                "problemMatcher": []
-            },
-            {
-                "label": "Switch All Submodules to Main Branch",
-                "type": "shell",
-                "command": "git submodule foreach 'git checkout main || git checkout master'",
-                "group": "build",
-                "presentation": {
-                    "echo": true,
-                    "reveal": "always",
-                    "focus": false,
-                    "panel": "shared"
-                },
                 "problemMatcher": []
             }
         ]
