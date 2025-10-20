@@ -1,0 +1,46 @@
+exclude: |
+  (?x)^(
+    external/|
+    testing/|
+    .*\.egg-info/|
+    venv/|
+    .venv/
+  )
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: 25.9.0
+    hooks:
+      - id: black
+        name: black (python)
+        language_version: python3
+        args: ["--line-length=88"]
+        files: ^(src|tests)/.*\.py$
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.1
+    hooks:
+      # Relaxed rules initially; will tighten incrementally
+      - id: flake8
+        name: flake8 (src - relaxed)
+        additional_dependencies: []
+        args: ["--max-line-length=88", "--extend-ignore=E203,E402,E501,F401,F541,F821,F841,W293"]
+        files: ^src/.*\.py$
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.19.0
+    hooks:
+      - id: pyupgrade
+        args: ["--py38-plus"]
+        files: ^(src|tests)/.*\.py$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+        files: ^(src|tests)/
+      - id: trailing-whitespace
+        files: ^(src|tests)/
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict

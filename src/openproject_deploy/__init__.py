@@ -17,7 +17,7 @@ provides OpenProject-specific integration.
 Submodules:
 - external/config-manager: 5-phase configuration workflow
   Import: from openproject_config_manager import ConfigurationManager
-  
+
 - external/deploy-manager: Deployment orchestration system
   Import: from openproject_deploy_manager import DeploymentOrchestrator
 

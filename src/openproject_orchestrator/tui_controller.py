@@ -518,7 +518,8 @@ Interactive deployment and management for OpenProject.
                 try:
                     dt = datetime.fromisoformat(deployment_time)
                     time_str = dt.strftime("%Y-%m-%d %H:%M:%S")
-                except:
+                except (ValueError, TypeError, AttributeError):
+                    # Fallback if timestamp parsing fails
                     time_str = deployment_time
             else:
                 time_str = "Unknown"
@@ -607,7 +608,8 @@ Interactive deployment and management for OpenProject.
                 try:
                     dt = datetime.fromisoformat(status["deployment_time"])
                     time_str = dt.strftime("%Y-%m-%d %H:%M:%S")
-                except:
+                except (ValueError, TypeError, AttributeError):
+                    # Fallback if timestamp parsing fails
                     time_str = status["deployment_time"]
                 deploy_details.add_row("Last Deployment", time_str)
 
