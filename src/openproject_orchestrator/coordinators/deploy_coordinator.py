@@ -93,23 +93,18 @@ class DeployCoordinator:
     
     def _setup_development_imports(self):
         """
-        Setup development mode imports by adding external submodules to sys.path.
+        Setup development mode imports.
         
-        In development mode, we use the local external/deploy-manager/src directory.
-        In production mode, we use the installed package.
+        Note: In development mode, submodules should be installed in editable mode:
+            pip install -e external/deploy-manager/
+        
+        In production mode, the package is installed normally:
+            pip install openproject-deploy-manager
+        
+        This avoids runtime sys.path manipulation.
         """
-        # Get the project root (3 levels up from this file)
-        current_file = Path(__file__).resolve()
-        project_root = current_file.parent.parent.parent.parent
-        
-        # Check if we're in development mode (external/deploy-manager exists)
-        deploy_manager_src = project_root / "external" / "deploy-manager" / "src"
-        
-        if deploy_manager_src.exists():
-            # Add to sys.path if not already there
-            deploy_manager_src_str = str(deploy_manager_src)
-            if deploy_manager_src_str not in sys.path:
-                sys.path.insert(0, deploy_manager_src_str)
+        # No sys.path.insert needed - rely on proper Python packaging
+        pass
     
     def _is_development_mode(self) -> bool:
         """

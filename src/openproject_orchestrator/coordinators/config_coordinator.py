@@ -54,18 +54,23 @@ class ConfigCoordinator:
         self._setup_development_imports()
         
     def _setup_development_imports(self):
-        """Setup imports for development with local submodules"""
+        """
+        Setup imports for development with local submodules.
+        
+        Note: In development mode, submodules should be installed in editable mode:
+            pip install -e external/config-manager/
+        
+        In production mode, the package is installed normally:
+            pip install openproject-config-manager
+        
+        This avoids runtime sys.path manipulation.
+        """
+        # No sys.path.insert needed - rely on proper Python packaging
         project_root = Path(__file__).parent.parent.parent.parent
         config_manager_src = project_root / 'external' / 'config-manager' / 'src'
         
-        if config_manager_src.exists():
-            # Development mode - use local submodule
-            if str(config_manager_src) not in sys.path:
-                sys.path.insert(0, str(config_manager_src))
-            self._dev_mode = True
-        else:
-            # Production mode - use installed package
-            self._dev_mode = False
+        # Dev mode detection still useful for feature flags/logging
+        self._dev_mode = config_manager_src.exists()
     
     def run_interactive_configuration(
         self,
